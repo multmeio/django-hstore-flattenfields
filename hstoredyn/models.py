@@ -47,7 +47,8 @@ class MyModelMeta(models.Model.__metaclass__):
 
         old_setattr = new_class.__setattr__
         def __setattr__(self, key, value):
-            #print "called __setattr__(%r, %r, %r)" % (self, key, value)
+            #print "called __setattr__(%r, %r)" % (key, value)
+
             if hasattr(self, '_dfields') and not key in dir(new_class):
                 # XXX: search for key on table, django will call this method on many times on 
                 #      __init__
@@ -78,8 +79,19 @@ class MyModel(models.Model):
     class Meta:
         abstract = True
 
-    #def __init__(self, *args, **kwargs):
-    # 
+    def __init__(self, *args, **kwargs):
+        dynamic_fields = dynfields_for_model(self.__class__)
+        # save and remove dfields kwargs
+        dfields_save = SortedDict()
+        for field in dynamic_fields.keys():
+            if field in kwargs:
+                dfields_save[str(field)] = str(kwargs.pop(field))
+
+        # init class
+        super(MyModel, self).__init__(*args, **kwargs)
+
+        # set dfields
+        self._dfields.update(dfields_save)
 
 #######################################################
 def dynfields_for_model(model, fields=None, exclude=None, widgets=None, formfield_callback=None):
@@ -130,6 +142,8 @@ def dynfields_for_model(model, fields=None, exclude=None, widgets=None, formfiel
             raise TypeError('formfield_callback must be a function or callable')
         else:
             formfield = formfield_callback(f, **kwargs)
+
+        formfield._model_field = f
 
         if formfield:
             field_list.append((f.name, formfield))
