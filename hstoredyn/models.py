@@ -80,6 +80,7 @@ class MyModelMeta(models.Model.__metaclass__):
                 for metafield in DynamicFields.objects.filter(refer=new_class.__name__):
                     type_ = metafield.type
                     try:
+                        #FIXME: eval is the evil, use module package
                         field_klass = eval('models.%s' % type_)
                         field = field_klass(name=metafield.name,
                                             max_length=metafield.max_length,
