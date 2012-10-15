@@ -53,7 +53,8 @@ class MyModelMeta(models.Model.__metaclass__):
                 # XXX: search for key on table, django will call this method on many times on 
                 #      __init__
                 if DynamicFields.objects.filter(refer=new_class.__name__, name=key):
-                    self._dfields[key] = value
+                    self._dfields[key] = str(value)
+                    return
 
             old_setattr(self, key, value)
 
@@ -68,7 +69,6 @@ class MyModelMeta(models.Model.__metaclass__):
 
             return old_delattr(self, key)
         new_class.__delattr__ = __delattr__
-
 
         # override _meta.fields (property)
         _old_meta = new_class._meta
