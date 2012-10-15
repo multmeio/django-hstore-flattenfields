@@ -23,14 +23,16 @@ def detail(request, some_id):
     return HttpResponse("You're looking at something %s." % some_id)
 
 def add(request):
-    if request.method == 'POST': # If the form has been submitted...
+    if request.method == 'POST': # If the form has been submitted
         form = SomethingForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
             # Process the data in form.cleaned_data
             # ...
+            form.save()
             return HttpResponseRedirect('/thanks/') # Redirect after POST
     else:
         form = SomethingForm() # An unbound form
+        #form.as_p()
 
     return render(request, 'something/add.html', {
         'form': form,
