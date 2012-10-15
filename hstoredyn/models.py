@@ -69,6 +69,42 @@ class MyModelMeta(models.Model.__metaclass__):
             return old_delattr(self, key)
         new_class.__delattr__ = __delattr__
 
+
+        # override _meta.fields (property)
+        _old_meta = new_class._meta
+        class _meta(object):
+            @property
+            def dynamic_fields(self):
+                fields = []
+                for metafield in DynamicFields.objects.filter(refer=new_class.__name__):
+                    type_ = metafield.type
+                    try:
+                        field_klass = eval('models.%s' % type_)
+                        field = field_klass(name=metafield.name,
+                                            max_length=metafield.max_length,
+                                            choices=metafield.choices.get('choices'),
+                                            blank=metafield.blank,
+                                            null=metafield.null)
+                        field.attname = metafield.name
+                        fields.append(field)
+                    except:
+                        raise \
+                            TypeError(('Cannot create field for %r, maybe type %r ' + \
+                                       'is not a django type') % (metafield, type_))
+
+                return fields
+
+            @property
+            def fields(self):
+                #add dynamic_fields from table
+                return _old_meta.fields + self.dynamic_fields
+
+            def __getattr__(self, key):
+                return getattr(_old_meta, key)
+            def __setattr__(self, key, value):
+                return setattr(_old_meta, key, value)
+        new_class._meta = _meta()
+
         # return it
         return new_class
 
@@ -80,18 +116,8 @@ class MyModel(models.Model):
         abstract = True
 
     def __init__(self, *args, **kwargs):
-        dynamic_fields = dynfields_for_model(self.__class__)
-        # save and remove dfields kwargs
-        dfields_save = SortedDict()
-        for field in dynamic_fields.keys():
-            if field in kwargs:
-                dfields_save[str(field)] = str(kwargs.pop(field))
-
-        # init class
         super(MyModel, self).__init__(*args, **kwargs)
 
-        # set dfields
-        self._dfields.update(dfields_save)
 
 #######################################################
 def dynfields_for_model(model, fields=None, exclude=None, widgets=None, formfield_callback=None):
