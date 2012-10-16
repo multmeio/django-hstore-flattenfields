@@ -4,7 +4,7 @@ Created on 13/10/2012
 @author: iuri
 '''
 
-from django.db import models
+from django.db import models, connection
 
 from django_orm.postgresql import hstore
 from django.utils.datastructures import SortedDict
@@ -83,7 +83,15 @@ class HStoreModelMeta(models.Model.__metaclass__):
             @property
             def dynamic_fields(self):
                 fields = []
-                for metafield in DynamicField.objects.filter(refer=new_class.__name__):
+                # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
+                cursor = connection.cursor()
+                cursor.execute("select count(*) from pg_tables  where tablename = 'dynamic_field'")
+                if cursor.fetchone()[0] == 0:
+                    return fields
+                metafields = DynamicField.objects.filter(refer=new_class.__name__)
+                # except DatabaseError:
+                    # return fields
+                for metafield in metafields:
                     try:
                         #FIXME: eval is the evil, use module package
                         field_klass_name = 'models.%s' % metafield.typo
