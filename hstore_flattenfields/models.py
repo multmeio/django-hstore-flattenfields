@@ -28,8 +28,6 @@ class DynamicField(models.Model):
     class Meta:
         db_table = u'dynamic_field'
 
-    objects = hstore.HStoreManager()
-
 
 class HStoreModelMeta(models.Model.__metaclass__):
     def __new__(cls, name, bases, attrs):
