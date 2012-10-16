@@ -87,8 +87,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 if cursor.fetchone()[0] == 0:
                     return fields
                 metafields = DynamicField.objects.filter(refer=new_class.__name__)
-                # except DatabaseError:
-                    # return fields
+
                 for metafield in metafields:
                     try:
                         #FIXME: eval is the evil, use module package
@@ -105,7 +104,6 @@ class HStoreModelMeta(models.Model.__metaclass__):
                         raise \
                             TypeError(('Cannot create field for %r, maybe type %r ' + \
                                        'is not a django type') % (metafield, field_klass_name))
-
                 return fields
 
             @property
@@ -126,6 +124,7 @@ class HStoreModel(models.Model):
     __metaclass__ = HStoreModelMeta
     objects = hstore.HStoreManager()
     _dfields = hstore.DictionaryField(db_index=True, null=True, blank=True)
+    
     class Meta:
         abstract = True
 
