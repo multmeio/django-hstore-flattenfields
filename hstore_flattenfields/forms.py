@@ -11,22 +11,8 @@ from django import forms
 from django.forms.models import fields_for_model
 from models import HStoreModel
 
-class HStoreModelFormMeta(forms.ModelForm.__metaclass__):
-    def __new__(cls, name, bases, attrs):
-        super_new = super(HStoreModelFormMeta, cls).__new__
-
-        # create it
-        new_class = super_new(cls, name, bases, attrs)
-
-        # pos create, remove _dfields
-        if '_dfields' in new_class.base_fields:
-            new_class.base_fields.pop('_dfields')
-        # return it
-        return new_class
-
 
 class HStoreModelForm(forms.ModelForm):
-    __metaclass__ = HStoreModelFormMeta
     def __init__(self, *args, **kwargs):
         super(HStoreModelForm, self).__init__(*args, **kwargs)
         # Always override for fields (dynamic fields maybe deleted/included) 
