@@ -93,9 +93,14 @@ class HStoreModelMeta(models.Model.__metaclass__):
                         #FIXME: eval is the evil, use module package
                         field_klass_name = 'models.%s' % metafield.typo
                         field_klass = eval(field_klass_name)
+                        if metafield.choices == '':
+                            choices_ = None
+                        else:
+                            choices_ = single_list_to_tuple(metafield.choices.split('\n'))
+
                         field = field_klass(name=metafield.name,
                                             max_length=metafield.max_length,
-                                            choices=single_list_to_tuple(metafield.choices.split('\n')),
+                                            choices=choices_,
                                             blank=metafield.maybe_blank,
                                             null=metafield.maybe_null)
                         field.attname = metafield.name
