@@ -83,7 +83,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 fields = []
                 # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
                 cursor = connection.cursor()
-                cursor.execute("select count(*) from pg_tables  where tablename = 'dynamic_field'")
+                cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
                 if cursor.fetchone()[0] == 0:
                     return fields
                 metafields = DynamicField.objects.filter(refer=new_class.__name__)
