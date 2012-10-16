@@ -9,12 +9,8 @@ Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
 
 from django.template.defaultfilters import slugify
 
-__all__ = ['generate_alias',
-           'single_list_to_tuple']
+__all__ = ['single_list_to_tuple']
 
-
-def generate_alias(value):
-    return slugify(value).replace('-', '_')
 
 def single_list_to_tuple(list_values):
-    return [(generate_alias(v), v.capitalize()) for v in list_values]
+    return [(v, v) for v in list_values]

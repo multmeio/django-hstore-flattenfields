@@ -9,7 +9,7 @@ Copyright (c) 2011 Multmeio [design+tecnologia]. All rights reserved.
 
 from django import forms
 from django.forms.models import fields_for_model
-
+from models import HStoreModel
 
 class HStoreModelFormMeta(forms.ModelForm.__metaclass__):
     def __new__(cls, name, bases, attrs):

@@ -12,23 +12,25 @@ from utils import single_list_to_tuple
 
 import copy
 
+FIELD_TYPES = [f for f in dir(models) if f.endswith('Field')]
 
 class DynamicField(models.Model):
-    refer = models.CharField(max_length=120, blank=False)
-    name = models.CharField(max_length=120, blank=False)
-    type = models.CharField(max_length=120, blank=False)
-    max_length = models.IntegerField(null=True, blank=True)
+    refer = models.CharField(max_length=120, blank=False, verbose_name="Class name")
+    name = models.CharField(max_length=120, blank=False, verbose_name="Field name")
+    typo = models.CharField(max_length=120, blank=False, verbose_name="Field type", 
+        choices=single_list_to_tuple(FIELD_TYPES))
+    max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
 
-    null = models.BooleanField(default=False)
-    blank = models.BooleanField(default=False)
-    choices = models.TextField(null=True, blank=True)
+    maybe_null = models.BooleanField(default=False, verbose_name="May be NULL?")
+    maybe_blank = models.BooleanField(default=False, verbose_name="May be BLANK?")
+    choices = models.TextField(null=True, blank=True, verbose_name="Choices")
 
     class Meta:
         db_table = u'dynamic_field'
 
     objects = hstore.HStoreManager()
 
-######################################
+
 class HStoreModelMeta(models.Model.__metaclass__):
     def __new__(cls, name, bases, attrs):
         super_new = super(HStoreModelMeta, cls).__new__
@@ -90,8 +92,8 @@ class HStoreModelMeta(models.Model.__metaclass__):
                         field = field_klass(name=metafield.name,
                                             max_length=metafield.max_length,
                                             choices=single_list_to_tuple(metafield.choices.split('\n')),
-                                            blank=metafield.blank,
-                                            null=metafield.null)
+                                            blank=metafield.maybe_blank,
+                                            null=metafield.maybe_null)
                         field.attname = metafield.name
                         fields.append(field)
                     except:
@@ -118,7 +120,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
 class HStoreModel(models.Model):
     __metaclass__ = HStoreModelMeta
     objects = hstore.HStoreManager()
-    _dfields = hstore.DictionaryField(db_index=True)
+    _dfields = hstore.DictionaryField(db_index=True, null=True, blank=True)
     class Meta:
         abstract = True
 
