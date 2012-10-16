@@ -25,9 +25,9 @@ class DynamicFields(models.Model):
     objects = hstore.HStoreManager()
 
 ######################################
-class MyModelMeta(models.Model.__metaclass__):
+class HStoreModelMeta(models.Model.__metaclass__):
     def __new__(cls, name, bases, attrs):
-        super_new = super(MyModelMeta, cls).__new__
+        super_new = super(HStoreModelMeta, cls).__new__
 
         # create it
         new_class = super_new(cls, name, bases, attrs)
@@ -110,20 +110,20 @@ class MyModelMeta(models.Model.__metaclass__):
         # return it
         return new_class
 
-class MyModel(models.Model):
-    __metaclass__ = MyModelMeta
+class HStoreModel(models.Model):
+    __metaclass__ = HStoreModelMeta
     objects = hstore.HStoreManager()
     _dfields = hstore.DictionaryField(db_index=True)
     class Meta:
         abstract = True
 
     def __init__(self, *args, **kwargs):
-        super(MyModel, self).__init__(*args, **kwargs)
+        super(HStoreModel, self).__init__(*args, **kwargs)
 
 
-class MyModelFormMeta(forms.ModelForm.__metaclass__):
+class HStoreModelFormMeta(forms.ModelForm.__metaclass__):
     def __new__(cls, name, bases, attrs):
-        super_new = super(MyModelFormMeta, cls).__new__
+        super_new = super(HStoreModelFormMeta, cls).__new__
 
         # create it
         new_class = super_new(cls, name, bases, attrs)
@@ -135,13 +135,13 @@ class MyModelFormMeta(forms.ModelForm.__metaclass__):
         return new_class
 
 
-class MyModelForm(forms.ModelForm):
-    __metaclass__ = MyModelFormMeta
+class HStoreModelForm(forms.ModelForm):
+    __metaclass__ = HStoreModelFormMeta
     def __init__(self, *args, **kwargs):
-        super(MyModelForm, self).__init__(*args, **kwargs)
+        super(HStoreModelForm, self).__init__(*args, **kwargs)
         # Always override for fields (dynamic fields maybe deleted/included) 
         opts = self._meta
-        if opts.model and issubclass(opts.model, MyModel):
+        if opts.model and issubclass(opts.model, HStoreModel):
             # If a model is defined, extract dynamic form fields from it.
             if not opts.exclude:
                 opts.exclude = []
@@ -150,16 +150,5 @@ class MyModelForm(forms.ModelForm):
             self.fields = fields_for_model(opts.model, opts.fields,
                                               opts.exclude, opts.widgets)
 
-
-#######################################################
-
-class Something(MyModel):
-    name = models.CharField(max_length=32)
-    def __unicode__(self):
-        return self.name
-
-class SomethingForm(MyModelForm):
-    class Meta:
-        model = Something
 
 
