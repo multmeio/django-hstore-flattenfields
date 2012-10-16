@@ -84,10 +84,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
             def dynamic_fields(self):
                 fields = []
                 for metafield in DynamicField.objects.filter(refer=new_class.__name__):
-                    type_ = metafield.type
                     try:
                         #FIXME: eval is the evil, use module package
-                        field_klass_name = 'models.%s' % type_
+                        field_klass_name = 'models.%s' % metafield.typo
                         field_klass = eval(field_klass_name)
                         field = field_klass(name=metafield.name,
                                             max_length=metafield.max_length,
