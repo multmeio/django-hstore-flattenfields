@@ -12,7 +12,7 @@ from django.utils.datastructures import SortedDict
 import copy
 from django.forms.models import fields_for_model
 
-class DynamicFields(models.Model):
+class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False)
     name = models.CharField(max_length=120, blank=False)
     type = models.CharField(max_length=120, blank=False)
@@ -21,6 +21,9 @@ class DynamicFields(models.Model):
     null = models.BooleanField(default=False)
     blank = models.BooleanField(default=False)
     choices = hstore.DictionaryField(null=True)
+
+    class Meta:
+        db_table = u'dynamic_field'
 
     objects = hstore.HStoreManager()
 
@@ -53,7 +56,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
             if hasattr(self, '_dfields') and not key in dir(new_class):
                 # XXX: search for key on table, django will call this method on many times on 
                 #      __init__
-                if DynamicFields.objects.filter(refer=new_class.__name__, name=key):
+                if DynamicField.objects.filter(refer=new_class.__name__, name=key):
                     self._dfields[key] = str(value)
                     return
 
@@ -77,7 +80,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
             @property
             def dynamic_fields(self):
                 fields = []
-                for metafield in DynamicFields.objects.filter(refer=new_class.__name__):
+                for metafield in DynamicField.objects.filter(refer=new_class.__name__):
                     type_ = metafield.type
                     try:
                         #FIXME: eval is the evil, use module package
