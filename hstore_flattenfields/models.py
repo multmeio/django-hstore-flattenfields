@@ -20,7 +20,7 @@ class DynamicField(models.Model):
 
     null = models.BooleanField(default=False)
     blank = models.BooleanField(default=False)
-    choices = hstore.DictionaryField(null=True)
+    choices = models.TextField(null=True, blank=True)
 
     class Meta:
         db_table = u'dynamic_field'
@@ -87,7 +87,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
                         field_klass = eval('models.%s' % type_)
                         field = field_klass(name=metafield.name,
                                             max_length=metafield.max_length,
-                                            choices=metafield.choices.get('choices'),
+                                            choices=single_list_to_tuple(metafield.choices.split('\n')),
                                             blank=metafield.blank,
                                             null=metafield.null)
                         field.attname = metafield.name
