@@ -1,3 +1,4 @@
 *.pyc
 .project
 .pydevproject
+django_hstore_flattenfields.egg*
