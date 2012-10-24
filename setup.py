@@ -15,8 +15,8 @@ setup(
     description='Django with dynamic fields in hstore',
     author=u'Iuri Diniz',
     author_email='iuridiniz@gmail.com',
-    maintainer=u'Iuri Diniz',
-    maintainer_email='iuridiniz@gmail.com',
+    maintainer=u'Luís Araújo',
+    maintainer_email='caitifbrito@gmail.com',
     url='https://github.com/multmeio/django-hstore-flattenfields',
     packages=find_packages(
         exclude=['example', 'example.*']),
