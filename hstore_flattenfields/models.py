@@ -129,15 +129,27 @@ class HStoreModel(models.Model):
     __metaclass__ = HStoreModelMeta
     objects = hstore.HStoreManager()
     _dfields = hstore.DictionaryField(db_index=True, null=True, blank=True)
-    
+
     class Meta:
         abstract = True
 
     def __init__(self, *args, **kwargs):
+        _dfields = None
+        if args:
+            # XXX: hack in order to save _dfields without alter django
+            # save _dfields in args and restore
+
+            # what the index of _dfields?
+            i = 0
+            index = None
+            for f in self._meta.local_fields:
+                if f.name == "_dfields":
+                    index = i
+                    break
+                i = i + 1
+            if index is not None and index < len(args):
+                _dfields = args[index]
+
         super(HStoreModel, self).__init__(*args, **kwargs)
-
-
-
-
-
-
+        if _dfields:
+            self._dfields = _dfields
