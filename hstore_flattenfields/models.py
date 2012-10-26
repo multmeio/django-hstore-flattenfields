@@ -17,7 +17,7 @@ FIELD_TYPES = [f for f in dir(models) if f.endswith('Field')]
 class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, verbose_name="Class name")
     name = models.CharField(max_length=120, blank=False, verbose_name="Field name")
-    typo = models.CharField(max_length=120, blank=False, verbose_name="Field type", 
+    typo = models.CharField(max_length=120, blank=False, verbose_name="Field type",
         choices=single_list_to_tuple(FIELD_TYPES))
     max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
 
