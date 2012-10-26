@@ -111,6 +111,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
                                        'is not a django type') % (metafield, field_klass_name))
                 return fields
 
+            def __eq__(self, other):
+                return _old_meta == other
+
             @property
             def fields(self):
                 #add dynamic_fields from table
