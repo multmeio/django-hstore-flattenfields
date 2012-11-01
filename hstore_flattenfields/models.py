@@ -26,6 +26,7 @@ FIELD_TYPES_DICT = dict(Input='CharField',
 class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, verbose_name="Class name")
     name = models.CharField(max_length=120, blank=False, verbose_name="Field name")
+    verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
     typo = models.CharField(max_length=120, blank=False, verbose_name="Field type",
         choices=single_list_to_tuple(FIELD_TYPES))
     max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
