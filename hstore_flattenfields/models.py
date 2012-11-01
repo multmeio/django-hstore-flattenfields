@@ -12,7 +12,16 @@ from utils import single_list_to_tuple
 
 import copy
 
-FIELD_TYPES = [f for f in dir(models) if f.endswith('Field')]
+FIELD_TYPES = ['Input', 'Memo', 'SelectBox', 'MultSelect', 'Date', 'DateTime', 'CheckBox', 'RadioButton']
+
+FIELD_TYPES_DICT = dict(Input='CharField',
+    Memo='TextField',
+    SelectBox='CharField',
+    MultSelect='CharField',
+    Date='CharField',
+    DateTime='CharField',
+    CheckBox='CharField',
+    RadioButton='CharField')
 
 class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, verbose_name="Class name")
@@ -91,7 +100,10 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 for metafield in metafields:
                     try:
                         #FIXME: eval is the evil, use module package
-                        field_klass_name = 'models.%s' % metafield.typo
+                        try:
+                            field_klass_name = 'models.%s' % FIELD_TYPES_DICT[metafield.typo]
+                        except KeyError:
+                            field_klass_name = 'models.CharField'
                         field_klass = eval(field_klass_name)
                         if metafield.choices == '':
                             choices_ = None
