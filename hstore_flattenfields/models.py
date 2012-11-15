@@ -12,12 +12,16 @@ from utils import single_list_to_tuple
 
 import copy
 
-FIELD_TYPES = ['Input', 'Memo', 'SelectBox', 'MultSelect', 'Date', 'DateTime', 'CheckBox', 'RadioButton']
+FIELD_TYPES = ['Input', 'Monetary', 'Float', 'Integer', 'TextArea', 
+    'SelectBox', 'MultSelect', 'Date', 'DateTime', 'CheckBox', 'RadioButton']
 
 FIELD_TYPES_DICT = dict(Input='CharField',
-    Memo='TextField',
+    Monetary='DecimalField',
+    Float='FloatField',
+    Integer='IntegerField', 
+    TextArea='TextField', 
     SelectBox='CharField',
-    MultSelect='CharField',
+    MultSelect='TextField',
     Date='CharField',
     DateTime='CharField',
     CheckBox='CharField',
@@ -27,13 +31,11 @@ class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, verbose_name="Class name")
     name = models.CharField(max_length=120, blank=False, verbose_name="Field name")
     verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
-    typo = models.CharField(max_length=120, blank=False, verbose_name="Field type",
+    typo = models.CharField(max_length=20, blank=False, verbose_name="Field type",
         choices=single_list_to_tuple(FIELD_TYPES))
     max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
-
-    maybe_null = models.BooleanField(default=False, verbose_name="May be NULL?")
-    maybe_blank = models.BooleanField(default=False, verbose_name="May be BLANK?")
     choices = models.TextField(null=True, blank=True, verbose_name="Choices")
+    default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name="Default value")
 
     class Meta:
         db_table = u'dynamic_field'
@@ -114,8 +116,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
                         field = field_klass(name=metafield.name,
                                             max_length=metafield.max_length,
                                             choices=choices_,
-                                            blank=metafield.maybe_blank,
-                                            null=metafield.maybe_null)
+                                            default=metafield.default_value,
+                                            blank=True,
+                                            null=True)
                         field.attname = metafield.name
                         fields.append(field)
                     except:
