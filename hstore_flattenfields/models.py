@@ -11,21 +11,67 @@ from django.utils.datastructures import SortedDict
 from utils import single_list_to_tuple
 
 import copy
+from django.utils.text import capfirst
+from django import forms
+import json
 
-FIELD_TYPES = ['Input', 'Monetary', 'Float', 'Integer', 'TextArea', 
+FIELD_TYPES = ['Input', 'Monetary', 'Float', 'Integer', 'TextArea',
     'SelectBox', 'MultSelect', 'Date', 'DateTime', 'CheckBox', 'RadioButton']
 
-FIELD_TYPES_DICT = dict(Input='CharField',
-    Monetary='DecimalField',
-    Float='FloatField',
-    Integer='IntegerField', 
-    TextArea='TextField', 
-    SelectBox='CharField',
-    MultSelect='TextField',
-    Date='CharField',
-    DateTime='CharField',
-    CheckBox='CharField',
-    RadioButton='CharField')
+FIELD_TYPES_DICT = dict(Input='models.CharField',
+    Monetary='models.DecimalField',
+    Float='models.FloatField',
+    Integer='models.IntegerField',
+    TextArea='models.TextField',
+    SelectBox='UncleanedCharField',
+    MultSelect='MultiSelectField',
+    Date='models.CharField',
+    DateTime='models.CharField',
+    CheckBox='MultiSelectField',
+    RadioButton='UncleanedCharField')
+
+class UncleanedCharField(models.CharField):
+    def clean(self, value, *args):
+        # ignore clean
+        return value
+
+class MultiSelectField(UncleanedCharField):
+    # XXX: Override formfield
+    # most code was copied from django 1.4.1: db.models.CharField.formfield)
+    # only changed TypedChoiceField to MultipleChoiceField
+    def formfield(self, form_class=forms.CharField, **kwargs):
+        """
+        Returns a django.forms.Field instance for this database Field.
+        """
+        defaults = {'required': not self.blank,
+                    'label': capfirst(self.verbose_name),
+                    'help_text': self.help_text}
+        if self.has_default():
+            if callable(self.default):
+                defaults['initial'] = self.default
+                defaults['show_hidden_initial'] = True
+            else:
+                defaults['initial'] = self.get_default()
+        if self.choices:
+            # Fields with choices get special treatment.
+            include_blank = (self.blank or
+                             not (self.has_default() or 'initial' in kwargs))
+            defaults['choices'] = self.get_choices(include_blank=include_blank)
+            defaults['coerce'] = self.to_python
+            if self.null:
+                defaults['empty_value'] = None
+            form_class = forms.TypedMultipleChoiceField
+            # Many of the subclass-specific formfield arguments (min_value,
+            # max_value) don't apply for choice fields, so be sure to only pass
+            # the values that TypedChoiceField will understand.
+            for k in kwargs.keys():
+                if k not in ('coerce', 'empty_value', 'choices', 'required',
+                             'widget', 'label', 'initial', 'help_text',
+                             'error_messages', 'show_hidden_initial'):
+                    del kwargs[k]
+        defaults.update(kwargs)
+        return form_class(**defaults)
+
 
 class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, verbose_name="Class name")
@@ -70,6 +116,10 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 # XXX: search for key on table, django will call this method on many times on 
                 #      __init__
                 if DynamicField.objects.filter(refer=new_class.__name__, name=key):
+                    if isinstance(value, (list, tuple)):
+                        value = [str(v) for v in value]
+                    elif value is not None:
+                        value = str(value)
                     self._dfields[key] = str(value)
                     return
 
@@ -102,16 +152,18 @@ class HStoreModelMeta(models.Model.__metaclass__):
 
                 for metafield in metafields:
                     try:
-                        #FIXME: eval is the evil, use module package
+                        # TODO: use FIELD_TYPES_DICT.get with default value instead of try/except
                         try:
-                            field_klass_name = 'models.%s' % FIELD_TYPES_DICT[metafield.typo]
+                            field_klass_name = '%s' % FIELD_TYPES_DICT[metafield.typo]
                         except KeyError:
                             field_klass_name = 'models.CharField'
+                        #FIXME: eval is the evil, use module package
                         field_klass = eval(field_klass_name)
                         if metafield.choices == '':
                             choices_ = None
                         else:
-                            choices_ = single_list_to_tuple(metafield.choices.split('\n'))
+                            choices_ = single_list_to_tuple(
+                                     [s.strip() for s in metafield.choices.splitlines()])
 
                         field = field_klass(name=metafield.name,
                                             max_length=metafield.max_length,
