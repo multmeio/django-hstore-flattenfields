@@ -166,7 +166,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
                                      [s.strip() for s in metafield.choices.splitlines()])
 
                         field = field_klass(name=metafield.name,
-                                            max_length=metafield.max_length,
+                                            max_length=metafield.max_length or 255,
                                             choices=choices_,
                                             default=metafield.default_value,
                                             blank=True,
