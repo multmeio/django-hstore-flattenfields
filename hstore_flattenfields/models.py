@@ -29,6 +29,9 @@ FIELD_TYPES_DICT = dict(Input='models.CharField',
     DateTime='models.CharField',
     CheckBox='MultiSelectField',
     RadioButton='UncleanedCharField')
+    
+FIELD_TYPE_DEFAULT = 'models.CharField'
+
 
 class UncleanedCharField(models.CharField):
     def clean(self, value, *args):
@@ -152,11 +155,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
 
                 for metafield in metafields:
                     try:
-                        # TODO: use FIELD_TYPES_DICT.get with default value instead of try/except
-                        try:
-                            field_klass_name = '%s' % FIELD_TYPES_DICT[metafield.typo]
-                        except KeyError:
-                            field_klass_name = 'models.CharField'
+                        field_klass_name = FIELD_TYPES_DICT.get(metafield.typo, 
+                                                                FIELD_TYPE_DEFAULT)
+                        
                         #FIXME: eval is the evil, use module package
                         field_klass = eval(field_klass_name)
                         if metafield.choices == '':
