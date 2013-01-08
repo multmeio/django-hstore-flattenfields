@@ -169,6 +169,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
                                             max_length=metafield.max_length or 255,
                                             choices=choices_,
                                             default=metafield.default_value,
+                                            verbose_name=metafield.verbose_name,
                                             blank=True,
                                             null=True)
                         field.attname = metafield.name
