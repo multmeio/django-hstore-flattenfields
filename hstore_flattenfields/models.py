@@ -37,6 +37,20 @@ class UncleanedCharField(models.CharField):
     def clean(self, value, *args):
         # ignore clean
         return value
+        
+    def get_choices(self, include_blank=False):
+        """
+        Overriding the method to remove the 
+        BLANK_OPTION in Checkbox, Radio and Select.
+        
+        * Only if the dfield is blank
+        """
+        choices = []
+        if self.blank:
+            choices = super(UncleanedCharField, self).get_choices()
+        
+        return choices or self._choices
+
 
 class MultiSelectField(UncleanedCharField):
     # XXX: Override formfield
@@ -83,6 +97,7 @@ class DynamicField(models.Model):
     typo = models.CharField(max_length=20, blank=False, verbose_name="Field type",
         choices=single_list_to_tuple(FIELD_TYPES))
     max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
+    blank = models.BooleanField(default=True, verbose_name="Blank")
     choices = models.TextField(null=True, blank=True, verbose_name="Choices")
     default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name="Default value")
 
