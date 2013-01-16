@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name='django_hstore_flattenfields',
-    version='0.4',
+    version='0.5',
     description='Support to MultiSelect fields',
     author=u'Iuri Diniz',
     author_email='iuridiniz@gmail.com',
