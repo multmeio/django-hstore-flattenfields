@@ -12,7 +12,7 @@ def read(fname):
 setup(
     name='django_hstore_flattenfields',
     version='0.5',
-    description='Support to MultiSelect fields',
+    description='Django with dynamic fields in hstore',
     author=u'Iuri Diniz',
     author_email='iuridiniz@gmail.com',
     maintainer=u'Luís Araújo',
@@ -31,6 +31,6 @@ setup(
         'Framework :: Django',
     ],
     zip_safe=False,
-    install_requires=['Django', 
+    install_requires=['Django',
     	'django-orm-extensions']
 )
