@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 '''
 Created on 13/10/2012
 
@@ -135,10 +138,10 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 #      __init__
                 if DynamicField.objects.filter(refer=new_class.__name__, name=key):
                     if isinstance(value, (list, tuple)):
-                        value = [str(v) for v in value]
+                        value = [unicode(v) for v in value]
                     elif value is not None:
-                        value = str(value)
-                    self._dfields[key] = str(value)
+                        value = unicode(value)
+                    self._dfields[key] = unicode(value)
                     return
 
             old_setattr(self, key, value)
