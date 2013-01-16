@@ -181,15 +181,16 @@ class HStoreModelMeta(models.Model.__metaclass__):
                         if metafield.choices == '':
                             choices_ = None
                         else:
-                            choices_ = single_list_to_tuple(
-                                     [s.strip() for s in metafield.choices.splitlines()])
+                            choices_ = single_list_to_tuple([\
+                                s.strip() for s in metafield.choices.splitlines()
+                            ])
 
                         field = field_klass(name=metafield.name,
                                             max_length=metafield.max_length or 255,
                                             choices=choices_,
                                             default=metafield.default_value,
                                             verbose_name=metafield.verbose_name,
-                                            blank=True,
+                                            blank=metafield.blank,
                                             null=True)
                         field.attname = metafield.name
                         fields.append(field)
