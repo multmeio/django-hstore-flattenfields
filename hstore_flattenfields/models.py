@@ -108,6 +108,22 @@ class DynamicField(CachingMixin, models.Model):
         db_table = u'dynamic_field'
 
 
+# XXX: Charge memory with all dfields for prevent flood on db.
+# NOTE: this solution need to restart project on each new dfield add. Nasty!!
+dfields =  DynamicField.objects.all()
+def find_dfields(refer, name=None):
+    if name:
+        return [dfield for dfield in dfields \
+            if dfield.refer == refer and dfield.name == name]
+    return [dfield for dfield in dfields if dfield.refer == refer]
+
+# NOTE: Error happen on syncdb, because DynamicField's table does not exist.
+cursor = connection.cursor()
+cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
+DYNAMIC_FIELD_TABLE_EXIST = (cursor.fetchone()[0] > 0)
+
+
+
 class HStoreModelMeta(models.Model.__metaclass__):
     def __new__(cls, name, bases, attrs):
         super_new = super(HStoreModelMeta, cls).__new__
@@ -136,7 +152,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
             if hasattr(self, '_dfields') and not key in dir(new_class):
                 # XXX: search for key on table, django will call this method on many times on 
                 #      __init__
-                if DynamicField.objects.filter(refer=new_class.__name__, name=key):
+                if find_dfields(refer=new_class.__name__, name=key):
                     if isinstance(value, (list, tuple)):
                         value = [unicode(v) for v in value]
                     elif value is not None:
@@ -164,12 +180,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
             @property
             def dynamic_fields(self):
                 fields = []
-                # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
-                cursor = connection.cursor()
-                cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
-                if cursor.fetchone()[0] == 0:
+                if not DYNAMIC_FIELD_TABLE_EXIST:
                     return fields
-                metafields = DynamicField.objects.filter(refer=new_class.__name__)
+                metafields = find_dfields(refer=new_class.__name__)
 
                 for metafield in metafields:
                     try:
