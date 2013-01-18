@@ -92,7 +92,7 @@ class MultiSelectField(UncleanedCharField):
         defaults.update(kwargs)
         return form_class(**defaults)
 
-class DynamicField(CachingMixin, models.Model):
+class DynamicField(models.Model):
 # class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
     name = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Field name")
