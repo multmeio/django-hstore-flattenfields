@@ -21,6 +21,8 @@ import json
 FIELD_TYPES = ['Input', 'Monetary', 'Float', 'Integer', 'TextArea',
     'SelectBox', 'MultSelect', 'Date', 'DateTime', 'CheckBox', 'RadioButton']
 
+FIELD_TYPES_WITHOUT_BLANK_OPTION = ['MultSelect', 'CheckBox', 'RadioButton']
+
 FIELD_TYPES_DICT = dict(Input='models.CharField',
     Monetary='models.DecimalField',
     Float='models.FloatField',
@@ -32,7 +34,7 @@ FIELD_TYPES_DICT = dict(Input='models.CharField',
     DateTime='models.CharField',
     CheckBox='MultiSelectField',
     RadioButton='UncleanedCharField')
-    
+
 FIELD_TYPE_DEFAULT = 'models.CharField'
 
 
@@ -40,18 +42,21 @@ class UncleanedCharField(models.CharField):
     def clean(self, value, *args):
         # ignore clean
         return value
-        
+
     def get_choices(self, include_blank=False):
         """
-        Overriding the method to remove the 
+        Overriding the method to remove the
         BLANK_OPTION in Checkbox, Radio and Select.
-        
+
         * Only if the dfield is blank
         """
+
         choices = []
-        if self.blank:
+        dynamic_field = DynamicField.objects.get(name=self.name)
+
+        if dynamic_field.has_blank_option:
             choices = super(UncleanedCharField, self).get_choices()
-        
+
         return choices or self._choices
 
 
@@ -92,7 +97,7 @@ class MultiSelectField(UncleanedCharField):
         defaults.update(kwargs)
         return form_class(**defaults)
 
-class DynamicField(caching.base.CachingMixin, models.Model):
+class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
     name = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Field name")
     verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
@@ -107,6 +112,12 @@ class DynamicField(caching.base.CachingMixin, models.Model):
 
     class Meta:
         db_table = u'dynamic_field'
+
+    @property
+    def has_blank_option(self):
+        return self.blank and \
+               self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION
+
 
 
 # XXX: Charge memory with all dfields for prevent flood on db.
@@ -151,7 +162,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
             #print "called __setattr__(%r, %r)" % (key, value)
 
             if hasattr(self, '_dfields') and not key in dir(new_class):
-                # XXX: search for key on table, django will call this method on many times on 
+                # XXX: search for key on table, django will call this method on many times on
                 #      __init__
                 if find_dfields(refer=new_class.__name__, name=key):
                     if isinstance(value, (list, tuple)):
@@ -187,9 +198,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
 
                 for metafield in metafields:
                     try:
-                        field_klass_name = FIELD_TYPES_DICT.get(metafield.typo, 
+                        field_klass_name = FIELD_TYPES_DICT.get(metafield.typo,
                                                                 FIELD_TYPE_DEFAULT)
-                        
+
                         #FIXME: eval is the evil, use module package
                         field_klass = eval(field_klass_name)
                         if metafield.choices == '':
