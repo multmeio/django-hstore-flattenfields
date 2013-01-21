@@ -12,7 +12,7 @@ from django.db import models, connection
 from django_orm.postgresql import hstore
 from django.utils.datastructures import SortedDict
 from utils import single_list_to_tuple
-
+import caching.base
 import copy
 from django.utils.text import capfirst
 from django import forms
@@ -92,7 +92,7 @@ class MultiSelectField(UncleanedCharField):
         defaults.update(kwargs)
         return form_class(**defaults)
 
-class DynamicField(models.Model):
+class DynamicField(caching.base.CachingMixin, models.Model):
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
     name = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Field name")
     verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
@@ -103,18 +103,20 @@ class DynamicField(models.Model):
     choices = models.TextField(null=True, blank=True, verbose_name="Choices")
     default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name="Default value")
 
+    cache = caching.base.CachingManager()
+
     class Meta:
         db_table = u'dynamic_field'
 
 
 # XXX: Charge memory with all dfields for prevent flood on db.
 # NOTE: this solution need to restart project on each new dfield add. Nasty!!
-dfields =  DynamicField.objects.all()
-def find_dfields(refer, name=None):
-    if name:
-        return [dfield for dfield in dfields \
-            if dfield.refer == refer and dfield.name == name]
-    return [dfield for dfield in dfields if dfield.refer == refer]
+# dfields =  DynamicField.objects.all()
+# def find_dfields(refer, name=None):
+#     if name:
+#         return [dfield for dfield in dfields \
+#             if dfield.refer == refer and dfield.name == name]
+#     return [dfield for dfield in dfields if dfield.refer == refer]
 
 # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
 cursor = connection.cursor()
