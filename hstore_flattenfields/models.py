@@ -8,96 +8,18 @@ Created on 13/10/2012
 '''
 
 from django.db import models, connection
-
 from django_orm.postgresql import hstore
 from django.utils.datastructures import SortedDict
-from utils import single_list_to_tuple
+from django import forms
+
+import json
 import caching.base
 import copy
-from django.utils.text import capfirst
-from django import forms
-import json
 
-FIELD_TYPES = ['Input', 'Monetary', 'Float', 'Integer', 'TextArea',
-    'SelectBox', 'MultSelect', 'Date', 'DateTime', 'CheckBox', 'RadioButton']
+from fields import *
+from utils import single_list_to_tuple
 
-FIELD_TYPES_WITHOUT_BLANK_OPTION = ['MultSelect', 'CheckBox', 'RadioButton']
-
-FIELD_TYPES_DICT = dict(Input='models.CharField',
-    Monetary='models.DecimalField',
-    Float='models.FloatField',
-    Integer='models.IntegerField',
-    TextArea='models.TextField',
-    SelectBox='UncleanedCharField',
-    MultSelect='MultiSelectField',
-    Date='models.CharField',
-    DateTime='models.CharField',
-    CheckBox='MultiSelectField',
-    RadioButton='UncleanedCharField')
-
-FIELD_TYPE_DEFAULT = 'models.CharField'
-
-
-class UncleanedCharField(models.CharField):
-    def clean(self, value, *args):
-        # ignore clean
-        return value
-
-    def get_choices(self, include_blank=False):
-        """
-        Overriding the method to remove the
-        BLANK_OPTION in Checkbox, Radio and Select.
-
-        * Only if the dfield is blank
-        """
-
-        choices = []
-        dynamic_field = DynamicField.objects.get(name=self.name)
-
-        if dynamic_field.has_blank_option:
-            choices = super(UncleanedCharField, self).get_choices()
-
-        return choices or self._choices
-
-
-class MultiSelectField(UncleanedCharField):
-    # XXX: Override formfield
-    # most code was copied from django 1.4.1: db.models.CharField.formfield)
-    # only changed TypedChoiceField to MultipleChoiceField
-    def formfield(self, form_class=forms.CharField, **kwargs):
-        """
-        Returns a django.forms.Field instance for this database Field.
-        """
-        defaults = {'required': not self.blank,
-                    'label': capfirst(self.verbose_name),
-                    'help_text': self.help_text}
-        if self.has_default():
-            if callable(self.default):
-                defaults['initial'] = self.default
-                defaults['show_hidden_initial'] = True
-            else:
-                defaults['initial'] = self.get_default()
-        if self.choices:
-            # Fields with choices get special treatment.
-            include_blank = (self.blank or
-                             not (self.has_default() or 'initial' in kwargs))
-            defaults['choices'] = self.get_choices(include_blank=include_blank)
-            defaults['coerce'] = self.to_python
-            if self.null:
-                defaults['empty_value'] = None
-            form_class = forms.TypedMultipleChoiceField
-            # Many of the subclass-specific formfield arguments (min_value,
-            # max_value) don't apply for choice fields, so be sure to only pass
-            # the values that TypedChoiceField will understand.
-            for k in kwargs.keys():
-                if k not in ('coerce', 'empty_value', 'choices', 'required',
-                             'widget', 'label', 'initial', 'help_text',
-                             'error_messages', 'show_hidden_initial'):
-                    del kwargs[k]
-        defaults.update(kwargs)
-        return form_class(**defaults)
-
-class DynamicField(models.Model):
+class DynamicField(caching.base.models.Model):
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
     name = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Field name")
     verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
@@ -113,27 +35,33 @@ class DynamicField(models.Model):
     class Meta:
         db_table = u'dynamic_field'
 
+    def __unicode__(self):
+        return u"%s at %s" (self.name, self.refer)
+
     @property
     def has_blank_option(self):
         return self.blank and \
-               self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION
+            self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION
 
+    def save(self, *args, **kwargs):
+        super(DynamicField, self).save(*args, **kwargs)
+        # FIXME: works?!
+        caching.invalidation.cache.clear()
 
 
 # XXX: Charge memory with all dfields for prevent flood on db.
 # NOTE: this solution need to restart project on each new dfield add. Nasty!!
-dfields =  DynamicField.cache.all()
-def find_dfields(refer, name=None):
-    if name:
-        return [dfield for dfield in dfields \
-            if dfield.refer == refer and dfield.name == name]
-    return [dfield for dfield in dfields if dfield.refer == refer]
+# dfields =  DynamicField.cache.all()
+# def find_dfields(refer, name=None):
+#     if name:
+#         return [dfield for dfield in dfields \
+#             if dfield.refer == refer and dfield.name == name]
+#     return [dfield for dfield in dfields if dfield.refer == refer]
 
 # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
 cursor = connection.cursor()
 cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
 DYNAMIC_FIELD_TABLE_EXIST = (cursor.fetchone()[0] > 0)
-
 
 
 class HStoreModelMeta(models.Model.__metaclass__):
@@ -164,7 +92,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
             if hasattr(self, '_dfields') and not key in dir(new_class):
                 # XXX: search for key on table, django will call this method on many times on
                 #      __init__
-                if find_dfields(refer=new_class.__name__, name=key):
+                new_class_refer = new_class.__name__
+                if DynamicField.cache.filter(refer=new_class_refer,
+                                             name=key).exists():
                     if isinstance(value, (list, tuple)):
                         value = [unicode(v) for v in value]
                     elif value is not None:
@@ -194,7 +124,8 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 fields = []
                 if not DYNAMIC_FIELD_TABLE_EXIST:
                     return fields
-                metafields = find_dfields(refer=new_class.__name__)
+
+                metafields = DynamicField.cache.filter(refer=new_class.__name__)
 
                 for metafield in metafields:
                     try:
