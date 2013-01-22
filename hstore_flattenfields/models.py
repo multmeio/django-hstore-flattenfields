@@ -80,9 +80,6 @@ class HStoreModelMeta(models.Model.__metaclass__):
         # override getattr/setattr/delattr
         old_getattribute = new_class.__getattribute__
         def __getattribute__(self, key):
-            if key.startswith('_') and key.endswith('_cache'):
-                return None
-
             try:
                 return old_getattribute(self, key)
             except AttributeError:
