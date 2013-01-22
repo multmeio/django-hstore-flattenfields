@@ -13,13 +13,17 @@ from django.utils.datastructures import SortedDict
 from django import forms
 
 import json
-import caching.base
+
+# import caching.base
 import copy
 
 from fields import *
 from utils import single_list_to_tuple
 
-class DynamicField(caching.base.models.Model):
+
+dfields = None
+
+class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
     name = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Field name")
     verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
@@ -29,8 +33,6 @@ class DynamicField(caching.base.models.Model):
     blank = models.BooleanField(default=True, verbose_name="Blank")
     choices = models.TextField(null=True, blank=True, verbose_name="Choices")
     default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name="Default value")
-
-    cache = caching.base.CachingManager()
 
     class Meta:
         db_table = u'dynamic_field'
@@ -45,18 +47,20 @@ class DynamicField(caching.base.models.Model):
 
     def save(self, *args, **kwargs):
         super(DynamicField, self).save(*args, **kwargs)
-        # FIXME: works?!
-        caching.invalidation.cache.clear()
+        # NOTE: force update global dfields resultset
+        global dfields
+        dfields =  DynamicField.objects.all()
 
 
 # XXX: Charge memory with all dfields for prevent flood on db.
 # NOTE: this solution need to restart project on each new dfield add. Nasty!!
-# dfields =  DynamicField.cache.all()
-# def find_dfields(refer, name=None):
-#     if name:
-#         return [dfield for dfield in dfields \
-#             if dfield.refer == refer and dfield.name == name]
-#     return [dfield for dfield in dfields if dfield.refer == refer]
+dfields =  DynamicField.objects.all()
+
+def find_dfields(refer, name=None):
+    if name:
+        return [dfield for dfield in dfields \
+            if dfield.refer == refer and dfield.name == name]
+    return [dfield for dfield in dfields if dfield.refer == refer]
 
 # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
 cursor = connection.cursor()
@@ -90,11 +94,10 @@ class HStoreModelMeta(models.Model.__metaclass__):
             #print "called __setattr__(%r, %r)" % (key, value)
 
             if hasattr(self, '_dfields') and not key in dir(new_class):
-                # XXX: search for key on table, django will call this method on many times on
-                #      __init__
+                # XXX: search for key on table, django will call this method many times on __init__
                 new_class_refer = new_class.__name__
-                if DynamicField.cache.filter(refer=new_class_refer,
-                                             name=key).exists():
+                # if DynamicField.objects.filter(refer=new_class_refer, name=key).exists():
+                if find_dfields(refer=new_class_refer, name=key):
                     if isinstance(value, (list, tuple)):
                         value = [unicode(v) for v in value]
                     elif value is not None:
@@ -125,8 +128,8 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 if not DYNAMIC_FIELD_TABLE_EXIST:
                     return fields
 
-                metafields = DynamicField.cache.filter(refer=new_class.__name__)
-
+                # metafields = DynamicField.objects.filter(refer=new_class.__name__)
+                metafields = find_dfields(refer=new_class.__name__)
                 for metafield in metafields:
                     try:
                         field_klass_name = FIELD_TYPES_DICT.get(metafield.typo,

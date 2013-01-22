@@ -55,7 +55,9 @@ class UncleanedCharField(models.CharField):
         choices = []
 
         # FIXME: this maybe mistake with fields with same name in different refers
-        dynamic_field = hs_models.DynamicField.cache.get(name=self.name)
+        # dynamic_field = hs_models.DynamicField.objects.get(name=self.name)
+        dynamic_field = hs_models.find_dfields(refer='Contact', name=self.name)[0]
+
 
         if dynamic_field.has_blank_option:
             choices = super(UncleanedCharField, self).get_choices()
