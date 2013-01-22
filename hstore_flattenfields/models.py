@@ -38,7 +38,7 @@ class DynamicField(models.Model):
         db_table = u'dynamic_field'
 
     def __unicode__(self):
-        return u"%s at %s" (self.name, self.refer)
+        return self.verbose_name or self.name
 
     @property
     def has_blank_option(self):
@@ -80,6 +80,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
         # override getattr/setattr/delattr
         old_getattribute = new_class.__getattribute__
         def __getattribute__(self, key):
+            if key.startswith('_') and key.endswith('_cache'):
+                return None
+
             try:
                 return old_getattribute(self, key)
             except AttributeError:
