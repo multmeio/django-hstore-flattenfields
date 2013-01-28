@@ -10,9 +10,11 @@ Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
 from django import forms
 from django.db import models
 from django.utils.text import capfirst
+from decimal import Decimal, InvalidOperation
 
 import models as hs_models
 import widgets as hs_widgets
+from utils import *
 
 FIELD_TYPES = ['Input', 'Monetary', 'Float', 'Integer', 'TextArea',
     'SelectBox', 'MultSelect', 'Date', 'DateTime', 'CheckBox', 'RadioButton']
@@ -20,7 +22,7 @@ FIELD_TYPES = ['Input', 'Monetary', 'Float', 'Integer', 'TextArea',
 FIELD_TYPES_WITHOUT_BLANK_OPTION = ['MultSelect', 'CheckBox', 'RadioButton']
 
 FIELD_TYPES_DICT = dict(Input='models.CharField',
-    Monetary='models.DecimalField',
+    Monetary='HstoreDecimalField',
     Float='models.FloatField',
     Integer='models.IntegerField',
     TextArea='models.TextField',
@@ -32,6 +34,26 @@ FIELD_TYPES_DICT = dict(Input='models.CharField',
     RadioButton='UncleanedCharField')
 
 FIELD_TYPE_DEFAULT = 'models.CharField'
+
+
+class HstoreDecimalField(models.DecimalField):
+    def __init__(self, *args, **kwargs):
+        super(HstoreDecimalField, self).__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        """
+        Validates that the input is a decimal number. Returns a Decimal
+        instance. Returns None for empty values. Ensures that there are no more
+        than max_digits in the number, and no more than decimal_places digits
+        after the decimal point.
+        """
+
+        try:
+            value = Decimal(value)
+            return value
+        except InvalidOperation:
+            # FIXME: In the case of the form send a u'None' in value
+            super(HstoreDecimalField, self).to_python(str2literal(value))
 
 
 class MultipleSelectField(forms.TypedMultipleChoiceField):
