@@ -12,13 +12,14 @@ from django_orm.postgresql import hstore
 from django.utils.datastructures import SortedDict
 from django import forms
 
+from datetime import datetime
 import json
 
 # import caching.base
 import copy
 
 from fields import *
-from utils import single_list_to_tuple
+from utils import *
 
 
 dfields = None
@@ -204,3 +205,31 @@ class HStoreModel(models.Model):
         super(HStoreModel, self).__init__(*args, **kwargs)
         if _dfields:
             self._dfields = _dfields
+
+    def __getattr__(self, attr_name):
+        """
+        This method was override because we have to manipulate the format
+        of the data should be shown in the templates. By adding a property
+        called 'pretty_FIELDNAME'.
+        """
+        field_name = attr_name.replace('pretty_', '')
+        field = find_dfields(refer=self.__class__.__name__, name=field_name)
+
+        if field:
+            field = field[0]
+            value = getattr(self, field.name)
+
+            if field.typo in PRETTY_FIELDS:
+                if field.typo == "Monetary":
+                    new_value = 'R$ %s' % dec2real(value)
+
+                elif field.typo in ["CheckBox", "MultSelect"]:
+                    new_value = ", ".join(str2literal(value)) + "."
+
+                elif field.typo == "Date":
+                    y, m, d = tuple([int(x) for x in value.split('/')][::-1])
+                    new_value = datetime(y, m, d)
+
+                setattr(self, attr_name, new_value)
+
+        return super(HStoreModel, self).__getattribute__(attr_name)

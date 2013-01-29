@@ -19,6 +19,8 @@ from utils import *
 FIELD_TYPES = ['Input', 'Monetary', 'Float', 'Integer', 'TextArea',
     'SelectBox', 'MultSelect', 'Date', 'DateTime', 'CheckBox', 'RadioButton']
 
+PRETTY_FIELDS = ["Monetary", "CheckBox", "MultSelect", "Date"]
+
 FIELD_TYPES_WITHOUT_BLANK_OPTION = ['MultSelect', 'CheckBox', 'RadioButton']
 
 FIELD_TYPES_DICT = dict(Input='models.CharField',
