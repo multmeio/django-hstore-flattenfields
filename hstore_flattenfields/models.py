@@ -84,9 +84,15 @@ class HStoreModelMeta(models.Model.__metaclass__):
             try:
                 return old_getattribute(self, key)
             except AttributeError:
+                field = find_dfields(refer=self.__class__.__name__, name=key)
+
                 if hasattr(self, '_dfields') and key in self._dfields:
                     return self._dfields[key]
-                raise
+                elif field:
+                    # FIXME: This Dynamic field really exists
+                    return field[0].default_value
+                else:
+                    raise
 
         new_class.__getattribute__ = __getattribute__
 
