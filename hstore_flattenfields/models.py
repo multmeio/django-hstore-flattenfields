@@ -31,6 +31,7 @@ class DynamicField(models.Model):
     typo = models.CharField(max_length=20, blank=False, db_index=True, verbose_name="Field type",
         choices=single_list_to_tuple(FIELD_TYPES))
     max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
+    order = models.IntegerField(null=True, blank=True, default=None, verbose_name="Order")
     blank = models.BooleanField(default=True, verbose_name="Blank")
     choices = models.TextField(null=True, blank=True, verbose_name="Choices")
     default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name="Default value")
