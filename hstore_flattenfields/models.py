@@ -26,7 +26,7 @@ dfields = None
 
 class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
-    name = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Field name")
+    name = models.CharField(max_length=120, blank=False, db_index=True, unique=True, verbose_name="Field name")
     verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
     typo = models.CharField(max_length=20, blank=False, db_index=True, verbose_name="Field type",
         choices=single_list_to_tuple(FIELD_TYPES))
@@ -54,13 +54,14 @@ class DynamicField(models.Model):
 
 
 # XXX: Charge memory with all dfields for prevent flood on db.
-# NOTE: this solution need to restart project on each new dfield add. Nasty!!
 dfields =  DynamicField.objects.all()
 
-def find_dfields(refer, name=None):
-    if name:
+def find_dfields(refer=None, name=None):
+    if name and refer:
         return [dfield for dfield in dfields \
             if dfield.refer == refer and dfield.name == name]
+    if name and not refer:
+        [dfield for dfield in dfields if dfield.name == name]
     return [dfield for dfield in dfields if dfield.refer == refer]
 
 # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
