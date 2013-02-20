@@ -31,6 +31,7 @@ class DynamicField(models.Model):
     typo = models.CharField(max_length=20, blank=False, db_index=True, verbose_name="Field type",
         choices=single_list_to_tuple(FIELD_TYPES))
     max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
+    order = models.IntegerField(null=True, blank=True, default=None, verbose_name="Order")
     blank = models.BooleanField(default=True, verbose_name="Blank")
     choices = models.TextField(null=True, blank=True, verbose_name="Choices")
     default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name="Default value")
@@ -85,9 +86,15 @@ class HStoreModelMeta(models.Model.__metaclass__):
             try:
                 return old_getattribute(self, key)
             except AttributeError:
+                field = find_dfields(refer=self.__class__.__name__, name=key)
+
                 if hasattr(self, '_dfields') and key in self._dfields:
                     return self._dfields[key]
-                raise
+                elif field:
+                    # FIXME: This Dynamic field really exists
+                    return field[0].default_value
+                else:
+                    raise
 
         new_class.__getattribute__ = __getattribute__
 
