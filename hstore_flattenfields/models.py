@@ -10,6 +10,7 @@ Created on 13/10/2012
 from django.db import models, connection
 from django_orm.postgresql import hstore
 from django.utils.datastructures import SortedDict
+from django.db.models.fields import FieldDoesNotExist
 from django import forms
 
 from datetime import datetime
@@ -49,7 +50,7 @@ class DynamicField(models.Model):
 
     def save(self, *args, **kwargs):
         super(DynamicField, self).save(*args, **kwargs)
-        # NOTE: force update global dfields resultset
+        # NOTE: force update global dfields fieldset
         global dfields
         dfields =  DynamicField.objects.all()
 
@@ -82,6 +83,8 @@ class HStoreModelMeta(models.Model.__metaclass__):
         # override getattr/setattr/delattr
         old_getattribute = new_class.__getattribute__
         def __getattribute__(self, key):
+            field = None
+
             try:
                 return old_getattribute(self, key)
             except AttributeError:
@@ -94,6 +97,16 @@ class HStoreModelMeta(models.Model.__metaclass__):
                     return field[0].default_value
                 else:
                     raise
+            except ValueError:
+                if isinstance(field, list) and field:
+                    return field[0].default_value
+            except TypeError:
+                field = find_dfields(refer=self.__class__.__name__, name=key)
+
+                if field and field.__class__.__name__ == 'ManyRelatedManager':
+                    return field.all()
+
+                return field
 
         new_class.__getattribute__ = __getattribute__
 
@@ -130,6 +143,32 @@ class HStoreModelMeta(models.Model.__metaclass__):
         # override _meta.fields (property)
         _old_meta = new_class._meta
         class _meta(object):
+            def init_name_map(self):
+                _cache = _old_meta.init_name_map()
+
+                for dfield in self.dynamic_fields:
+                    _cache.update(**{
+                        dfield.name: (dfield, _old_meta.concrete_model, True, False)
+                    })
+
+                return _cache
+
+            def get_field_by_name(self, name):
+                if name is 'pk': name = 'id'
+
+                try:
+                    try:
+                        return self._name_map[name]
+                    except AttributeError:
+                        cache = self.init_name_map()
+                        return cache[name]
+                except KeyError:
+                    raise FieldDoesNotExist('%s has no field named %r'
+                            % (self.object_name, name))
+
+            def get_all_field_names(self):
+                return [f.name for f in self.fields if not f.name == '_dfields']
+
             @property
             def dynamic_fields(self):
                 fields = []
@@ -160,6 +199,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
                                             blank=metafield.blank,
                                             null=True)
                         field.attname = metafield.name
+                        field.db_type = 'dynamic_field'
+                        field.db_column = "_dfields->'%s'" % field.name
+
                         fields.append(field)
                     except:
                         raise \
