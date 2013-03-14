@@ -20,6 +20,7 @@ import json
 import copy
 
 from fields import *
+from queryset import *
 from utils import *
 
 
@@ -202,6 +203,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
                         field.attname = metafield.name
                         field.db_type = 'dynamic_field'
                         field.db_column = "_dfields->'%s'" % field.name
+                        field.column = "_dfields->'%s'" % field.name
 
                         fields.append(field)
                     except:
@@ -229,8 +231,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
 
 class HStoreModel(models.Model):
     __metaclass__ = HStoreModelMeta
-    objects = hstore.HStoreManager()
     _dfields = hstore.DictionaryField(db_index=True, null=True, blank=True)
+
+    objects = FlattenFieldsFilterManager()
 
     class Meta:
         abstract = True
