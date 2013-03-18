@@ -67,7 +67,7 @@ class DynamicField(models.Model):
 dfields =  DynamicField.objects.all()
 
 def find_dfields(refer=None, name=None):
-    if not dynamic_field_table_exist:
+    if not dynamic_field_table_exist():
         return []
     if name and refer:
         return [dfield for dfield in dfields \
