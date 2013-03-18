@@ -25,6 +25,14 @@ from utils import *
 
 dfields = None
 
+def dynamic_field_table_exist():
+    # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
+    cursor = connection.cursor()
+    cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
+    return (cursor.fetchone()[0] > 0)
+
+
+
 class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
     name = models.CharField(max_length=120, blank=False, db_index=True, unique=True, verbose_name="Field name")
@@ -59,6 +67,8 @@ class DynamicField(models.Model):
 dfields =  DynamicField.objects.all()
 
 def find_dfields(refer=None, name=None):
+    if not dynamic_field_table_exist:
+        return []
     if name and refer:
         return [dfield for dfield in dfields \
             if dfield.refer == refer and dfield.name == name]
@@ -66,10 +76,6 @@ def find_dfields(refer=None, name=None):
         [dfield for dfield in dfields if dfield.name == name]
     return [dfield for dfield in dfields if dfield.refer == refer]
 
-# NOTE: Error happen on syncdb, because DynamicField's table does not exist.
-cursor = connection.cursor()
-cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
-DYNAMIC_FIELD_TABLE_EXIST = (cursor.fetchone()[0] > 0)
 
 
 class HStoreModelMeta(models.Model.__metaclass__):
@@ -173,7 +179,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
             @property
             def dynamic_fields(self):
                 fields = []
-                if not DYNAMIC_FIELD_TABLE_EXIST:
+                if not dynamic_field_table_exist():
                     return fields
 
                 # metafields = DynamicField.objects.filter(refer=new_class.__name__)
