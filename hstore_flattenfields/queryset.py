@@ -13,38 +13,77 @@ from django.db.models.query import *
 
 from utils import *
 
-query_map_filters = {
-    u"exact": """{0} = '{1}'""",
-    u"iexact": """{0} = LOWER('{1}')""",
-    u"contains": """{0} LIKE '%{1}%'""",
-    u"icontains": """{0} ILIKE '%{1}%'""",
-    # "in": """  """,
-    u"gt": """{0} > '{1}'""",
-    u"gte": """{0} >= '{1}'""",
-    u"lt": """{0} < '{1}'""",
-    u"lte": """{0} <= '{1}'""",
-    u"startswith": """{0} LIKE '%{1}'""",
-    u"istartswith": """{0} ILIKE '%{1}'""",
-    u"endswith": """{0} LIKE '{1}'%""",
-    u"iendswith": """{0} ILIKE '{1}'%""",
-    u"range": """{0} BETWEEN '{1}' AND '{2}'""",
-    u"range_dates": """{0} BETWEEN CAST('{1}'::date AS varchar) AND CAST('{2}'::interval AS varchar)""",
-    u"isnull": """{0} = ''""",
+parse_column_type = {
+    "IntegerField": """CAST(NULLIF({0}, '') AS integer)""",
 }
 
-query_sql = u"""SELECT %(fields)s FROM %(table)s WHERE %(condition)s"""
+where_filters = {
+    u"exact": """{0} = %s""",
+
+    u"gt": """{0} > %s""",
+    u"gte": """{0} >= %s""",
+    u"lt": """{0} < %s""",
+    u"lte": """{0} <= %s""",
+    # u"range": """CAST(NULLIF({0}, '') AS integer) BETWEEN %s""",
+
+    u"iexact": """UPPER({0}) = UPPER(%s)""",
+    u"contains": """{0} LIKE %s""",
+    u"icontains": """{0} ILIKE %s""",
+    # "in": """  """,
+    u"startswith": """{0} LIKE %s""",
+    u"istartswith": """{0} ILIKE %s""",
+    u"endswith": """{0} LIKE %s""",
+    u"iendswith": """{0} ILIKE %s""",
+
+    # u"range_dates": """{0} BETWEEN %s""",
+
+    # u"isnull": """{0} = ''""",
+}
+
+value_filters = {
+    u"exact": """{0}""",
+
+    u"gt": """{0}""",
+    u"gte": """{0}""",
+    u"lt": """{0}""",
+    u"lte": """{0}""",
+    u"range": """{0} AND {1}""",
+
+    u"iexact": """{0}""",
+    u"contains": """%{0}%""",
+    u"icontains": """%{0}%""",
+    # "in": """: """%{0}""",
+    u"startswith": """{0}%""",
+    u"istartswith": """{0}%""",
+    u"endswith": """%{0}""",
+    u"iendswith": """%{0}%""",
+
+    # u"range_dates": """CAST(%s::date AS varchar) AND CAST(%s::interval AS varchar)""",
+
+    # u"isnull": """''""",
+}
 
 class FlattenFieldsFilterQuerySet(QuerySet):
     def __init__(self, *args, **kwargs):
         super(FlattenFieldsFilterQuerySet, self).__init__(*args, **kwargs)
         self.all_field_names = self.model._meta.get_all_field_names()
 
+    def parse_column(self, field):
+        try:
+            db_column = parse_column_type[field.__class__.__name__].format(
+                field.db_column
+            )
+        except KeyError:
+            db_column = field.db_column
+
+        return db_column
+
     def values(self, *fields):
         if not fields:
             fields = self.all_field_names
 
         result = []
-        for obj in super(FlattenFieldsFilterQuerySet, self).filter():
+        for obj in super(FlattenFieldsFilterQuerySet, self)._clone():
             _dict = {}
             for field in fields:
                 _dict.update({
@@ -58,7 +97,7 @@ class FlattenFieldsFilterQuerySet(QuerySet):
             fields = self.all_field_names
 
         result = []
-        for obj in super(FlattenFieldsFilterQuerySet, self).filter():
+        for obj in super(FlattenFieldsFilterQuerySet, self)._clone():
             _list = []
             for field in fields:
                 _list.append(
@@ -68,20 +107,19 @@ class FlattenFieldsFilterQuerySet(QuerySet):
         return result
 
     def filter(self, *args, **kwargs):
-        query_table = self.model._meta.db_table
-
-        # FIXME: If his father inherits from hstore
-        #        i.e.: Customer <- Organization and Person
-        parent_classnames = [b.__base__.__name__ for b in self.model.__bases__]
-        if has_any_in(parent_classnames, ['Customer']):
-            query_table = self.model.__base__._meta.db_table
-
-        query_conditions = []
+        where_conditions = []
+        value_conditions = []
         for orm_query_filter, value in kwargs.iteritems():
             try:
                 field_name, filter_type = orm_query_filter.rsplit('__')
             except ValueError:
                 field_name, filter_type = orm_query_filter, 'exact'
+
+            if type(value) != list:
+                # FIXME: We have to send strings
+                # to hstore, and inside the sql query
+                # we made the cast.
+                value = [unicode(value)]
 
             try:
                 field = self.model._meta.get_field_by_name(field_name)[0]
@@ -89,12 +127,20 @@ class FlattenFieldsFilterQuerySet(QuerySet):
                 # When is not a query in dfields... when is just a normal query
                 return super(FlattenFieldsFilterQuerySet, self).filter(*args, **kwargs)
             else:
-                query_condition = unicode(query_map_filters[filter_type]).format(
-                    field.db_column, value
+                where_condition = where_filters[filter_type].format(
+                    self.parse_column(field)
+                )
+                value_condition = value_filters[filter_type].format(
+                    *value
                 )
 
-            query_conditions.append(query_condition)
-        return self.extra(where=query_conditions)
+            where_conditions.append(where_condition)
+            value_conditions.append(value_condition)
+
+        return self.extra(
+            where=where_conditions,
+            params=value_conditions
+        )
 
 
 class FlattenFieldsFilterManager(hstore.HStoreManager):

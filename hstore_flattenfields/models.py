@@ -181,35 +181,13 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 metafields = find_dfields(refer=new_class.__name__)
                 for metafield in metafields:
                     try:
-                        field_klass_name = FIELD_TYPES_DICT.get(metafield.typo,
-                                                                FIELD_TYPE_DEFAULT)
-
-                        #FIXME: eval is the evil, use module package
-                        field_klass = eval(field_klass_name)
-                        if metafield.choices == '':
-                            choices_ = None
-                        else:
-                            choices_ = single_list_to_tuple([\
-                                s.strip() for s in metafield.choices.splitlines()
-                            ])
-
-                        field = field_klass(name=metafield.name,
-                                            max_length=metafield.max_length or 255,
-                                            choices=choices_,
-                                            default=metafield.default_value,
-                                            verbose_name=metafield.verbose_name,
-                                            blank=metafield.blank,
-                                            null=True)
-                        field.attname = metafield.name
-                        field.db_type = 'dynamic_field'
-                        field.db_column = "_dfields->'%s'" % field.name
-                        field.column = "_dfields->'%s'" % field.name
-
-                        fields.append(field)
-                    except:
+                        fields.append(
+                            crate_field_from_instance(metafield)
+                        )
+                    except SyntaxError:
                         raise \
                             TypeError(('Cannot create field for %r, maybe type %r ' + \
-                                       'is not a django type') % (metafield, field_klass_name))
+                                       'is not a django type') % (metafield, metafield.typo))
                 return fields
 
             def __eq__(self, other):
