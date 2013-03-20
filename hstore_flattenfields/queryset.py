@@ -15,6 +15,7 @@ from utils import *
 
 parse_column_type = {
     "IntegerField": """CAST(NULLIF({0}, '') AS integer)""",
+    "HstoreDecimalField": """CAST(NULLIF({0}, '') AS float)""",
 }
 
 where_filters = {
@@ -24,20 +25,19 @@ where_filters = {
     u"gte": """{0} >= %s""",
     u"lt": """{0} < %s""",
     u"lte": """{0} <= %s""",
-    # u"range": """CAST(NULLIF({0}, '') AS integer) BETWEEN %s""",
+    u"range": """{0} BETWEEN %s AND %s""",
 
     u"iexact": """UPPER({0}) = UPPER(%s)""",
     u"contains": """{0} LIKE %s""",
     u"icontains": """{0} ILIKE %s""",
-    # "in": """  """,
     u"startswith": """{0} LIKE %s""",
     u"istartswith": """{0} ILIKE %s""",
     u"endswith": """{0} LIKE %s""",
     u"iendswith": """{0} ILIKE %s""",
 
-    # u"range_dates": """{0} BETWEEN %s""",
+    # u"range_dates": """{0} BETWEEN %s AND %s""",
 
-    # u"isnull": """{0} = ''""",
+    u"isnull": """{0} = %s""",
 }
 
 value_filters = {
@@ -47,12 +47,10 @@ value_filters = {
     u"gte": """{0}""",
     u"lt": """{0}""",
     u"lte": """{0}""",
-    u"range": """{0} AND {1}""",
 
     u"iexact": """{0}""",
     u"contains": """%{0}%""",
     u"icontains": """%{0}%""",
-    # "in": """: """%{0}""",
     u"startswith": """{0}%""",
     u"istartswith": """{0}%""",
     u"endswith": """%{0}""",
@@ -60,7 +58,7 @@ value_filters = {
 
     # u"range_dates": """CAST(%s::date AS varchar) AND CAST(%s::interval AS varchar)""",
 
-    # u"isnull": """''""",
+    u"isnull": """''""",
 }
 
 class FlattenFieldsFilterQuerySet(QuerySet):
@@ -115,27 +113,39 @@ class FlattenFieldsFilterQuerySet(QuerySet):
             except ValueError:
                 field_name, filter_type = orm_query_filter, 'exact'
 
-            if type(value) != list:
-                # FIXME: We have to send strings
-                # to hstore, and inside the sql query
-                # we made the cast.
-                value = [unicode(value)]
-
             try:
                 field = self.model._meta.get_field_by_name(field_name)[0]
             except FieldDoesNotExist:
                 # When is not a query in dfields... when is just a normal query
                 return super(FlattenFieldsFilterQuerySet, self).filter(*args, **kwargs)
             else:
-                where_condition = where_filters[filter_type].format(
-                    self.parse_column(field)
-                )
-                value_condition = value_filters[filter_type].format(
-                    *value
+                if filter_type == "in":
+                    import ipdb; ipdb.set_trace()
+
+
+                if type(value) != list:
+                    # FIXME: We have to send strings
+                    # to hstore, and inside the sql query
+                    # we made the cast.
+                    value = [unicode(value)]
+
+                where_conditions.append(
+                    where_filters[filter_type].format(
+                        self.parse_column(field)
+                    )
                 )
 
-            where_conditions.append(where_condition)
-            value_conditions.append(value_condition)
+                try:
+                    value_conditions.append(
+                        value_filters[filter_type].format(
+                            *value
+                        )
+                    )
+                except KeyError:
+                    if filter_type == "range":
+                        value_conditions = tuple(value)
+                    else:
+                        value_conditions = value
 
         return self.extra(
             where=where_conditions,
