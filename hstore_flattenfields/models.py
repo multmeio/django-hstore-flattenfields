@@ -65,8 +65,11 @@ dfields =  DynamicField.objects.all()
 
 def find_dfields(refer=None, name=None):
     # NOTE: if in test_mode return empty
-    if sys.argv[1] == 'test':
-        return []
+    try:
+        if sys.argv[1] == 'test':
+            return []
+    except IndexError:
+        pass
     if name and refer:
         return [dfield for dfield in dfields \
             if dfield.refer == refer and dfield.name == name]
