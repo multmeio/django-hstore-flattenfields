@@ -168,8 +168,22 @@ class HStoreModelMeta(models.Model.__metaclass__):
                     raise FieldDoesNotExist('%s has no field named %r'
                             % (self.object_name, name))
 
+            def get_field(self, name, many_to_many=True):
+                """
+                Returns the requested field by name. Raises FieldDoesNotExist on error.
+                """
+                to_search = many_to_many and (self.fields + self.many_to_many) or self.fields
+                for f in to_search:
+                    if f.name == name:
+                        return f
+
+                raise FieldDoesNotExist('%s has no field named %r' % (self.object_name, name))
+
             def get_all_field_names(self):
                 return [f.name for f in self.fields if not f.name == '_dfields']
+
+            def get_all_dynamic_field_names(self):
+                return [f.name for f in self.dynamic_fields if not f.name == '_dfields']
 
             @property
             def dynamic_fields(self):
