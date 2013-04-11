@@ -145,6 +145,14 @@ class HStoreModelMeta(models.Model.__metaclass__):
         # override _meta.fields (property)
         _old_meta = new_class._meta
         class _meta(object):
+            def __eq__(self, other):
+                return _old_meta == other
+
+            def __getattr__(self, key):
+                return getattr(_old_meta, key)
+            def __setattr__(self, key, value):
+                return setattr(_old_meta, key, value)
+
             def init_name_map(self):
                 _cache = _old_meta.init_name_map()
 
@@ -204,22 +212,38 @@ class HStoreModelMeta(models.Model.__metaclass__):
                                        'is not a django type') % (metafield, metafield.typo))
                 return fields
 
-            def __eq__(self, other):
-                return _old_meta == other
-
             @property
             def fields(self):
                 #add dynamic_fields from table
                 return _old_meta.fields + self.dynamic_fields
 
-            def __getattr__(self, key):
-                return getattr(_old_meta, key)
-            def __setattr__(self, key, value):
-                return setattr(_old_meta, key, value)
-        new_class._meta = _meta()
+            def get_base_chain(self, model):
+                """
+                Returns a list of parent classes leading to 'model' (order from closet
+                to most distant ancestor). This has to handle the case were 'model' is
+                a granparent or even more distant relation.
+                """
 
-        # return it
+                if not self.parents:
+                    return
+                if model in self.parents:
+                    return [model]
+
+                for parent in self.parents:
+                    res = parent._meta.get_base_chain(model)
+                    if res:
+                        res.insert(0, parent)
+                        return res
+
+                if model.__base__ == parent:
+                    return [parent]
+
+                raise TypeError('%r is not an ancestor of this model'
+                        % model._meta.module_name)
+
+        new_class._meta = _meta()
         return new_class
+
 
 class HStoreModel(models.Model):
     __metaclass__ = HStoreModelMeta

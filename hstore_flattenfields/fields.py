@@ -162,5 +162,6 @@ def crate_field_from_instance(instance):
 
     field.db_type = 'dynamic_field'
     field.attname = field.name
+    field.column = field.db_column
 
     return field

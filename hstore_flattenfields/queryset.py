@@ -95,6 +95,10 @@ class HStoreConstraint():
         expr = '%s %s %%s' % (lvalue, self.operator)
         return (expr, self.values)
 
+    def quote_name(self, name):
+        import ipdb; ipdb.set_trace()
+
+
 class HQ(tree.Node):
     AND = 'AND'
     OR = 'OR'
@@ -197,40 +201,7 @@ class HQ(tree.Node):
 class FlattenFieldsFilterQuerySet(QuerySet):
     def __init__(self, *args, **kwargs):
         super(FlattenFieldsFilterQuerySet, self).__init__(*args, **kwargs)
-        self.all_dynamic_field_names = self.model._meta.get_all_dynamic_field_names()
-
-    def quote_name(self, name):
-        if name.startswith('"') and name.endswith('"'):
-            return name # Quoting once is enough.
-        return '"%s"' % name
-
-    def values(self, *fields):
-        if not fields:
-            fields = self.model._meta.get_all_field_names()
-
-        result = []
-        for obj in super(FlattenFieldsFilterQuerySet, self)._clone():
-            _dict = {}
-            for field in fields:
-                _dict.update({
-                    field: getattr(obj, field, None)
-                })
-            result.append(_dict)
-        return result
-
-    def values_list(self, *fields, **kwargs):
-        if not fields:
-            fields = self.all_field_names
-
-        result = []
-        for obj in super(FlattenFieldsFilterQuerySet, self)._clone():
-            _list = []
-            for field in fields:
-                _list.append(
-                    getattr(obj, field, None)
-                )
-            result.append(tuple(_list))
-        return result
+        _fields = self.all_dynamic_field_names = self.model._meta.get_all_dynamic_field_names()
 
     def filter(self, *args, **kwargs):
         queries = []
