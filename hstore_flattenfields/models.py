@@ -224,11 +224,12 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 a granparent or even more distant relation.
                 """
 
-                if not self.parents:
-                    return
-                if model in self.parents:
+                if model in self.parents or not self.parents:
+                    # FIXME: In cases of the actual Model doesn`t have
+                    # Any parent, so return him
                     return [model]
 
+                parent = None
                 for parent in self.parents:
                     res = parent._meta.get_base_chain(model)
                     if res:
