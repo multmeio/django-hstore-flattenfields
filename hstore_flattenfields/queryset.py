@@ -95,10 +95,6 @@ class HStoreConstraint():
         expr = '%s %s %%s' % (lvalue, self.operator)
         return (expr, self.values)
 
-    def quote_name(self, name):
-        import ipdb; ipdb.set_trace()
-
-
 class HQ(tree.Node):
     AND = 'AND'
     OR = 'OR'
@@ -222,6 +218,9 @@ class FlattenFieldsFilterQuerySet(QuerySet):
             pass
 
         return self.model.objects.none()
+
+    def quote_name(self, name):
+        return '"%s"' % name
 
     def where(self, *args):
         clone = self._clone()
