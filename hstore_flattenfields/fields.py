@@ -114,7 +114,7 @@ class MultiSelectField(UncleanedCharField):
             defaults['choices'] = self.get_choices(include_blank=include_blank)
             defaults['coerce'] = self.to_python
             if self.null:
-                defaults['empty_value'] = None
+                defaults['empty_value'] = ""
 
             form_class = MultipleSelectField
             # Many of the subclass-specific formfield arguments (min_value,
@@ -127,3 +127,41 @@ class MultiSelectField(UncleanedCharField):
                     del kwargs[k]
         defaults.update(kwargs)
         return form_class(**defaults)
+
+
+def create_choices(choices=''):
+    if not choices: choices = ''
+
+    return single_list_to_tuple([
+        s.strip() for s in choices.splitlines()
+    ])
+
+def crate_field_from_instance(instance):
+    class_name = FIELD_TYPES_DICT.get(
+        instance.typo, FIELD_TYPE_DEFAULT
+    )
+
+    field_class = eval(class_name)
+
+    # FIXME: The Data were saved in a string: "None"
+    default_value = instance.default_value
+    if default_value is None:
+        default_value = ""
+
+    field = field_class(name=instance.name,
+        verbose_name=instance.verbose_name,
+        max_length=instance.max_length or 255,
+        blank=instance.blank,
+        null=True,
+        default=default_value,
+        choices=create_choices(instance.choices),
+        help_text='',
+        # XXX: HARDCODED "_dfields"
+        db_column="_dfields->'%s'" % instance.name,
+    )
+
+    field.db_type = 'dynamic_field'
+    field.attname = field.name
+    field.column = field.db_column
+
+    return field
