@@ -2,3 +2,4 @@
 .project
 .pydevproject
 django_hstore_flattenfields.egg*
+local_settings.py
