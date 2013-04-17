@@ -197,7 +197,22 @@ class HQ(tree.Node):
 class FlattenFieldsFilterQuerySet(QuerySet):
     def __init__(self, *args, **kwargs):
         super(FlattenFieldsFilterQuerySet, self).__init__(*args, **kwargs)
-        _fields = self.all_dynamic_field_names = self.model._meta.get_all_dynamic_field_names()
+        self.all_dynamic_field_names = self.model._meta.get_all_dynamic_field_names()
+        self.all_field_names = self.model._meta.get_all_field_names()
+
+    def values(self, *fields):
+        if not fields:
+            fields = self.all_field_names
+        return super(FlattenFieldsFilterQuerySet, self).values(*fields)
+
+    def values_list(self, *fields, **kwargs):
+        if not fields and not kwargs.get('flat', False):
+            # FIXME: Actually, the values_list
+            # doesnt is flattening the data inside hstore.
+            fields = self.all_field_names
+        return super(FlattenFieldsFilterQuerySet, self).values_list(
+            *fields, **kwargs
+        )
 
     def filter(self, *args, **kwargs):
         queries = []
