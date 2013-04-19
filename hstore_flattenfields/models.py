@@ -168,9 +168,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 if name is 'pk': name = 'id'
 
                 try:
-                    try:
+                    if hasattr(self, '_name_map') and name in self._name_map:
                         return self._name_map[name]
-                    except AttributeError:
+                    else:
                         cache = self.init_name_map()
                         return cache[name]
                 except KeyError:
