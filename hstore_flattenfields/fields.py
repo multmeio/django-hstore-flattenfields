@@ -141,14 +141,14 @@ def crate_field_from_instance(instance):
         instance.typo, FIELD_TYPE_DEFAULT
     )
 
-    field_class = eval(class_name)
+    FieldClass = eval(class_name)
 
     # FIXME: The Data were saved in a string: "None"
     default_value = instance.default_value
     if default_value is None:
         default_value = ""
 
-    field = field_class(name=instance.name,
+    field = FieldClass(name=instance.name,
         verbose_name=instance.verbose_name,
         max_length=instance.max_length or 255,
         blank=instance.blank,
