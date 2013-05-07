@@ -12,7 +12,9 @@ from ast import literal_eval
 
 __all__ = ['single_list_to_tuple',
            'str2literal',
-           'dec2real',]
+           'dec2real',
+           'has_any_in',
+]
 
 
 def single_list_to_tuple(list_values):
@@ -26,3 +28,6 @@ def str2literal(string):
 
 def dec2real(value):
     return floatformat(value, 2)
+
+def has_any_in(chances, possibilities):
+    return any([x for x in chances if x in possibilities])

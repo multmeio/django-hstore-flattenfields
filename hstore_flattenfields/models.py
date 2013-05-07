@@ -20,6 +20,7 @@ import json
 import copy
 
 from fields import *
+from queryset import *
 from utils import *
 
 
@@ -64,9 +65,6 @@ class DynamicField(models.Model):
 dfields =  DynamicField.objects.all()
 
 def find_dfields(refer=None, name=None):
-    # NOTE: if in test_mode return empty
-    if sys.argv[1] == 'test':
-        return []
     if name and refer:
         return [dfield for dfield in dfields \
             if dfield.refer == refer and dfield.name == name]
@@ -148,6 +146,14 @@ class HStoreModelMeta(models.Model.__metaclass__):
         # override _meta.fields (property)
         _old_meta = new_class._meta
         class _meta(object):
+            def __eq__(self, other):
+                return _old_meta == other
+
+            def __getattr__(self, key):
+                return getattr(_old_meta, key)
+            def __setattr__(self, key, value):
+                return setattr(_old_meta, key, value)
+
             def init_name_map(self):
                 _cache = _old_meta.init_name_map()
 
@@ -162,17 +168,31 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 if name is 'pk': name = 'id'
 
                 try:
-                    try:
+                    if hasattr(self, '_name_map') and name in self._name_map:
                         return self._name_map[name]
-                    except AttributeError:
+                    else:
                         cache = self.init_name_map()
                         return cache[name]
                 except KeyError:
                     raise FieldDoesNotExist('%s has no field named %r'
                             % (self.object_name, name))
 
+            def get_field(self, name, many_to_many=True):
+                """
+                Returns the requested field by name. Raises FieldDoesNotExist on error.
+                """
+                to_search = many_to_many and (self.fields + self.many_to_many) or self.fields
+                for f in to_search:
+                    if f.name == name:
+                        return f
+
+                raise FieldDoesNotExist('%s has no field named %r' % (self.object_name, name))
+
             def get_all_field_names(self):
                 return [f.name for f in self.fields if not f.name == '_dfields']
+
+            def get_all_dynamic_field_names(self):
+                return [f.name for f in self.dynamic_fields if not f.name == '_dfields']
 
             @property
             def dynamic_fields(self):
@@ -184,57 +204,54 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 metafields = find_dfields(refer=new_class.__name__)
                 for metafield in metafields:
                     try:
-                        field_klass_name = FIELD_TYPES_DICT.get(metafield.typo,
-                                                                FIELD_TYPE_DEFAULT)
-
-                        #FIXME: eval is the evil, use module package
-                        field_klass = eval(field_klass_name)
-                        if metafield.choices == '':
-                            choices_ = None
-                        else:
-                            choices_ = single_list_to_tuple([\
-                                s.strip() for s in metafield.choices.splitlines()
-                            ])
-
-                        field = field_klass(name=metafield.name,
-                                            max_length=metafield.max_length or 255,
-                                            choices=choices_,
-                                            default=metafield.default_value,
-                                            verbose_name=metafield.verbose_name,
-                                            blank=metafield.blank,
-                                            null=True)
-                        field.attname = metafield.name
-                        field.db_type = 'dynamic_field'
-                        field.db_column = "_dfields->'%s'" % field.name
-
-                        fields.append(field)
-                    except:
+                        fields.append(
+                            crate_field_from_instance(metafield)
+                        )
+                    except SyntaxError:
                         raise \
                             TypeError(('Cannot create field for %r, maybe type %r ' + \
-                                       'is not a django type') % (metafield, field_klass_name))
+                                       'is not a django type') % (metafield, metafield.typo))
                 return fields
-
-            def __eq__(self, other):
-                return _old_meta == other
 
             @property
             def fields(self):
                 #add dynamic_fields from table
                 return _old_meta.fields + self.dynamic_fields
 
-            def __getattr__(self, key):
-                return getattr(_old_meta, key)
-            def __setattr__(self, key, value):
-                return setattr(_old_meta, key, value)
-        new_class._meta = _meta()
+            def get_base_chain(self, model):
+                """
+                Returns a list of parent classes leading to 'model' (order from closet
+                to most distant ancestor). This has to handle the case were 'model' is
+                a granparent or even more distant relation.
+                """
 
-        # return it
+                if model in self.parents or not self.parents:
+                    # FIXME: In cases of the actual Model doesn`t have
+                    # Any parent, so return him
+                    return [model]
+
+                parent = None
+                for parent in self.parents:
+                    res = parent._meta.get_base_chain(model)
+                    if res:
+                        res.insert(0, parent)
+                        return res
+
+                if model.__base__ == parent:
+                    return [parent]
+
+                raise TypeError('%r is not an ancestor of this model'
+                        % model._meta.module_name)
+
+        new_class._meta = _meta()
         return new_class
+
 
 class HStoreModel(models.Model):
     __metaclass__ = HStoreModelMeta
-    objects = hstore.HStoreManager()
     _dfields = hstore.DictionaryField(db_index=True, null=True, blank=True)
+
+    objects = FlattenFieldsFilterManager()
 
     class Meta:
         abstract = True
