@@ -200,6 +200,27 @@ class FlattenFieldsFilterQuerySet(QuerySet):
         self.all_dynamic_field_names = self.model._meta.get_all_dynamic_field_names()
         self.all_field_names = self.model._meta.get_all_field_names()
 
+    def hstore_override_method(self, method, *args, **kwargs):
+        queries = []
+        super_cls = super(FlattenFieldsFilterQuerySet, self)
+        for key in kwargs.keys():
+            if key.split('__')[0] in self.all_dynamic_field_names:
+                queries.append(
+                    Q(HQ(**{
+                        "_dfields__%s" % key: kwargs[key]
+                    }))
+                )
+            else:
+                queries.append(Q(**{key: kwargs[key]}))
+        try:
+            super_method = getattr(super_cls, method)
+            return super_method(*queries)
+        except:
+            return self.model.objects.none()
+
+    def quote_name(self, name):
+        return '"%s"' % name
+
     def values(self, *fields):
         if not fields:
             fields = self.all_field_names
@@ -215,27 +236,14 @@ class FlattenFieldsFilterQuerySet(QuerySet):
         )
 
     def filter(self, *args, **kwargs):
-        queries = []
+        return self.hstore_override_method(
+            'filter', *args, **kwargs
+        )
 
-        for key in kwargs.keys():
-            if key.split('__')[0] in self.all_dynamic_field_names:
-                queries.append(
-                    Q(HQ(**{"_dfields__%s" % key: kwargs[key]}))
-                )
-            else:
-                queries.append(Q(**{key: kwargs[key]}))
-
-        try:
-            return super(FlattenFieldsFilterQuerySet, self).filter(
-                *queries
-            )
-        except:
-            pass
-
-        return self.model.objects.none()
-
-    def quote_name(self, name):
-        return '"%s"' % name
+    def exclude(self, *args, **kwargs):
+        return self.hstore_override_method(
+            'exclude', *args, **kwargs
+        )
 
     def where(self, *args):
         clone = self._clone()
