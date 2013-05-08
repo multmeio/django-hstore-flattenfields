@@ -6,7 +6,7 @@ Created on 13/10/2012
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from hstoredyn.models import Something
+from app.models import Something
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 

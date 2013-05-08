@@ -6,15 +6,15 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
-    # url(r'^$', 'hstoredyn.views.home', name='home'),
-    # url(r'^hstoredyn/', include('hstoredyn.foo.urls')),
+    # url(r'^$', 'app.views.home', name='home'),
+    # url(r'^app/', include('app.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    url(r'^hstoredyn/$', 'hstoredyn.views.index'),
-    url(r'^hstoredyn/add$', 'hstoredyn.views.add'),
-    url(r'^hstoredyn/(?P<some_id>\d+)/$', 'hstoredyn.views.detail'),
+    url(r'^app/$', 'app.views.index'),
+    url(r'^app/add$', 'app.views.add'),
+    url(r'^app/(?P<some_id>\d+)/$', 'app.views.detail'),
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
