@@ -40,33 +40,42 @@ DICT_DFIELD_STR = dict(
     verbose_name = u"Dynamic Field Str",
 )
 
-LIST_DFIELD_INT_VALUES = [
-    {'something_dfield_int': u''},
-    {'something_dfield_int': u'41'},
-    {'something_dfield_int': u''},
-    {'something_dfield_int': u'39'},
-    {'something_dfield_int': u''},
-    {'something_dfield_int': u'37'},
-    {'something_dfield_int': u''},
-    {'something_dfield_int': u'35'},
-    {'something_dfield_int': u''},
-    {'something_dfield_int': u'33'}
-]
+LIST_DFIELD_INT_VALUES = [{'something_dfield_int': u''},
+                          {'something_dfield_int': u'41'},
+                          {'something_dfield_int': u''},
+                          {'something_dfield_int': u'39'},
+                          {'something_dfield_int': u''},
+                          {'something_dfield_int': u'37'},
+                          {'something_dfield_int': u''},
+                          {'something_dfield_int': u'35'},
+                          {'something_dfield_int': u''},
+                          {'something_dfield_int': u'33'}]
+LIST_DFIELD_INT_VALUES_LIST =  [(u'',), (u'41',), (u'',),
+                                (u'39',), (u'',), (u'37',),
+                                (u'',), (u'35',), (u'',),
+                                (u'33',)]
+LIST_DFIELD_INT_VALUES_LIST_FLAT = [u'', u'41', u'', u'39',
+                                    u'', u'37', u'', u'35',
+                                    u'', u'33']
 
-LIST_DFIELD_INT_VALUES_LIST =  [(u'',), (u'41',), (u'',), (u'39',), (u'',),
-                                (u'37',), (u'',), (u'35',), (u'',), (u'33',)]
 
-LIST_DFIELD_INT_VALUES_LIST_FLAT = [u'', u'41', u'', u'39', u'',
-                                    u'37', u'', u'35', u'', u'33']
-
-
-LIST_DFIELD_STR_VALUES = [{'something_dfield_str': u''}, {'something_dfield_str': u'41'}, {'something_dfield_str': u''}, {'something_dfield_str': u'39'}, {'something_dfield_str': u''}, {'something_dfield_str': u'37'}, {'something_dfield_str': u''}, {'something_dfield_str': u'35'}, {'something_dfield_str': u''}, {'something_dfield_str': u'33'}]
-
-LIST_DFIELD_STR_VALUES_LIST = [(u'',), (u'41',), (u'',), (u'39',), (u'',),
-                          (u'37',), (u'',), (u'35',), (u'',), (u'33',)]
-
-LIST_DFIELD_STR_VALUES_LIST_FLAT = [u'', u'41', u'', u'39', u'', u'37',
-                                    u'', u'35', u'', u'33']
+LIST_DFIELD_STR_VALUES = [{'something_dfield_str': u''},
+                          {'something_dfield_str': u'41'},
+                          {'something_dfield_str': u''},
+                          {'something_dfield_str': u'39'},
+                          {'something_dfield_str': u''},
+                          {'something_dfield_str': u'37'},
+                          {'something_dfield_str': u''},
+                          {'something_dfield_str': u'35'},
+                          {'something_dfield_str': u''},
+                          {'something_dfield_str': u'33'}]
+LIST_DFIELD_STR_VALUES_LIST = [(u'',), (u'41',), (u'',),
+                               (u'39',), (u'',), (u'37',),
+                               (u'',), (u'35',), (u'',),
+                               (u'33',)]
+LIST_DFIELD_STR_VALUES_LIST_FLAT = [u'', u'41', u'', u'39',
+                                    u'', u'37', u'', u'35',
+                                    u'', u'33']
 
 class TestSomething(TestCase):
     def setUp(self):
