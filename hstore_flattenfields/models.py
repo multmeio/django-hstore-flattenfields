@@ -7,7 +7,7 @@ Created on 13/10/2012
 @author: iuri
 '''
 import sys
-from django.db import models, connection
+from django.db import models
 from django_orm.postgresql import hstore
 from django.utils.datastructures import SortedDict
 from django.db.models.fields import FieldDoesNotExist
@@ -25,11 +25,6 @@ from utils import *
 
 
 dfields = None
-
-# NOTE: Error happen on syncdb, because DynamicField's table does not exist.
-cursor = connection.cursor()
-cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
-DYNAMIC_FIELD_TABLE_EXIST =  (cursor.fetchone()[0] > 0)
 
 class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
@@ -65,6 +60,7 @@ class DynamicField(models.Model):
 dfields =  DynamicField.objects.all()
 
 def find_dfields(refer=None, name=None):
+
     if name and refer:
         return [dfield for dfield in dfields \
             if dfield.refer == refer and dfield.name == name]
@@ -197,7 +193,8 @@ class HStoreModelMeta(models.Model.__metaclass__):
             @property
             def dynamic_fields(self):
                 fields = []
-                if not DYNAMIC_FIELD_TABLE_EXIST:
+
+                if not DYNAMIC_FIELD_TABLE_EXISTS():
                     return fields
 
                 # metafields = DynamicField.objects.filter(refer=new_class.__name__)
