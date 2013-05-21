@@ -194,7 +194,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
             def dynamic_fields(self):
                 fields = []
 
-                if not DYNAMIC_FIELD_TABLE_EXISTS():
+                if not dynamic_field_table_exists():
                     return fields
 
                 # metafields = DynamicField.objects.filter(refer=new_class.__name__)
