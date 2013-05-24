@@ -25,11 +25,10 @@ How to install e config
 5. Setup the ```DATABASES``` confs, inside the [settings](https://github.com/multmeio/django-hstore-flattenfields/blob/master/example/hstoredyn/settings.py#L12) file.
 6. Sync your database with the project models and external apps's models:
     - ```python manage.py syncdb```
-        - You don't have to add the ```superuser```, this simple project don't will use him. So, when the Django ask if you want to add the ```superuser```, you answer: **no**.
 7. Migrate your database's  schema, use the South's command called **migrate**
     - ```python manage.py migrate```
 8. Run the tests.
-    - ```python manage.py test core```
+    - ```python manage.py test app```
 9. Run your project:
     - ```python manage.py runserver```
 10. See in the localhost;
