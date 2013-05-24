@@ -6,6 +6,7 @@ Created on 13/10/2012
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.shortcuts import redirect
 from app.models import Something
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -28,11 +29,11 @@ def detail(request, something_pk):
         context_instance=RequestContext(request))
 
 def add(request):
-    form = SomethingForm(request.POST or None) # A form bound to the POST data
+    form = SomethingForm(request.POST or None)
 
     if form.is_valid():
         form.save()
-        return HttpResponseRedirect('/thanks/') # Redirect after POST
+        return redirect('index')
 
     data = {
         'form': form
