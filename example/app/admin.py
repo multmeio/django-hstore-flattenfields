@@ -9,4 +9,3 @@ from django.contrib import admin
 from app.models import Something
 
 admin.site.register(Something)
-admin.site.register(DynamicField)
