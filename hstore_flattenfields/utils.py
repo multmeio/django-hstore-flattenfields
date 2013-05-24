@@ -15,7 +15,7 @@ __all__ = ['single_list_to_tuple',
            'str2literal',
            'dec2real',
            'has_any_in',
-           'DYNAMIC_FIELD_TABLE_EXISTS'
+           'dynamic_field_table_exists'
 ]
 
 
@@ -34,8 +34,13 @@ def dec2real(value):
 def has_any_in(chances, possibilities):
     return any([x for x in chances if x in possibilities])
 
-def DYNAMIC_FIELD_TABLE_EXISTS():
+# cache in globals
+_DYNAMIC_FIELD_TABLE_EXISTS = None
+def dynamic_field_table_exists():
     # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
-    cursor = connection.cursor()
-    cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
-    return cursor.fetchone()[0] > 0
+    global _DYNAMIC_FIELD_TABLE_EXISTS
+    if _DYNAMIC_FIELD_TABLE_EXISTS == None:
+        cursor = connection.cursor()
+        cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
+        _DYNAMIC_FIELD_TABLE_EXISTS = cursor.fetchone()[0] > 0
+    return _DYNAMIC_FIELD_TABLE_EXISTS
