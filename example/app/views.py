@@ -10,17 +10,22 @@ from app.models import Something
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 
-from models import SomethingForm
+from models import Something
+from forms import SomethingForm
 
 def index(request):
     data = {
-        'something': Something.objects.all()
+        'somethings': Something.objects.all()
     }
     return render_to_response('something/index.html', data,
         context_instance=RequestContext(request))
 
-def detail(request, some_id):
-    return HttpResponse("You're looking at something %s." % some_id)
+def detail(request, something_pk):
+    data = {
+        'something': Something.objects.get(pk=something_pk)
+    }
+    return render_to_response('something/detail.html', data,
+        context_instance=RequestContext(request))
 
 def add(request):
     form = SomethingForm(request.POST or None) # A form bound to the POST data

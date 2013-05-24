@@ -5,10 +5,9 @@ Created on 13/10/2012
 '''
 
 from django.db import models
-
 from hstore_flattenfields.models import HStoreModel
-from hstore_flattenfields.forms import HStoreModelForm
 
+import utils
 
 class Something(HStoreModel):
     name = models.CharField(max_length=32)
@@ -16,6 +15,7 @@ class Something(HStoreModel):
     def __unicode__(self):
         return self.name
 
-class SomethingForm(HStoreModelForm):
-    class Meta:
-        model = Something
+    @property
+    def fields_template(self):
+        excludes = ['_dfields']
+        return utils._unpack_fields(self, excludes)
