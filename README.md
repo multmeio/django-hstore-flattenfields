@@ -8,9 +8,9 @@ DynamicFields are suportated:
 * ModelForms
 * *.objects.create() method, accept the DynamicFields.
 * QuerySet (Simple Filters and Exclude)
-    * ['exact', 'iexact', 'contains', 'icontains', 'startswith', 'istartswith', 'endswith', 'iendswith', 'in', 'lt', 'lte', 'gt', 'gte']
+   * ['exact', 'iexact', 'contains', 'icontains', 'startswith', 'istartswith', 'endswith', 'iendswith', 'in', 'lt', 'lte', 'gt', 'gte']
 * Parse types
-    * If your DynamicField was a DateTimeField, when the Flattenfields will save he will convert your data in DateTimeField automatically.
+   * If your DynamicField was a DateTimeField, when the Flattenfields will save he will convert your data in DateTimeField automatically.
 
 How to install e config
 ===============
