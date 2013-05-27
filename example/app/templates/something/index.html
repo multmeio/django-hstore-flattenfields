@@ -1,0 +1,11 @@
+<ul>
+  {% for something in somethings %}
+    <li>
+      <a href="{% url detail something.pk %}">
+        {{ something.name }}
+      </a>
+    </li>
+  {% empty %}
+    <li><p>No data is available.</p></li>
+  {% endfor %}
+</ul>
