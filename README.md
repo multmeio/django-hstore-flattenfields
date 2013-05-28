@@ -1,7 +1,9 @@
 django-hstore-flattenfields
 ===============
 -----------
-This project is an alternative for who want to have a Dynamic Scheme in Django, we have the goal to add 'dynamic fields' in the Django Models, we use the Hstore extension built in the PostgreSQL V9.1+, using this you can quickly add new fields in a Model, with some great features, he is built and used in the [Multmeio](http://www.multmeio.com.br) enterprise.
+Django-hstore-flattenfields is an alternative for who want to have a Dynamic Scheme in Django without rely on a NoSQL database. Our goal is add 'dynamic fields' in Django Models, using the Hstore extension built in the PostgreSQL V9.1+. Using this you can quickly add new fields in a Model, with some great features.
+
+Django-hstore-flattenfields is built and used in the [Multmeio](http://www.multmeio.com.br) enterprise.
 
 
 DynamicFields are suportated:
