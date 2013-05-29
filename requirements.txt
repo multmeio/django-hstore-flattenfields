@@ -1,2 +1,2 @@
-Django
-django-orm-extensions
+Django==1.4.3
+django-orm-extensions==3.0b3
