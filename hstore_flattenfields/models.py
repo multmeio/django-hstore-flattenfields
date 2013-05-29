@@ -60,14 +60,12 @@ class DynamicField(models.Model):
 dfields =  DynamicField.objects.all()
 
 def find_dfields(refer=None, name=None):
-
     if name and refer:
-        return [dfield for dfield in dfields \
-            if dfield.refer == refer and dfield.name == name]
-    if name and not refer:
-        [dfield for dfield in dfields if dfield.name == name]
-    return [dfield for dfield in dfields if dfield.refer == refer]
-
+        return [dfield for dfield in dfields if dfield.refer == refer and dfield.name == name]
+    elif name:
+        return [dfield for dfield in dfields if dfield.name == name]
+    elif refer:
+        return [dfield for dfield in dfields if dfield.refer == refer]
 
 
 class HStoreModelMeta(models.Model.__metaclass__):
