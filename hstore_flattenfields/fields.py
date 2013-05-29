@@ -28,7 +28,7 @@ FIELD_TYPES_DICT = dict(Input='models.CharField',
     Float='models.FloatField',
     Integer='models.IntegerField',
     TextArea='models.TextField',
-    SelectBox='UncleanedCharField',
+    SelectBox='SelectField',
     MultSelect='MultiSelectField',
     Date='models.CharField',
     DateTime='models.CharField',
@@ -88,6 +88,18 @@ class UncleanedCharField(models.CharField):
 
         return choices or self._choices
 
+
+class SelectField(models.CharField):
+    __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        super(SelectField, self).__init__(*args, **kwargs)
+
+    def clean(self, value, *args):
+        #FIXME: At the beginning of the project there was
+        #       a bug that was saving the value as a string: 'None'
+        if value == 'None' or not value: return ''
+        return value
 
 
 class MultiSelectField(UncleanedCharField):
