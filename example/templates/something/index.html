@@ -1,9 +1,0 @@
-{% if somethings_list %}
-    <ul>
-    {% for something in somethings_list %}
-        <li><a href="/hstoredyn/{{ something.id }}/">{{ something.name }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No data is available.</p>
-{% endif %}

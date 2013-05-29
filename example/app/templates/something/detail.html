@@ -1,0 +1,8 @@
+{% load tags %}
+
+<h1>{{ something }}</h1>
+{% for field in something.fields_template %}
+ <strong>{{ field.verbose_name|capfirst }}</strong>
+     {{ something|get_attr:field.name }}
+ <br>
+{% endfor %}
