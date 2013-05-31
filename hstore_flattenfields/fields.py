@@ -30,8 +30,8 @@ FIELD_TYPES_DICT = dict(Input='models.CharField',
     TextArea='models.TextField',
     SelectBox='SelectField',
     MultSelect='MultiSelectField',
-    Date='models.CharField',
-    DateTime='models.CharField',
+    Date='HstoreDateField',
+    DateTime='HstoreDateTimeField',
     CheckBox='MultiSelectField',
     RadioButton='UncleanedCharField')
 
@@ -39,6 +39,8 @@ FIELD_TYPE_DEFAULT = 'models.CharField'
 
 
 class HstoreDecimalField(models.DecimalField):
+    __metaclass__ = models.SubfieldBase
+
     def __init__(self, *args, **kwargs):
         super(HstoreDecimalField, self).__init__(*args, **kwargs)
 
@@ -58,7 +60,29 @@ class HstoreDecimalField(models.DecimalField):
             super(HstoreDecimalField, self).to_python(str2literal(value))
 
 
+class HstoreDateField(models.DateField):
+    __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        super(HstoreDateField, self).__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        return str2date(value)
+
+
+class HstoreDateTimeField(models.DateTimeField):
+    __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        super(HstoreDateTimeField, self).__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        return str2datetime(value)
+
+
 class MultipleSelectField(forms.TypedMultipleChoiceField):
+    __metaclass__ = models.SubfieldBase
+
     def __init__(self, *args, **kwargs):
         self.widget = hs_widgets.SelectMultipleWidget
         super(MultipleSelectField, self).__init__(*args, **kwargs)
@@ -140,6 +164,9 @@ class MultiSelectField(UncleanedCharField):
         defaults.update(kwargs)
         return form_class(**defaults)
 
+    def to_python(self, value):
+        return str2literal(value)
+
 
 def create_choices(choices=''):
     if not choices: choices = ''
@@ -148,12 +175,15 @@ def create_choices(choices=''):
         s.strip() for s in choices.splitlines()
     ])
 
-def crate_field_from_instance(instance):
-    class_name = FIELD_TYPES_DICT.get(
-        instance.typo, FIELD_TYPE_DEFAULT
+def get_modelfield(typo):
+    return eval(
+        FIELD_TYPES_DICT.get(
+            typo, FIELD_TYPE_DEFAULT
+        )
     )
 
-    FieldClass = eval(class_name)
+def crate_field_from_instance(instance):
+    FieldClass = get_modelfield(instance.typo)
 
     # FIXME: The Data were saved in a string: "None"
     default_value = instance.default_value
