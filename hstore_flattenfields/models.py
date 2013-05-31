@@ -80,26 +80,31 @@ class HStoreModelMeta(models.Model.__metaclass__):
         # override getattr/setattr/delattr
         old_getattribute = new_class.__getattribute__
         def __getattribute__(self, key):
-            field = None
+            field = find_dfields(name=key)
+            if field:
+                field = get_modelfield(field[0].typo)()
+            else:
+                field = None
 
             try:
                 return old_getattribute(self, key)
             except AttributeError:
-                field = find_dfields(refer=self.__class__.__name__, name=key)
+                if field:
+                    try:
+                        value = self._dfields[key]
+                    except KeyError:
+                        if hasattr(field, 'default_value'):
+                            value = field.default_value
+                        elif hasattr(field, 'default'):
+                            value = field.default
 
-                if hasattr(self, '_dfields') and key in self._dfields:
-                    return self._dfields[key]
-                elif field:
-                    # FIXME: This Dynamic field really exists
-                    return field[0].default_value
+                    return field.to_python(value)
                 else:
                     raise
             except ValueError:
-                if isinstance(field, list) and field:
-                    return field[0].default_value
+                if field:
+                    return field.to_python(field.default_value)
             except TypeError:
-                field = find_dfields(refer=self.__class__.__name__, name=key)
-
                 if field and field.__class__.__name__ == 'ManyRelatedManager':
                     return field.all()
 
@@ -145,6 +150,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
 
             def __getattr__(self, key):
                 return getattr(_old_meta, key)
+
             def __setattr__(self, key, value):
                 return setattr(_old_meta, key, value)
 
@@ -193,7 +199,8 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 fields = []
 
                 if not dynamic_field_table_exists():
-                    return fields
+                    force_create_table()
+                #     return fields
 
                 # metafields = DynamicField.objects.filter(refer=new_class.__name__)
                 metafields = find_dfields(refer=new_class.__name__)
@@ -272,30 +279,30 @@ class HStoreModel(models.Model):
         if _dfields:
             self._dfields = _dfields
 
-    def __getattr__(self, attr_name):
-        """
-        This method was override because we have to manipulate the format
-        of the data should be shown in the templates. By adding a property
-        called 'pretty_FIELDNAME'.
-        """
-        field_name = attr_name.replace('pretty_', '')
-        field = find_dfields(refer=self.__class__.__name__, name=field_name)
+    # def __getattr__(self, attr_name):
+    #     """
+    #     This method was override because we have to manipulate the format
+    #     of the data should be shown in the templates. By adding a property
+    #     called 'pretty_FIELDNAME'.
+    #     """
+    #     field_name = attr_name.replace('pretty_', '')
+    #     field = find_dfields(refer=self.__class__.__name__, name=field_name)
 
-        if field:
-            field = field[0]
-            value = getattr(self, field.name)
+    #     if field:
+    #         field = field[0]
+    #         value = getattr(self, field.name)
 
-            if field.typo in PRETTY_FIELDS:
-                if field.typo == "Monetary":
-                    new_value = 'R$ %s' % dec2real(value)
+    #         if field.typo in PRETTY_FIELDS:
+    #             if field.typo == "Monetary":
+    #                 new_value = 'R$ %s' % dec2real(value)
 
-                elif field.typo in ["CheckBox", "MultSelect"]:
-                    new_value = ", ".join(str2literal(value)) + "."
+    #             elif field.typo in ["CheckBox", "MultSelect"]:
+    #                 new_value = ", ".join(str2literal(value)) + "."
 
-                elif field.typo == "Date":
-                    y, m, d = tuple([int(x) for x in value.split('/')][::-1])
-                    new_value = datetime(y, m, d)
+    #             elif field.typo == "Date":
+    #                 y, m, d = tuple([int(x) for x in value.split('/')][::-1])
+    #                 new_value = datetime(y, m, d)
 
-                setattr(self, attr_name, new_value)
+    #             setattr(self, attr_name, new_value)
 
-        return super(HStoreModel, self).__getattribute__(attr_name)
+    #     return super(HStoreModel, self).__getattribute__(attr_name)
