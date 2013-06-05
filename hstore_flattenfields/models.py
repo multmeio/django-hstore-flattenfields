@@ -6,23 +6,15 @@ Created on 13/10/2012
 
 @author: iuri
 '''
-import sys
+
 from django.db import models
 from django_orm.postgresql import hstore
-from django.utils.datastructures import SortedDict
 from django.db.models.fields import FieldDoesNotExist
 from django import forms
-
-from datetime import datetime
-import json
-
-# import caching.base
-import copy
 
 from fields import *
 from queryset import *
 from utils import *
-
 
 dfields = None
 
@@ -103,7 +95,11 @@ class HStoreModelMeta(models.Model.__metaclass__):
                     raise
             except ValueError:
                 if field:
-                    return field.to_python(field.default_value)
+                    try:
+                        return field.to_python(field.default_value)
+                    except AttributeError:
+                        return field.to_python(field.default)
+
             except TypeError:
                 if field and field.__class__.__name__ == 'ManyRelatedManager':
                     return field.all()
@@ -125,7 +121,8 @@ class HStoreModelMeta(models.Model.__metaclass__):
                         value = [unicode(v) for v in value]
                     elif value is not None:
                         value = unicode(value)
-                    self._dfields[key] = unicode(value)
+
+                    self._dfields[key] = unicode(value) if value else ''
                     return
 
             old_setattr(self, key, value)
@@ -278,31 +275,3 @@ class HStoreModel(models.Model):
         super(HStoreModel, self).__init__(*args, **kwargs)
         if _dfields:
             self._dfields = _dfields
-
-    # def __getattr__(self, attr_name):
-    #     """
-    #     This method was override because we have to manipulate the format
-    #     of the data should be shown in the templates. By adding a property
-    #     called 'pretty_FIELDNAME'.
-    #     """
-    #     field_name = attr_name.replace('pretty_', '')
-    #     field = find_dfields(refer=self.__class__.__name__, name=field_name)
-
-    #     if field:
-    #         field = field[0]
-    #         value = getattr(self, field.name)
-
-    #         if field.typo in PRETTY_FIELDS:
-    #             if field.typo == "Monetary":
-    #                 new_value = 'R$ %s' % dec2real(value)
-
-    #             elif field.typo in ["CheckBox", "MultSelect"]:
-    #                 new_value = ", ".join(str2literal(value)) + "."
-
-    #             elif field.typo == "Date":
-    #                 y, m, d = tuple([int(x) for x in value.split('/')][::-1])
-    #                 new_value = datetime(y, m, d)
-
-    #             setattr(self, attr_name, new_value)
-
-    #     return super(HStoreModel, self).__getattribute__(attr_name)
