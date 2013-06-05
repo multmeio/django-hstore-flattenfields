@@ -255,7 +255,7 @@ class LookupTests(TestCase):
                 {'author__author_name': u'Author 2', 'title': u'Book 7'},
             ], transform=self.identity)
 
-    def test_saassa(self):
+    def test_values_author__author_name_and_book_title_with_order_by(self):
         self.assertQuerysetEqual(
             Author.objects.values('author_name', 'book__title').order_by('author_name', 'book__title'),
             [

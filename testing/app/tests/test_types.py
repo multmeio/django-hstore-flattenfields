@@ -15,7 +15,7 @@ from decimal import Decimal
 from app.models import *
 from hstore_flattenfields.models import DynamicField
 
-class TestSomethingTypes(TestCase):
+class TypeTests(TestCase):
     def setUp(self):
         DynamicField.objects.create(id=1, refer="Something", typo="Integer", name="something_dfield_int", verbose_name = u"Dynamic Field Int")
         DynamicField.objects.create(id=5, refer="Something", typo="Monetary", name="something_dfield_decimal", verbose_name=u"Dynamic Field Decimal",)
