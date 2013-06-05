@@ -55,13 +55,10 @@ def has_any_in(chances, possibilities):
 # cache in globals
 _DYNAMIC_FIELD_TABLE_EXISTS = None
 def dynamic_field_table_exists():
-    # NOTE: Error happen on syncdb, because DynamicField's table does not exist.
+    # NOTE: Error may happen on syncdb, because DynamicField's table does not exist.
     global _DYNAMIC_FIELD_TABLE_EXISTS
-    _DYNAMIC_FIELD_TABLE_EXISTS = 'dynamic_field' in connection.introspection.table_names()
-    # if _DYNAMIC_FIELD_TABLE_EXISTS == None:
-    #     cursor = connection.cursor()
-    #     cursor.execute("select count(*) from pg_tables where tablename='dynamic_field'")
-    #     _DYNAMIC_FIELD_TABLE_EXISTS = cursor.fetchone()[0] > 0
+    if _DYNAMIC_FIELD_TABLE_EXISTS == None:
+      _DYNAMIC_FIELD_TABLE_EXISTS = 'dynamic_field' in connection.introspection.table_names()
     return _DYNAMIC_FIELD_TABLE_EXISTS
 
 
