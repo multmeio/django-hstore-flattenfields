@@ -80,7 +80,16 @@ class HstoreIntegerField(models.IntegerField):
         if isinstance(value, int):
             return value
         else:
-            return int(value)
+            try:
+                return int(value)
+            except ValueError:
+                return None
+
+    def _get_val_from_obj(self, obj):
+        try:
+            return getattr(obj, self.attname)
+        except AttributeError:
+            return getattr(obj, self.name)
 
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
