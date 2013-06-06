@@ -71,3 +71,23 @@ class HstoreDateFieldTests(TestCase):
         self.assertEqual(f.value_to_string(something), "")
         _update_obj(something, "something_dfield_date", None)
         self.assertEqual(f.value_to_string(something), "")
+
+
+class HstoreDateTimeFieldTests(TestCase):
+    def test_to_python(self):
+        f = HstoreDateTimeField()
+        self.assertEqual(f.to_python("2013-06-03 11:04:05"), datetime(2013, 6, 3, 11, 4, 5))
+        self.assertEqual(f.to_python("2013-52-99 131:04:5"), "")
+        self.assertEqual(f.to_python(None), None)
+
+    def test_value_to_string(self):
+        f = HstoreDateTimeField(name="something_dfield_datetime")
+        DynamicField.objects.create(id=1, refer="Something", typo="DateTime", name="something_dfield_datetime", verbose_name=u"Dynamic Field Datetime")
+        something = Something.objects.create(something_dfield_datetime="2013-05-25 11:04:33")
+
+        self.assertEqual(f.value_to_string(something), "2013-05-25T11:04:33")
+        _update_obj(something, "something_dfield_datetime", datetime(2013, 2, 9, 11, 30, 22))
+
+        self.assertEqual(f.value_to_string(something), "2013-02-09T11:30:22")
+        _update_obj(something, "something_dfield_datetime", None)
+        self.assertEqual(f.value_to_string(something), "")

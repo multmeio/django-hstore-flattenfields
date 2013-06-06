@@ -191,7 +191,7 @@ class HstoreDateTimeField(models.DateTimeField):
         super(HstoreDateTimeField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):
-        if value is models.fields.NOT_PROVIDED or value == 'None':
+        if not value or value is models.fields.NOT_PROVIDED or value == 'None':
             return None
 
         if len(value) == 19:
@@ -203,6 +203,12 @@ class HstoreDateTimeField(models.DateTimeField):
         if value == 'None' or not value:
             return ''
         return value
+
+    def _get_val_from_obj(self, obj):
+        try:
+            return getattr(obj, self.attname)
+        except AttributeError:
+            return getattr(obj, self.name)
 
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
