@@ -1,11 +1,14 @@
 from django.test import TestCase
 from decimal import Decimal
+from datetime import date, datetime
 
 from hstore_flattenfields.fields import *
 from hstore_flattenfields.models import DynamicField
 
 from app.models import Something
 
+def _update_obj(obj, field, value):
+    setattr(obj, field, value); obj.save()
 
 class HstoreDecimalFieldTests(TestCase):
     def test_to_python(self):
@@ -20,9 +23,10 @@ class HstoreDecimalFieldTests(TestCase):
 
     def test_format(self):
         f = HstoreDecimalField(max_digits=5, decimal_places=1)
-        self.assertEqual(f._format(f.to_python(2)), '2.0')
-        self.assertEqual(f._format(f.to_python('2.6')), '2.6')
+        self.assertEqual(f._format(f.to_python(2)), "2.0")
+        self.assertEqual(f._format(f.to_python("2.6")), "2.6")
         self.assertEqual(f._format(None), None)
+
 
 class HstoreIntegerFieldTests(TestCase):
     def test_to_python(self):
@@ -37,19 +41,33 @@ class HstoreIntegerFieldTests(TestCase):
         self.assertEqual(f.get_default(), 0)
 
     def test_value_to_string(self):
-        def _update_something(obj, value):
-            obj.something_dfield_int = value;
-            obj.save()
-
-        f = HstoreIntegerField(name='something_dfield_int')
-        DynamicField.objects.create(id=1, refer="Something", typo="Integer", name="something_dfield_int", verbose_name = u"Dynamic Field Int")
+        f = HstoreIntegerField(name="something_dfield_int")
+        DynamicField.objects.create(id=1, refer="Something", typo="Integer", name="something_dfield_int", verbose_name=u"Dynamic Field Int")
         something = Something.objects.create(something_dfield_int=3)
 
         self.assertEqual(f.value_to_string(something), 3)
-        _update_something(something, -3)
+        _update_obj(something, "something_dfield_int", -3)
         self.assertEqual(f.value_to_string(something), -3)
-        _update_something(something, None)
+        _update_obj(something, "something_dfield_int", None)
         self.assertEqual(f.value_to_string(something), None)
-        _update_something(something, 'aaa')
+        _update_obj(something, "something_dfield_int", "aaa")
         self.assertEqual(f.value_to_string(something), None)
 
+
+class HstoreDateFieldTests(TestCase):
+    def test_to_python(self):
+        f = HstoreDateField()
+        self.assertEqual(f.to_python("2013-05-25"), date(2013, 05, 25))
+        self.assertEqual(f.to_python("2013-52-99"), "")
+        self.assertEqual(f.to_python(None), "")
+
+    def test_value_to_string(self):
+        f = HstoreDateField(name="something_dfield_date")
+        DynamicField.objects.create(id=1, refer="Something", typo="Date", name="something_dfield_date", verbose_name=u"Dynamic Field Date")
+        something = Something.objects.create(something_dfield_date="2013-05-25")
+
+        self.assertEqual(f.value_to_string(something), "2013-05-25")
+        _update_obj(something, "something_dfield_date", "2013-52-99")
+        self.assertEqual(f.value_to_string(something), "")
+        _update_obj(something, "something_dfield_date", None)
+        self.assertEqual(f.value_to_string(something), "")
