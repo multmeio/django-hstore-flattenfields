@@ -7,4 +7,4 @@ Django Hstore FlattenFields contributors (sorted alphabeticaly)
   * Most of features development
   * Initial tests
 
-**[Full contributors info](https://github.com/caolan/nodeunit/contributors).**
+**[Full contributors info](https://github.com/multmeio/django-hstore-flattenfields/contributors).**
