@@ -196,10 +196,8 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 fields = []
 
                 if not dynamic_field_table_exists():
-                    force_create_table()
-                #     return fields
+                    return fields
 
-                # metafields = DynamicField.objects.filter(refer=new_class.__name__)
                 metafields = find_dfields(refer=new_class.__name__)
                 for metafield in metafields:
                     try:
