@@ -174,7 +174,9 @@ class HstoreDateField(models.DateField):
 
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
-        return self.get_db_prep_value(value).isoformat()
+        if isinstance(value, date):
+            return self.get_db_prep_value(value).isoformat()
+        return ''
 
 
 class HstoreDateTimeField(models.DateTimeField):
@@ -272,9 +274,10 @@ class HstoreMultipleSelectField(models.CharField):
         return form_class(**defaults)
 
     def to_python(self, value):
+        if isinstance(value, list):
+            return value
         if value is models.fields.NOT_PROVIDED:
             return []
-
         return str2literal(value)
 
     def get_choices(self, include_blank=False):
