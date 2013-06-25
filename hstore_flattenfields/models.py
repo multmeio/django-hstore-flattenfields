@@ -10,6 +10,7 @@ Created on 13/10/2012
 from django.db import models
 from django_orm.postgresql import hstore
 from django.db.models.fields import FieldDoesNotExist
+from django.core.exceptions import ValidationError
 from django import forms
 
 from fields import *
@@ -62,12 +63,9 @@ def find_dfields(refer=None, name=None):
 
 class HStoreModelMeta(models.Model.__metaclass__):
     def __new__(cls, name, bases, attrs):
-        super_new = super(HStoreModelMeta, cls).__new__
-
-        # create it
-        new_class = super_new(cls, name, bases, attrs)
-
-        # pos create
+        new_class = super(HStoreModelMeta, cls).__new__(
+            cls, name, bases, attrs
+        )
 
         # override getattr/setattr/delattr
         old_getattribute = new_class.__getattribute__
@@ -99,34 +97,33 @@ class HStoreModelMeta(models.Model.__metaclass__):
                         return field.to_python(field.default_value)
                     except AttributeError:
                         return field.to_python(field.default)
-
             except TypeError:
                 if field and field.__class__.__name__ == 'ManyRelatedManager':
                     return field.all()
-
                 return field
-
         new_class.__getattribute__ = __getattribute__
 
         old_setattr = new_class.__setattr__
         def __setattr__(self, key, value):
             #print "called __setattr__(%r, %r)" % (key, value)
-
             if hasattr(self, '_dfields') and not key in dir(new_class):
-                # XXX: search for key on table, django will call this method many times on __init__
-                new_class_refer = new_class.__name__
-                # if DynamicField.objects.filter(refer=new_class_refer, name=key).exists():
-                if find_dfields(refer=new_class_refer, name=key):
-                    if isinstance(value, (list, tuple)):
-                        value = [unicode(v) for v in value]
-                    elif value is not None:
-                        value = unicode(value)
+                dfield = find_dfields(refer=new_class.__name__, name=key)
+                if dfield:
+                    value = dfield[0].get_modelfield.to_python(value)
 
-                    self._dfields[key] = unicode(value) if value else ''
+                    # if isinstance(value, (list, tuple)):
+                    #     value = [unicode(v) for v in value]
+                    # elif value is not None:
+                    #     value = unicode(value)
+                    #NOTE: Convert Date strings to ISO format.
+                    # if dfield.typo == 'Date' and value and not isinstance(value, date):
+                    #     value = str2date(value)
+
+                    self._dfields[key] = ''
+                    if value is not None:
+                        self._dfields[key] = unicode(value)
                     return
-
             old_setattr(self, key, value)
-
         new_class.__setattr__ = __setattr__
 
         old_delattr = new_class.__delattr__
@@ -135,7 +132,6 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 if key in self._dfields:
                     del self._dfields[key]
                     return
-
             return old_delattr(self, key)
         new_class.__delattr__ = __delattr__
 
@@ -153,17 +149,14 @@ class HStoreModelMeta(models.Model.__metaclass__):
 
             def init_name_map(self):
                 _cache = _old_meta.init_name_map()
-
                 for dfield in self.dynamic_fields:
                     _cache.update(**{
                         dfield.name: (dfield, _old_meta.concrete_model, True, False)
                     })
-
                 return _cache
 
             def get_field_by_name(self, name):
                 if name is 'pk': name = 'id'
-
                 try:
                     if hasattr(self, '_name_map') and name in self._name_map:
                         return self._name_map[name]
@@ -182,22 +175,19 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 for f in to_search:
                     if f.name == name:
                         return f
-
                 raise FieldDoesNotExist('%s has no field named %r' % (self.object_name, name))
 
             def get_all_field_names(self):
-                return [f.name for f in self.fields if not f.name == '_dfields']
+                return get_fieldnames(self.fields, ['_dfields'])
 
             def get_all_dynamic_field_names(self):
-                return [f.name for f in self.dynamic_fields if not f.name == '_dfields']
+                return get_fieldnames(self.dynamic_fields)
 
             @property
             def dynamic_fields(self):
                 fields = []
-
                 if not dynamic_field_table_exists():
                     return fields
-
                 metafields = find_dfields(refer=new_class.__name__)
                 for metafield in metafields:
                     try:
@@ -212,7 +202,6 @@ class HStoreModelMeta(models.Model.__metaclass__):
 
             @property
             def fields(self):
-                #add dynamic_fields from table
                 return _old_meta.fields + self.dynamic_fields
 
             def get_base_chain(self, model):
@@ -221,22 +210,18 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 to most distant ancestor). This has to handle the case were 'model' is
                 a granparent or even more distant relation.
                 """
-
                 if model in self.parents or not self.parents:
                     # FIXME: In cases of the actual Model doesn`t have
                     # Any parent, so return him
                     return [model]
-
                 parent = None
                 for parent in self.parents:
                     res = parent._meta.get_base_chain(model)
                     if res:
                         res.insert(0, parent)
                         return res
-
                 if model.__base__ == parent:
                     return [parent]
-
                 raise TypeError('%r is not an ancestor of this model'
                         % model._meta.module_name)
 
@@ -245,9 +230,9 @@ class HStoreModelMeta(models.Model.__metaclass__):
 
 
 class HStoreModel(models.Model):
-    __metaclass__ = HStoreModelMeta
     _dfields = hstore.DictionaryField(db_index=True, null=True, blank=True)
 
+    __metaclass__ = HStoreModelMeta
     objects = FlattenFieldsFilterManager()
 
     class Meta:

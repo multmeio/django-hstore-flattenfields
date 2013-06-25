@@ -9,13 +9,47 @@ Replace this with more appropriate tests for your application.
 """
 
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 from datetime import date, datetime
 from decimal import Decimal
 
 from app.models import *
 from hstore_flattenfields.models import DynamicField
 
-class TypeTests(TestCase):
+
+class TypeDateObjectLevelTests(TestCase):
+    def setUp(self):
+        DynamicField.objects.create(id=3, refer="Something", blank=False, typo="Date", name="something_dfield_date", verbose_name = u"Dynamic Field Date",)
+        self.something = Something.objects.create(
+            name=u"Some Name",
+        )
+
+    def test_assert_date_type(self):
+        self.something.something_dfield_date = date.today()
+        self.something.save()
+        self.assertIsInstance(self.something.something_dfield_date, date)
+
+    def test_assert_date_string_iso_type(self):
+        self.something.something_dfield_date = str(date.today())
+        self.something.save()
+        self.assertIsInstance(self.something.something_dfield_date, date)
+
+    def test_assert_date_string_br_type(self):
+        self.something.something_dfield_date = date.today().strftime("%d/%m/%Y")
+        self.something.save()
+        self.assertIsInstance(self.something.something_dfield_date, date)
+
+    def test_assert_invalid_date_string_type(self):
+        iso_today = str(date.today())
+        iso_today = iso_today.replace(iso_today[-2:], '50')
+        with self.assertRaises(ValueError):
+            self.something.something_dfield_date = iso_today
+            self.assertEqual(self.something.something_dfield_date, iso_today)
+            # self.assertRaises(ValueError, self.something.save)
+            self.assertIsInstance(self.something.something_dfield_date, date)
+
+
+class TypeCreateManagerTests(TestCase):
     def setUp(self):
         DynamicField.objects.create(id=1, refer="Something", typo="Integer", name="something_dfield_int", verbose_name = u"Dynamic Field Int")
         DynamicField.objects.create(id=5, refer="Something", typo="Monetary", name="something_dfield_decimal", verbose_name=u"Dynamic Field Decimal",)
@@ -24,7 +58,15 @@ class TypeTests(TestCase):
         DynamicField.objects.create(id=4, refer="Something", typo="DateTime", name="something_dfield_datetime", verbose_name=u"Dynamic Field DateTime")
         DynamicField.objects.create(id=6, refer="Something", typo="MultSelect", name="something_dfield_multiselect", verbose_name=u"Dynamic Field MultiSelect",)
 
-        self.something = Something.objects.create(name=u"Some Name", something_dfield_int=42, something_dfield_decimal=Decimal(42.5), something_dfield_str=u"Dynamic Field Str", something_dfield_date=date.today(), something_dfield_datetime=datetime.now(), something_dfield_multiselect=['A', 'B', 'C'])
+        self.something = Something.objects.create(
+            name=u"Some Name",
+            something_dfield_int=42,
+            something_dfield_decimal=Decimal(42.5),
+            something_dfield_str=u"Dynamic Field Str",
+            something_dfield_date=date.today(),
+            something_dfield_datetime=datetime.now(),
+            something_dfield_multiselect=['A', 'B', 'C']
+        )
 
     def test_assert_int_type(self):
         value = self.something.something_dfield_int
