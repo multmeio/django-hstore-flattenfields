@@ -31,6 +31,8 @@ setup(
         'Framework :: Django',
     ],
     zip_safe=False,
-    install_requires=['Django',
-    	'django-orm-extensions']
+    install_requires=[
+        'Django==1.4.3',
+    	'django-orm-extensions==3.0b3',
+    ]
 )
