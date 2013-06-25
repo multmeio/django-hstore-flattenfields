@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 from decimal import Decimal
 from datetime import date, datetime
 
@@ -58,7 +59,7 @@ class HstoreDateFieldTests(TestCase):
     def test_to_python(self):
         f = HstoreDateField()
         self.assertEqual(f.to_python("2013-05-25"), date(2013, 05, 25))
-        self.assertEqual(f.to_python("2013-52-99"), "")
+        self.assertRaises(ValueError, f.to_python, "2013-52-99")
         self.assertEqual(f.to_python(None), "")
 
     def test_value_to_string(self):
@@ -67,8 +68,29 @@ class HstoreDateFieldTests(TestCase):
         something = Something.objects.create(something_dfield_date="2013-05-25")
 
         self.assertEqual(f.value_to_string(something), "2013-05-25")
-        _update_obj(something, "something_dfield_date", "2013-52-99")
+        with self.assertRaises(ValueError):
+            _update_obj(something, "something_dfield_date", "2013-52-99")
+            self.assertEqual(f.value_to_string(something), "")
+        _update_obj(something, "something_dfield_date", None)
         self.assertEqual(f.value_to_string(something), "")
+
+
+class HstoreDateFieldBrTests(TestCase):
+    def test_to_python(self):
+        f = HstoreDateField()
+        self.assertEqual(f.to_python("25/05/2013"), date(2013, 05, 25))
+        self.assertRaises(ValueError, f.to_python, "99/52/2013")
+        self.assertEqual(f.to_python(None), "")
+
+    def test_value_to_string(self):
+        f = HstoreDateField(name="something_dfield_date")
+        DynamicField.objects.create(id=1, refer="Something", typo="Date", name="something_dfield_date", verbose_name=u"Dynamic Field Date")
+        something = Something.objects.create(something_dfield_date="25/05/2013")
+
+        self.assertEqual(f.value_to_string(something), "2013-05-25")
+        with self.assertRaises(ValueError):
+            _update_obj(something, "something_dfield_date", "99/52/2013")
+            self.assertEqual(f.value_to_string(something), "")
         _update_obj(something, "something_dfield_date", None)
         self.assertEqual(f.value_to_string(something), "")
 
@@ -77,7 +99,7 @@ class HstoreDateTimeFieldTests(TestCase):
     def test_to_python(self):
         f = HstoreDateTimeField()
         self.assertEqual(f.to_python("2013-06-03 11:04:05"), datetime(2013, 6, 3, 11, 4, 5))
-        self.assertEqual(f.to_python("2013-52-99 131:04:5"), "")
+        self.assertRaises(ValidationError, f.to_python, "2013-52-99 131:04:5")
         self.assertEqual(f.to_python(None), None)
 
     def test_value_to_string(self):
