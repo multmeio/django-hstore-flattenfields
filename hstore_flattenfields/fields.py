@@ -36,8 +36,6 @@ FIELD_TYPES_DICT = dict(
 )
 FIELD_TYPES = FIELD_TYPES_DICT.keys()
 
-
-
 class HstoreTextField(models.TextField):
     __metaclass__ = models.SubfieldBase
 
@@ -159,15 +157,11 @@ class HstoreDateField(models.DateField):
         super(HstoreDateField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):
-        if value is models.fields.NOT_PROVIDED or value == 'None':
+        if isinstance(value, date):
+            return value
+        if value is models.fields.NOT_PROVIDED:
             return None
-
         return str2date(value)
-
-    def clean(self, value, *args):
-        if value == 'None' or not value:
-            return ''
-        return value
 
     def _get_val_from_obj(self, obj):
         try:
@@ -175,13 +169,14 @@ class HstoreDateField(models.DateField):
         except AttributeError:
             return getattr(obj, self.name)
 
+    def get_db_prep_value(self, value):
+        return value if isinstance(value, date) else ''
+
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
-
-        if value and isinstance(value, date):
-            return value.isoformat()
-        else:
-            return ''
+        if isinstance(value, date):
+            return self.get_db_prep_value(value).isoformat()
+        return ''
 
 
 class HstoreDateTimeField(models.DateTimeField):
@@ -193,11 +188,7 @@ class HstoreDateTimeField(models.DateTimeField):
     def to_python(self, value):
         if not value or value is models.fields.NOT_PROVIDED or value == 'None':
             return None
-
-        if len(value) == 19:
-            return str2datetime(value, format="%Y-%m-%d %H:%M:%S")
-        else:
-            return str2datetime(value)
+        return str2datetime(value)
 
     def clean(self, value, *args):
         if value == 'None' or not value:
@@ -283,9 +274,10 @@ class HstoreMultipleSelectField(models.CharField):
         return form_class(**defaults)
 
     def to_python(self, value):
+        if isinstance(value, list):
+            return value
         if value is models.fields.NOT_PROVIDED:
             return []
-
         return str2literal(value)
 
     def get_choices(self, include_blank=False):
@@ -340,4 +332,5 @@ def crate_field_from_instance(instance):
     field.attname = field.name
     field.column = field.db_column
 
+    instance.get_modelfield = field
     return field
