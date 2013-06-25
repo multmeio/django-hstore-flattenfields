@@ -53,7 +53,7 @@ def release():
     local("git lg1 -n5")
     rev = prompt("Which revision you want release?")
 
-    cmd_tag = "git tag -f -a %s %s -m '%s'" % (tagname, rev, comment)
+    cmd_tag = "git tag -f %s %s -m '%s'" % (tagname, rev, comment)
 
     if confirm('%s # Create tag?' % cmd_tag, default=False):
         local(cmd_tag)
