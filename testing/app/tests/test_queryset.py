@@ -10,6 +10,7 @@ Replace this with more appropriate tests for your application.
 
 from django.test import TestCase, skipUnlessDBFeature
 from django.core.exceptions import FieldError
+from django.db.models import Sum
 from django.utils import six
 from datetime import date, datetime
 from decimal import Decimal
@@ -17,6 +18,7 @@ from operator import attrgetter
 
 from app.models import *
 from hstore_flattenfields.models import DynamicField
+from hstore_flattenfields.aggregates import *
 
 
 class LookupTests(TestCase):
@@ -38,13 +40,13 @@ class LookupTests(TestCase):
         self.au2 = Author.objects.create(author_name='Author 2', id=2)
 
         # Create a couple of Books.
-        self.b1 = Book.objects.create(title='Book 1', id=1, pubdate=datetime(2005, 7, 26), author=self.au1)
-        self.b2 = Book.objects.create(title='Book 2', id=2, pubdate=datetime(2005, 7, 27), author=self.au1)
-        self.b3 = Book.objects.create(title='Book 3', id=3, pubdate=datetime(2005, 7, 27), author=self.au1)
-        self.b4 = Book.objects.create(title='Book 4', id=4, pubdate=datetime(2005, 7, 28), author=self.au1)
-        self.b5 = Book.objects.create(title='Book 5', id=5, pubdate=datetime(2005, 8, 1, 9, 0), author=self.au2)
-        self.b6 = Book.objects.create(title='Book 6', id=6, pubdate=datetime(2005, 8, 1, 8, 0), author=self.au2)
-        self.b7 = Book.objects.create(title='Book 7', id=7, pubdate=datetime(2005, 7, 27), author=self.au2)
+        self.b1 = Book.objects.create(title='Book 1', id=1, pubdate=datetime(2005, 7, 26), author=self.au1, pages=1)
+        self.b2 = Book.objects.create(title='Book 2', id=2, pubdate=datetime(2005, 7, 27), author=self.au1, pages=2)
+        self.b3 = Book.objects.create(title='Book 3', id=3, pubdate=datetime(2005, 7, 27), author=self.au1, pages=3)
+        self.b4 = Book.objects.create(title='Book 4', id=4, pubdate=datetime(2005, 7, 28), author=self.au1, pages=4)
+        self.b5 = Book.objects.create(title='Book 5', id=5, pubdate=datetime(2005, 8, 1, 9, 0), author=self.au2, pages=5)
+        self.b6 = Book.objects.create(title='Book 6', id=6, pubdate=datetime(2005, 8, 1, 8, 0), author=self.au2, pages=6)
+        self.b7 = Book.objects.create(title='Book 7', id=7, pubdate=datetime(2005, 7, 27), author=self.au2, pages=7)
 
         # Create a few Tags.
         self.t1 = Tag.objects.create(tag_name='Tag 1')
@@ -55,6 +57,36 @@ class LookupTests(TestCase):
         self.t3.articles.add(self.b5, self.b6, self.b7)
 
         self.identity = lambda x: x
+
+    def test_aggregate_sum(self):
+        self.assertEqual(
+            Book.objects.aggregate(total_pages=HstoreSum('pages')),
+            {'total_pages': 28}
+        )
+
+    def test_aggregate_count(self):
+        self.assertEqual(
+            Book.objects.aggregate(total_pages=HstoreCount('pages')),
+            {'total_pages': 7}
+        )
+
+    def test_aggregate_avg(self):
+        self.assertEqual(
+            Book.objects.aggregate(total_pages=HstoreAvg('pages')),
+            {'total_pages': 4}
+        )
+
+    def test_aggregate_max(self):
+        self.assertEqual(
+            Book.objects.aggregate(total_pages=HstoreMax('pages')),
+            {'total_pages': 7}
+        )
+
+    def test_aggregate_min(self):
+        self.assertEqual(
+            Book.objects.aggregate(total_pages=HstoreMin('pages')),
+            {'total_pages': 1}
+        )
 
     def test_exists(self):
         # We can use .exists() to check that there are some
@@ -273,7 +305,7 @@ class LookupTests(TestCase):
         self.assertQuerysetEqual(Book.objects.filter(id=self.b5.id).values(),
             [{
                 # u'pages': 0,
-                u'pages': u'0',
+                u'pages': u'5',
                 u'title': u'Book 5',
                 u'id': 5,
                 u'pubdate': u'2005-08-01 09:00:00',
