@@ -178,7 +178,12 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 raise FieldDoesNotExist('%s has no field named %r' % (self.object_name, name))
 
             def get_all_field_names(self):
-                return get_fieldnames(self.fields, ['_dfields'])
+                declared_and_dfields = set(get_fieldnames(self.fields, ['_dfields']))
+                relation_fields = set()
+                if hasattr(self, '_name_map'):
+                    relation_fields = set(getattr(self, '_name_map').keys())
+                all_fields = list(declared_and_dfields.union(relation_fields))
+                return all_fields
 
             def get_all_dynamic_field_names(self):
                 return get_fieldnames(self.dynamic_fields)
