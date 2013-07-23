@@ -10,6 +10,7 @@ Django-hstore-flattenfields is an alternative for who want to have a Dynamic Sch
 * *.objects.create()
 * Automatic type parsing
 * QuerySet filters (exact, iexact, contains, icontains, startswith, istartswith, endswith, iendswith, in, lt, lte, gt, gte)
+* Aggregations
 
 
 Install and usage
