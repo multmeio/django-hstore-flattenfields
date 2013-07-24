@@ -59,7 +59,7 @@ def release():
         local(cmd_tag)
 
     if confirm('push to github?', default=False):
-        local('git push --tags -f')
+        local('git push origin master --tags -f')
 
 def pub_release():
     """Publish release to PyPI. It's only used by mantainer"""
