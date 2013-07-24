@@ -48,6 +48,12 @@ class DynamicField(models.Model):
         global dfields
         dfields =  DynamicField.objects.all()
 
+    def delete(self, *args, **kwargs):
+        super(DynamicField, self).delete(*args, **kwargs)
+        # NOTE: force update global dfields fieldset
+        global dfields
+        dfields =  DynamicField.objects.all()
+
 
 # XXX: Charge memory with all dfields for prevent flood on db.
 dfields =  DynamicField.objects.all()
