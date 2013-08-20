@@ -56,7 +56,7 @@ class HstoreFloatField(models.FloatField):
         super(HstoreFloatField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):
-        if value is models.fields.NOT_PROVIDED:
+        if not value or value is models.fields.NOT_PROVIDED:
             return None
 
         if isinstance(value, float):
