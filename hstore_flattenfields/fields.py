@@ -308,7 +308,7 @@ def get_modelfield(typo):
         )
     )
 
-def crate_field_from_instance(instance):
+def create_field_from_instance(instance):
     FieldClass = get_modelfield(instance.typo)
 
     # FIXME: The Data were saved in a string: "None"
