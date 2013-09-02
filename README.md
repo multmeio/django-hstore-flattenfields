@@ -5,6 +5,10 @@ Django-hstore-flattenfields is an alternative for who want to have a Dynamic Sch
 
 *Django-hstore-flattenfields is built and used in the [Multmeio](http://www.multmeio.com.br) enterprise.*
 
+Status:
+
+![Downloads](https://pypip.in/d/django_hstore_flattenfields/badge.png)
+
 #### Some great features are:
 * ModelForms
 * *.objects.create()
