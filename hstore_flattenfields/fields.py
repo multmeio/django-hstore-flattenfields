@@ -157,11 +157,14 @@ class HstoreDateField(models.DateField):
         super(HstoreDateField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):
-        if isinstance(value, date):
-            return value
-        if value is models.fields.NOT_PROVIDED:
+        if not value or value is models.fields.NOT_PROVIDED or value == 'None':
             return None
         return str2date(value)
+
+    def clean(self, value, *args):
+        if value == 'None' or not value:
+            return ''
+        return value
 
     def _get_val_from_obj(self, obj):
         try:
@@ -169,15 +172,12 @@ class HstoreDateField(models.DateField):
         except AttributeError:
             return getattr(obj, self.name)
 
-    def get_db_prep_value(self, value):
-        return value if isinstance(value, date) else ''
-
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
-        if isinstance(value, date):
-            return self.get_db_prep_value(value).isoformat()
-        return ''
 
+        if value and isinstance(value, date):
+            return value.isoformat()
+        return ''
 
 class HstoreDateTimeField(models.DateTimeField):
     __metaclass__ = models.SubfieldBase
@@ -308,7 +308,7 @@ def get_modelfield(typo):
         )
     )
 
-def create_field_from_instance(instance):
+def crate_field_from_instance(instance):
     FieldClass = get_modelfield(instance.typo)
 
     # FIXME: The Data were saved in a string: "None"

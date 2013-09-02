@@ -8,6 +8,6 @@ Copyright (c) 2011 Multmeio [design+tecnologia]. All rights reserved.
 """
 
 from django.contrib import admin
-from models import DynamicField
+# from models import DynamicField
 
-admin.site.register(DynamicField)
+# admin.site.register(DynamicField)

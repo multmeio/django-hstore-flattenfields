@@ -10,22 +10,66 @@ Created on 13/10/2012
 from django.db import models
 from django_orm.postgresql import hstore
 from django.db.models.fields import FieldDoesNotExist
-from django.db.models.fields.related import ManyRelatedManager
-from django.core.exceptions import ValidationError
+from django.db.models.fields.related import ManyToManyField
+from django.db.models.query import QuerySet
+from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django import forms
+from django.conf import settings
+from django.db.models import get_model
 
 from fields import *
 from queryset import *
 from utils import *
 
-dfields = None
+dfields = []
+
+# Setup the "class Meta:" flattenfields custom configs
+models.options.DEFAULT_NAMES += (
+    'hstore_related_field', 
+    'hstore_related_class_field',
+)
+
+
+class BaseDynamicField(models.Model):
+    refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
+    name = models.CharField(max_length=120, blank=False, db_index=True, unique=True, verbose_name="Field name")
+    verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
+    typo = models.CharField(max_length=20, blank=False, db_index=True, verbose_name="Field type",
+        choices=single_list_to_tuple(FIELD_TYPES))
+    max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
+    order = models.IntegerField(null=True, blank=True, default=None, verbose_name="Order")
+    blank = models.BooleanField(default=True, verbose_name="Blank")
+    choices = models.TextField(null=True, blank=True, verbose_name="Choices")
+    default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name="Default value")
+
+    class Meta:
+        abstract = True
+
+    def __unicode__(self):
+        return self.verbose_name or self.name
+
+    @property
+    def has_blank_option(self):
+        return self.blank and \
+            self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION
+
+    def save(self, *args, **kwargs):
+        super(BaseDynamicField, self).save()
+        global dfields  
+        dfields = get_dynamic_field_model().objects.all()
+
+    def delete(self):
+        super(BaseDynamicField, self).delete()
+        global dfields        
+        dfields = get_dynamic_field_model().objects.all()
+
 
 class ContentPane(models.Model):
     """
     Class to contains fields reproduced into TABs, DIVs,... on templates.
     """
-    name = models.CharField(max_length=80, null=False, verbose_name=u'Título')
-    order = models.IntegerField(null=False, blank=False, default=0, verbose_name=u'Ordem')
+    name = models.CharField(max_length=80, null=False, verbose_name=u'Name')
+    order = models.IntegerField(null=False, blank=False, default=0, verbose_name=u'Order')
     slug = models.CharField(max_length=80, null=False)
 
     class Meta:
@@ -39,7 +83,7 @@ class ContentPane(models.Model):
         return self.dynamic_fields.all()
 
 
-class DynamicFieldGroup(models.Model):
+class BaseDynamicFieldGroup(models.Model):
     """
     Class context to fields in the use case.
     This has to be implemented on main app, and related to
@@ -49,56 +93,11 @@ class DynamicFieldGroup(models.Model):
     slug = models.CharField(max_length=80, unique=True, null=False)
     description = models.TextField(null=True, blank=True, verbose_name=u'Description')
 
+    class Meta:
+        abstract = True
+
     def __unicode__(self):
         return u"%s" % self.name
-
-
-class DynamicField(models.Model):
-    refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
-    name = models.CharField(max_length=120, blank=False, db_index=True, unique=True, verbose_name="Field name")
-    verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
-    typo = models.CharField(max_length=20, blank=False, db_index=True, verbose_name="Field type",
-        choices=single_list_to_tuple(FIELD_TYPES))
-    max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
-    order = models.IntegerField(null=True, blank=True, default=None, verbose_name="Order")
-    blank = models.BooleanField(default=True, verbose_name="Blank")
-    choices = models.TextField(null=True, blank=True, verbose_name="Choices")
-    default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name="Default value")
-
-    # relations
-    content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name='dynamic_fields', verbose_name=u'Panel')
-    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='dynamic_fields', verbose_name=u'Group')
-
-    def __unicode__(self):
-        return self.verbose_name or self.name
-
-    @property
-    def has_blank_option(self):
-        return self.blank and \
-            self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION
-
-    def save(self, *args, **kwargs):
-        super(DynamicField, self).save()
-        global dfields
-        dfields = DynamicField.objects.all()
-
-    def delete(self):
-        super(DynamicField, self).delete()
-        global dfields
-        dfields = DynamicField.objects.all()
-
-# XXX: Charge memory with all dfields for prevent flood on db.
-dfields =  DynamicField.objects.all()
-
-def find_dfields(refer=None, name=None, groups=None):
-    if name and refer:
-        return [dfield for dfield in dfields if dfield.refer == refer and dfield.name == name]
-    elif name:
-        return [dfield for dfield in dfields if dfield.name == name]
-    elif refer and groups:
-        return [dfield for dfield in dfields if dfield.refer == refer and dfield.group in groups]
-    elif refer:
-        return [dfield for dfield in dfields if dfield.refer == refer]
 
 
 class HStoreModelMeta(models.Model.__metaclass__):
@@ -131,12 +130,6 @@ class HStoreModelMeta(models.Model.__metaclass__):
                     return field.to_python(value)
                 else:
                     raise
-            except ValueError:
-                if field:
-                    try:
-                        return field.to_python(field.default_value)
-                    except AttributeError:
-                        return field.to_python(field.default)
             except TypeError:
                 if field and field.__class__.__name__ == 'ManyRelatedManager':
                     return field.all()
@@ -146,20 +139,10 @@ class HStoreModelMeta(models.Model.__metaclass__):
         old_setattr = new_class.__setattr__
         def __setattr__(self, key, value):
             #print "called __setattr__(%r, %r)" % (key, value)
-
-            if hasattr(self, '_dfields') and not hasattr(new_class, key):
+            if hasattr(self, '_dfields') and not key in dir(new_class):
                 dfield = find_dfields(refer=new_class.__name__, name=key)
                 if dfield:
-                    # import ipdb; ipdb.set_trace()
-                    value = get_modelfield(dfield[0].typo)().to_python(value)
-
-                    # if isinstance(value, (list, tuple)):
-                    #     value = [unicode(v) for v in value]
-                    # elif value is not None:
-                    #     value = unicode(value)
-                    #NOTE: Convert Date strings to ISO format.
-                    # if dfield.typo == 'Date' and value and not isinstance(value, date):
-                    #     value = str2date(value)
+                    value = get_modelfield(dfield[0])().to_python(value)
 
                     self._dfields[key] = ''
                     if value is not None:
@@ -176,42 +159,6 @@ class HStoreModelMeta(models.Model.__metaclass__):
                     return
             return old_delattr(self, key)
         new_class.__delattr__ = __delattr__
-
-
-        # @property
-        # def dynamic_fields(self):
-        #     """
-        #     Property created to return the DynamicFields of this instance.
-
-        #     If this instance has a 'related_field', it returns his fields,
-        #     if not, we will return just the fields without 'related_field' setted.
-
-        #     XXX: Today the fields is getting from the memory...
-        #     """
-        #     import ipdb; ipdb.set_trace()
-
-        #     dfields = find_dfields(refer=self.__class__.__name__)
-        #     selected_dfields = []
-
-        #     for dfield in dfields:
-        #         if self.related_instance:
-        #             if getattr(dfield, self.hstore_related_field) == self.related_instance or \
-        #                getattr(dfield, self.hstore_related_field) == None:
-        #                 selected_dfields.append(dfield)
-        #         else:
-        #             if getattr(dfield, self.hstore_related_field) == None:
-        #                 selected_dfields.append(dfield)
-        #     return selected_dfields
-        # new_class.dynamic_fields = dynamic_fields
-
-
-        # @property
-        # def content_panes(self):
-        #     return ContentPane.objects.filter(
-        #         dynamic_fields__in=self.dynamic_fields
-        #     ).distinct()
-
-
 
         # override _meta.fields (property)
         _old_meta = new_class._meta
@@ -275,7 +222,7 @@ class HStoreModelMeta(models.Model.__metaclass__):
                 for metafield in metafields:
                     try:
                         fields.append(
-                            create_field_from_instance(metafield)
+                            crate_field_from_instance(metafield)
                         )
                     except SyntaxError:
                         raise \
@@ -343,20 +290,28 @@ class HStoreModel(models.Model):
             self._dfields = _dfields
 
 
-class HStoreContentPaneModel(HStoreModel):
-    hstore_related_field = None
-    related_instance = None
-
+class BaseHStoreGroupedModel(HStoreModel):
     class Meta:
         abstract = True
 
     def __init__(self, *args, **kwargs):
-        super(HStoreContentPaneModel, self).__init__(*args, **kwargs)
-        if self.hstore_related_field:
-            self.related_instance = getattr(self, self.hstore_related_field)
-
-            if isinstance(self.related_instance, ManyRelatedManager):
-                self.related_instance = self.related_instance.all()
+        super(BaseHStoreGroupedModel, self).__init__(*args, **kwargs)
+        if not hasattr(self._meta, 'hstore_related_field'):
+            raise TypeError("'class Meta: hstore_related_field' "
+                            "must be setted with the name of your "
+                            "Relation of your Group Model")
+        if not hasattr(self._meta, 'hstore_related_class_field'):
+            raise TypeError("'class Meta: hstore_related_class_field' "
+                            "must be setted with the name of your "
+                            "Relation *inside* of your Group Model")
+    
+    @property
+    def related_instance(self):
+        """
+        Property created to return the object which is related from 'self'
+        and the 'self._meta.hstore_related_field' attribute.
+        """
+        raise NotImplementedError()
 
     @property
     def dynamic_fields(self):
@@ -365,95 +320,49 @@ class HStoreContentPaneModel(HStoreModel):
 
         If this instance has a 'related_field', it returns his fields,
         if not, we will return just the fields without 'related_field' setted.
-
-        XXX: Today the fields is getting from the memory...
         """
-        dfields = find_dfields(refer=self.__class__.__name__)
-        selected_dfields = []
-
-        for dfield in dfields:
-            if self.related_instance:
-                if getattr(dfield, self.hstore_related_field) == self.related_instance or \
-                   getattr(dfield, self.hstore_related_field) == None:
-                   selected_dfields.append(dfield)
-            else:
-                if getattr(dfield, self.hstore_related_field) == None:
-                    selected_dfields.append(dfield)
-        return selected_dfields
-
-    @property
-    def content_panes(self):
-        return ContentPane.objects.filter(
-            dynamic_fields__in=self.dynamic_fields
-        ).distinct()
+        raise NotImplementedError()
 
 
-class HStoreContentPaneManyToManyModel(HStoreModel):
-    hstore_related_field = None
-    hstore_dfield_related_field = None
-
+class HStoreGroupedModel(HStoreModel):
     class Meta:
         abstract = True
-
-    def save(self, *args, **kwargs):
-        super(HStoreContentPaneManyToManyModel, self).save(*args, **kwargs)
-
-    def __init__(self, *args, **kwargs):
-        super(HStoreContentPaneManyToManyModel, self).__init__(*args, **kwargs)
-        base_class = self.__class__.__base__
-        hstore_classes = [HStoreModel, HStoreContentPaneManyToManyModel]
-
-        if self.hstore_related_field:
-            try:
-                self.related_instance = getattr(self, self.hstore_related_field).all()
-            except AttributeError:
-                self.related_instance = []
-
-        if not base_class in hstore_classes:
-            related_name = "%s_ptr" % base_class.__name__.lower()
-
-            for dfield in self.dynamic_fields:
-                name = dfield.name
-
-                if self.pk and hasattr(self.__class__, related_name):
-                    parent = getattr(self, related_name)
-                    value = getattr(parent, name, '')
-                    setattr(self, name, value)
+        db_table = 'hstore_grouped_model'
 
     @property
-    def related_field(self):
-        # NOTE: The name of fields in the relation of the Entity and
-        #       the DynamicField Model can be differents...
-        return self.hstore_dfield_related_field if \
-            self.hstore_dfield_related_field else \
-            self.hstore_related_field
+    def related_instance(self):
+        return getattr(self, self._meta.hstore_related_field)
+    
+    @property
+    def dynamic_fields(self):
+        refer = self.__class__.__name__
+        def by_group(dynamic_field): 
+            return getattr(
+                dynamic_field, 
+                self._meta.hstore_related_class_field
+            ) in [self.related_instance, None]
+        return filter(by_group, find_dfields(refer=refer))
+        
+
+class HStoreM2MGroupedModel(HStoreModel):
+    class Meta:
+        abstract = True
+        db_table = 'hstore_m2m_grouped_model'
+
+    @property
+    def related_instances(self):
+        return filter(
+            lambda related_dynamic_field: related_dynamic_field, 
+            getattr(self, self._meta.hstore_related_field).all()
+        )
 
     @property
     def dynamic_fields(self):
-        """
-        Property created to return the DynamicFields of this instance.
-
-        If this instance has a 'related_field', it returns his fields,
-        if not, we will return just the fields withou 'related_field' setted.
-
-        XXX: Today the fields is getting from the memory...
-        """
-        dfields = find_dfields(refer=self.__class__.__name__, groups=[self.related_instance])
-        selected_dfields = []
-        for dfield in dfields:
-            if self.related_instance:
-                if dfield.dynamic_fields in self.related_instance or \
-                   dfield.dynamic_fields == None:
-                   selected_dfields.append(dfield)
-            else:
-                if getattr(dfield, self.dynamic_fields) == None:
-                    selected_dfields.append(dfield)
-        return selected_dfields
-
-
-    @property
-    def content_panes(self):
-        return set([
-            x.content_pane for x in self.dynamic_fields if x.content_pane
-        ])
-
+        refer = self.__class__.__name__
+        def by_group(dynamic_field): 
+            instances = self.related_instances + [None]
+            return getattr(
+                dynamic_field, 
+                self._meta.hstore_related_class_field
+            ) in instances
+        return filter(by_group, find_dfields(refer=refer))

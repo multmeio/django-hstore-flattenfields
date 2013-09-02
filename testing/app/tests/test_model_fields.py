@@ -4,9 +4,9 @@ from decimal import Decimal
 from datetime import date, datetime
 
 from hstore_flattenfields.fields import *
-from hstore_flattenfields.models import DynamicField
+# from hstore_flattenfields.models import DynamicField
 
-from app.models import Something
+from app.models import Something, DynamicField
 
 def _update_obj(obj, field, value):
     setattr(obj, field, value); obj.save()
@@ -60,7 +60,7 @@ class HstoreDateFieldTests(TestCase):
         f = HstoreDateField()
         self.assertEqual(f.to_python("2013-05-25"), date(2013, 05, 25))
         self.assertRaises(ValueError, f.to_python, "2013-52-99")
-        self.assertEqual(f.to_python(None), "")
+        self.assertEqual(f.to_python(None), None)
 
     def test_value_to_string(self):
         f = HstoreDateField(name="something_dfield_date")
@@ -80,7 +80,7 @@ class HstoreDateFieldBrTests(TestCase):
         f = HstoreDateField()
         self.assertEqual(f.to_python("25/05/2013"), date(2013, 05, 25))
         self.assertRaises(ValueError, f.to_python, "99/52/2013")
-        self.assertEqual(f.to_python(None), "")
+        self.assertEqual(f.to_python(None), None)
 
     def test_value_to_string(self):
         f = HstoreDateField(name="something_dfield_date")

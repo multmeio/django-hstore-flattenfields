@@ -17,7 +17,7 @@ from decimal import Decimal
 from operator import attrgetter
 
 from app.models import *
-from hstore_flattenfields.models import DynamicField
+# from hstore_flattenfields.models import DynamicField
 from hstore_flattenfields.aggregates import *
 
 
@@ -304,12 +304,31 @@ class LookupTests(TestCase):
         # If you don't specify field names to values(), all are returned.
         self.assertQuerysetEqual(Book.objects.filter(id=self.b5.id).values(),
             [{
-                # u'pages': 0,
-                u'pages': u'5',
-                u'title': u'Book 5',
-                u'id': 5,
-                u'pubdate': u'2005-08-01 09:00:00',
-                'author': 2
+                'pubdate': '2005-08-01 09:00:00',
+                'title': str(self.b5),
+                'author': 2,
+                '_dfields': {
+                    'pages': '5', 
+                    'pubdate': '2005-08-01 09:00:00', 
+                    'title': str(self.b5)
+                }, 
+                'id': 5, 
+                'tag': 86, 
+                'pages': '5', 
+                'tags': None
+            }, {
+                'pubdate': '2005-08-01 09:00:00', 
+                'title': str(self.b5), 
+                'author': 2, 
+                '_dfields': {
+                    'pages': '5', 
+                    'pubdate': '2005-08-01 09:00:00', 
+                    'title': str(self.b5)
+                }, 
+                'id': 5, 
+                'tag': 87, 
+                'pages': '5', 
+                'tags': None
             }], transform=self.identity)
 
     def test_values_list__title(self):

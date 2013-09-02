@@ -8,8 +8,10 @@ Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
 """
 
 from django.template.defaultfilters import slugify, floatformat
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.db import connection
+from django.db.models import get_model
+from django.conf import settings
 from ast import literal_eval
 from datetime import datetime, date
 import re, six
@@ -45,7 +47,9 @@ __all__ = ['single_list_to_tuple',
            'str2date',
            'str2datetime',
            'DATE_BR_RE',
-           'get_fieldnames'
+           'get_fieldnames',
+           'find_dfields',
+           'get_dynamic_field_model',
 ]
 
 
@@ -102,3 +106,29 @@ def get_fieldnames(fields, excludes=[]):
     return map(lambda f: f.name,
         filter(lambda f: f.name not in excludes, fields)
     )
+
+def find_dfields(refer=None, name=None):
+    from hstore_flattenfields.models import dfields
+
+    def by_refer(x): return x.refer == refer
+    def by_name(x): return x.name == name
+    def by_refer_name(x): return by_refer(x) and by_name(x)
+
+    if refer and name:
+        return filter(by_refer_name, dfields)
+    elif refer:
+        return filter(by_refer, dfields)
+    elif name:
+        return filter(by_name, dfields)
+
+def get_dynamic_field_model():
+    "Return the DynamicField model that is used in this project"
+    try:
+        app_label, model_name = settings.HSTORE_DYNAMIC_MODEL.split('.')
+    except ValueError:
+        raise ImproperlyConfigured("HSTORE_DYNAMIC_MODEL must be of the form 'app_label.model_name'")
+    user_model = get_model(app_label, model_name)
+    if user_model is None:
+        raise ImproperlyConfigured("HSTORE_DYNAMIC_MODEL refers to model '%s' that has not been installed" % settings.HSTORE_DYNAMIC_MODEL)
+    return user_model
+
