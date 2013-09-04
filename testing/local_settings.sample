@@ -15,6 +15,10 @@ DATABASES = {
         'NAME': DBNAME,
         'USER': DBUSER,
         'PASSWORD': DBPASS,
+        'HOST': '',
+        'PORT': '',
+    }
+}
 
 # The version of your postgres db, must be >= 9.1.
 PG_VERSION = (9.1,)
