@@ -97,9 +97,10 @@ def has_any_in(chances, possibilities):
 # cache in globals
 _DYNAMIC_FIELD_TABLE_EXISTS = None
 def dynamic_field_table_exists():
+    dynamic_field_table_name = get_dynamic_field_model()._meta.db_table
     global _DYNAMIC_FIELD_TABLE_EXISTS
     if not _DYNAMIC_FIELD_TABLE_EXISTS:
-        _DYNAMIC_FIELD_TABLE_EXISTS = 'dynamic_field' in connection.introspection.table_names()
+        _DYNAMIC_FIELD_TABLE_EXISTS = dynamic_field_table_name in connection.introspection.table_names()
     return _DYNAMIC_FIELD_TABLE_EXISTS
 
 def get_fieldnames(fields, excludes=[]):
