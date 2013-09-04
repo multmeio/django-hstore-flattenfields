@@ -9,6 +9,10 @@ Status:
 
 ![Downloads](https://pypip.in/d/django_hstore_flattenfields/badge.png)
 
+CIBuildStatus
+
+![Codeship Status for multmeio/django-hstore-flattenfields](https://www.codeship.io/projects/7179a640-f087-0130-5d53-7e0d6fca55d7/status?branch=content_pane_and_dynamic_field_group)
+
 #### Some great features are:
 * ModelForms
 * *.objects.create()
