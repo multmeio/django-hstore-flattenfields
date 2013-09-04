@@ -11,3 +11,6 @@ DATABASES = {
 
 # The version of your postgres db, must be >= 9.1.
 PG_VERSION = (X.X,)
+
+
+HSTORE_DYNAMIC_MODEL = 'app.DynamicField'
