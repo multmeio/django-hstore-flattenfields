@@ -351,15 +351,20 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def related_instances(self):
-        return filter(
-            lambda related_dynamic_field: related_dynamic_field, 
-            getattr(self, self._meta.hstore_related_field).all()
-        )
+        try:
+            return filter(
+                lambda related_dynamic_field: related_dynamic_field, 
+                getattr(self, self._meta.hstore_related_field).all()
+            )
+        except (AttributeError, ValueError):
+            return []
 
     @property
     def dynamic_fields(self):
+        
         refer = self.__class__.__name__
         def by_group(dynamic_field): 
+            # import ipdb; ipdb.set_trace()
             instances = self.related_instances + [None]
             return getattr(
                 dynamic_field, 

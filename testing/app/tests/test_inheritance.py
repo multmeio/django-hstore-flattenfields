@@ -23,6 +23,8 @@ class AuthorSpecializedInheritanceTests(TestCase):
            	typo="Integer", name="author_specialized_age", verbose_name=u"Age")
         self.dfield2 = DynamicField.objects.create(id=2, refer="AuthorSpecialized", group=self.group1, 
             name="author_specialized_name", verbose_name=u"Name", typo="CharField", max_length=100)
+        self.dfield3 = DynamicField.objects.create(id=3, refer="AuthorSpecialized", 
+            name="author_specialized_information", verbose_name=u"Information", typo="CharField", max_length=100)
 
     def test_assert_all_dynamic_fields(self):
         self.author_specialized = AuthorSpecialized.objects.create(
@@ -31,5 +33,5 @@ class AuthorSpecializedInheritanceTests(TestCase):
         self.author_specialized.groups.add(self.group1)
         self.assertEqual(
             self.author_specialized.dynamic_fields,
-            [self.dfield1, self.dfield2]
+            [self.dfield1, self.dfield2, self.dfield3]
         )
