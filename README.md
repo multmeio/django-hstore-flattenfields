@@ -29,8 +29,9 @@ You're done! django-hstore-flattenfields is ready to use! ;)
 
 For a full example click [here](https://github.com/multmeio/django-hstore-flattenfields/tree/master/example).
 
-*TODO Add usage information and useful example*
+Diagram Application
 
+![diagram](https://raw.github.com/multmeio/django-hstore-flattenfields/content_pane_and_dynamic_field_group/doc/application_diagram.png)
 
 Development
 ------------
