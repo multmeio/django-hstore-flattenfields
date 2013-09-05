@@ -349,6 +349,24 @@ class HStoreM2MGroupedModel(HStoreModel):
         abstract = True
         db_table = 'hstore_m2m_grouped_model'
 
+    def __init__(self, *args, **kwargs):
+        super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)
+        if not self.pk: return
+        
+        base_class = self.__class__.__base__
+        hstore_classes = [HStoreModel, HStoreM2MGroupedModel]
+
+        if not base_class in hstore_classes:
+            related_name = "%s_ptr" % base_class.__name__.lower()
+
+            for dfield in self.dynamic_fields:
+                name = dfield.name
+
+                if hasattr(self.__class__, related_name):
+                    parent = getattr(self, related_name)
+                    value = getattr(parent, name, '')
+                    setattr(self, name, value)
+
     @property
     def related_instances(self):
         try:
@@ -361,10 +379,8 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def dynamic_fields(self):
-        
         refer = self.__class__.__name__
         def by_group(dynamic_field): 
-            # import ipdb; ipdb.set_trace()
             instances = self.related_instances + [None]
             return getattr(
                 dynamic_field, 

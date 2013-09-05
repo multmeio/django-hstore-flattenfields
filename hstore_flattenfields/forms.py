@@ -73,7 +73,6 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                 self.fields[field_name].widget = field_widget
                 self.fields[field_name].localize = True
 
-
         if not hstore_order:
             hstore_order = [x for x in self.fields.keyOrder if not x in dfield_names]
 
@@ -84,7 +83,6 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             hstore_order.insert(field.order or len(hstore_order), field.name)
 
         self.fields.keyOrder = hstore_order
-
 
         for name in self.fields.keys():
             if name not in all_fields:
