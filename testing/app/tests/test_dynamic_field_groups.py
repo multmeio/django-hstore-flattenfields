@@ -45,8 +45,6 @@ class OneToManyDynamicFieldGroupTests(TestCase):
             something_age=42,
             something_slug="some-name",
         )
-        # import ipdb; ipdb.set_trace()
-
         self.assertEqual(
             self.something.dynamic_fields,
             [self.dfield2, self.dfield3]
