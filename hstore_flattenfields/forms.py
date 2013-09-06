@@ -14,7 +14,7 @@ from django.template import Context, loader
 
 import models as hs_models
 import widgets as hs_widgets
-from utils import find_dfields, get_dynamic_field_model
+# from utils import get_dynamic_field_model
 
 class HStoreModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -61,7 +61,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                                       parent_local_fields]
         for field in self._dyn_fields:
             field_name = field.name
-            if isinstance(field, get_dynamic_field_model()):
+            if isinstance(field, hs_models.DynamicField):
                 field_widget = field.get_modelfield.formfield().widget
             else:
                 field_widget = field.widget
@@ -76,7 +76,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         if not hstore_order:
             hstore_order = [x for x in self.fields.keyOrder if not x in dfield_names]
 
-        for field in find_dfields(refer=self.instance.__class__.__name__):
+        for field in hs_models.DynamicField.objects.find_dfields(refer=self.instance.__class__.__name__):
             if field.name in hstore_order:
                 hstore_order.pop(hstore_order.index(field.name))
 

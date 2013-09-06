@@ -1,28 +1,7 @@
 from django.db import models
-from hstore_flattenfields.models import (HStoreModel, BaseDynamicField, 
-                                         ContentPane, BaseDynamicFieldGroup,
+from hstore_flattenfields.models import (HStoreModel, DynamicField,
+                                         ContentPane, DynamicFieldGroup,
                                          HStoreGroupedModel, HStoreM2MGroupedModel)
-
-
-class DynamicFieldGroup(BaseDynamicFieldGroup):
-
-    class Meta:
-        verbose_name = 'DynamicFieldGroup'
-        verbose_name_plural = 'DynamicFieldGroups'
-
-
-class DynamicField(BaseDynamicField):
-    # TODO: Define fields here
-
-    # relations
-    content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name='dynamic_fields', verbose_name=u'Panel')
-    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='dynamic_fields', verbose_name=u'Group')
-
-    class Meta:
-        db_table = 'dynamic_field'
-        verbose_name = 'DynamicField'
-        verbose_name_plural = 'DynamicFields'
-
 
 class Something(HStoreGroupedModel):
     name = models.CharField(max_length=32)
@@ -30,20 +9,10 @@ class Something(HStoreGroupedModel):
     # relations
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='somethings', verbose_name=u'Group')
 
-    class Meta:
-        # hstore
-        hstore_related_field = 'group'
-        hstore_related_class_field = 'group'
-
 
 class Author(HStoreM2MGroupedModel):
     # relations
     groups = models.ManyToManyField(DynamicFieldGroup, null=True, blank=True, related_name='authors', verbose_name=u'Group')
-
-    class Meta:
-        # hstore
-        hstore_related_field = 'groups'
-        hstore_related_class_field = 'group'
 
     def __str__(self):
         if self.author_name:

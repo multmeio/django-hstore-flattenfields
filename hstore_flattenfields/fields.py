@@ -109,7 +109,7 @@ class HstoreCharField(models.CharField):
 
         # FIXME: this maybe mistake on fields with same name in different refers
         try:
-            dynamic_field = hs_models.find_dfields(name=self.name)[0]
+            dynamic_field = hs_models.DynamicField.objects.find_dfields(name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreMultipleSelectField, self).get_choices()
         except IndexError:
@@ -285,7 +285,7 @@ class HstoreMultipleSelectField(models.CharField):
 
         # FIXME: this maybe mistake on fields with same name in different refers
         try:
-            dynamic_field = hs_models.find_dfields(name=self.name)[0]
+            dynamic_field = hs_models.DynamicField.objects.find_dfields(name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreMultipleSelectField, self).get_choices()
         except IndexError:

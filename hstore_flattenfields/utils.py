@@ -48,8 +48,6 @@ __all__ = ['single_list_to_tuple',
            'str2datetime',
            'DATE_BR_RE',
            'get_fieldnames',
-           'find_dfields',
-           'get_dynamic_field_model',
 ]
 
 
@@ -97,7 +95,8 @@ def has_any_in(chances, possibilities):
 # cache in globals
 _DYNAMIC_FIELD_TABLE_EXISTS = None
 def dynamic_field_table_exists():
-    dynamic_field_table_name = get_dynamic_field_model()._meta.db_table
+    from models import DynamicField
+    dynamic_field_table_name = DynamicField._meta.db_table
     global _DYNAMIC_FIELD_TABLE_EXISTS
     if not _DYNAMIC_FIELD_TABLE_EXISTS:
         _DYNAMIC_FIELD_TABLE_EXISTS = dynamic_field_table_name in connection.introspection.table_names()
@@ -108,28 +107,28 @@ def get_fieldnames(fields, excludes=[]):
         filter(lambda f: f.name not in excludes, fields)
     )
 
-def find_dfields(refer=None, name=None):
-    from hstore_flattenfields.models import dfields
+# def find_dfields(refer=None, name=None):
+#     from hstore_flattenfields.models import BaseDynamicField
 
-    def by_refer(x): return x.refer == refer
-    def by_name(x): return x.name == name
-    def by_refer_name(x): return by_refer(x) and by_name(x)
+#     def by_refer(x): return x.refer == refer
+#     def by_name(x): return x.name == name
+#     def by_refer_name(x): return by_refer(x) and by_name(x)
 
-    if refer and name:
-        return filter(by_refer_name, dfields)
-    elif refer:
-        return filter(by_refer, dfields)
-    elif name:
-        return filter(by_name, dfields)
+#     if refer and name:
+#         return filter(by_refer_name, BaseDynamicField.dfields)
+#     elif refer:
+#         return filter(by_refer, BaseDynamicField.dfields)
+#     elif name:
+#         return filter(by_name, BaseDynamicField.dfields)
 
-def get_dynamic_field_model():
-    "Return the DynamicField model that is used in this project"
-    try:
-        app_label, model_name = settings.HSTORE_DYNAMIC_MODEL.split('.')
-    except ValueError:
-        raise ImproperlyConfigured("HSTORE_DYNAMIC_MODEL must be of the form 'app_label.model_name'")
-    user_model = get_model(app_label, model_name)
-    if user_model is None:
-        raise ImproperlyConfigured("HSTORE_DYNAMIC_MODEL refers to model '%s' that has not been installed" % settings.HSTORE_DYNAMIC_MODEL)
-    return user_model
+# def get_dynamic_field_model():
+#     "Return the DynamicField model that is used in this project"
+#     try:
+#         app_label, model_name = settings.HSTORE_DYNAMIC_MODEL.split('.')
+#     except ValueError:
+#         raise ImproperlyConfigured("HSTORE_DYNAMIC_MODEL must be of the form 'app_label.model_name'")
+#     user_model = get_model(app_label, model_name)
+#     if user_model is None:
+#         raise ImproperlyConfigured("HSTORE_DYNAMIC_MODEL refers to model '%s' that has not been installed" % settings.HSTORE_DYNAMIC_MODEL)
+#     return user_model
 
