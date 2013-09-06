@@ -57,15 +57,21 @@ class DynamicFieldGroup(models.Model):
     slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True)
     description = models.TextField(null=True, blank=True, verbose_name=u'Description')
 
+    @property
+    def fields(self):
+        return DynamicField.objects.find_dfields(group=self)
+
     def __unicode__(self):
         return u"%s" % self.name
 
 
 class CacheDynamicFieldManager(models.Manager):
-    def find_dfields(self, refer=None, name=None, cpane=None):
+    def find_dfields(self, refer=None, name=None, cpane=None, group=None):
         def by_refer(x): return x.refer == refer
         def by_name(x): return x.name == name
         def by_cpane(x): return x.content_pane == cpane
+        def by_group(x): return x.group == group.dynamicfieldgroup_ptr
+        def by_refer_group(x): return by_refer(x) and by_group(x)
         def by_refer_cpane(x): return by_refer(x) and by_cpane(x)
         def by_refer_name(x): return by_refer(x) and by_name(x)
 
@@ -80,6 +86,10 @@ class CacheDynamicFieldManager(models.Manager):
             return filter(by_refer_cpane, dfields)
         elif cpane:
             return filter(by_cpane, dfields)
+        elif refer and group:
+            return filter(by_refer_group, dfields)
+        elif group:
+            return filter(by_group, dfields)
 
 
 # dfields = []
@@ -324,7 +334,6 @@ class HStoreGroupedModel(HStoreModel):
     def dynamic_fields(self):
         refer = self.__class__.__name__
         def by_group(dynamic_field):
-            # group_related_field = [x for x in dir(self) if isinstance(getattr(self, x), DynamicFieldGroup)][0]
             return getattr(
                 dynamic_field, 'group'
             ) in [self.related_instance, None]
@@ -366,9 +375,13 @@ class HStoreM2MGroupedModel(HStoreModel):
     @property
     def dynamic_fields(self):
         refer = self.__class__.__name__
+
         def by_group(dynamic_field):
+            # FIXME: return grouped fields and generic dynamicfields
+            import ipdb; ipdb.set_trace()
             instances = self.related_instances + [None]
             return getattr(
                 dynamic_field, 'group'
             ) in instances
+        dynamic_field in DynamicField.objects.find_dfields(group=instances[0])
         return filter(by_group, DynamicField.objects.find_dfields(refer=refer))
