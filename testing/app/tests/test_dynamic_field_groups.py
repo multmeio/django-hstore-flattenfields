@@ -21,7 +21,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
     def setUp(self):
         self.group1 = DynamicFieldGroup.objects.create(id=1, name="Something Group", slug="something_group")
         self.dfield1 = DynamicField.objects.create(id=1, refer="Something", group=self.group1, typo="Integer", name="something_age", verbose_name=u"Age")
-        
+
         self.group2 = DynamicFieldGroup.objects.create(id=2, name="Something Group2", slug="something_group2")
         self.dfield2 = DynamicField.objects.create(id=2, refer="Something", group=self.group2, name="something_slug", verbose_name=u"Slug", typo="CharField", max_length=100)
         self.dfield3 = DynamicField.objects.create(id=3, refer="Something", group=self.group2, name="something_info", verbose_name=u"Info", typo="CharField", max_length=100)
@@ -29,7 +29,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
     def test_assert_all_dynamic_fields(self):
         self.something = Something.objects.create(
             name=u"Some Name",
-            group=self.group1,
+            something_group=self.group1,
             something_age=42,
             something_slug="some-name",
         )
@@ -41,10 +41,12 @@ class OneToManyDynamicFieldGroupTests(TestCase):
     def test_assert_specific_dynamic_fields(self):
         self.something = Something.objects.create(
             name=u"Some Name",
-            group=self.group2,
+            something_group=self.group2,
             something_age=42,
             something_slug="some-name",
         )
+        # import ipdb; ipdb.set_trace()
+
         self.assertEqual(
             self.something.dynamic_fields,
             [self.dfield2, self.dfield3]
@@ -55,10 +57,10 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
     def setUp(self):
         self.group1 = DynamicFieldGroup.objects.create(id=1, name="Author Group", slug="author_group")
         self.group2 = DynamicFieldGroup.objects.create(id=2, name="Author Group 2", slug="author_group_2")
-        
+
         self.dfield1 = DynamicField.objects.create(id=1, refer="Author", group=self.group1, typo="Integer", name="author_age", verbose_name=u"Age")
         self.dfield2 = DynamicField.objects.create(id=2, refer="Author", group=self.group2, name="author_name", verbose_name=u"Name", typo="CharField", max_length=100)
-        
+
         self.dfield3 = DynamicField.objects.create(id=3, refer="Author", name="author_information", verbose_name=u"Information", typo="CharField", max_length=100)
 
     def test_assert_all_dynamic_fields(self):
@@ -66,8 +68,8 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
             author_age=42,
             author_name="some-name",
         )
-        self.author.groups.add(self.group1)
-        self.author.groups.add(self.group2)
+        self.author.author_groups.add(self.group1)
+        self.author.author_groups.add(self.group2)
         self.assertEqual(
             self.author.dynamic_fields,
             [self.dfield1, self.dfield2, self.dfield3]
@@ -84,7 +86,7 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
             author_age=42,
             author_name="some-name",
         )
-        self.author.groups.add(self.group1)
+        self.author.author_groups.add(self.group1)
         self.assertEqual(
             self.author.dynamic_fields,
             [self.dfield1, self.dfield3]
@@ -93,22 +95,22 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
 class ContentPaneTests(TestCase):
     def setUp(self):
         self.content_pane = ContentPane.objects.create(name="Container", slug="container")
-        
+
         self.group1 = DynamicFieldGroup.objects.create(id=1, name="Author Group", slug="author_group")
-        
-        self.dfield1 = DynamicField.objects.create(id=1, refer="Author", group=self.group1, 
+
+        self.dfield1 = DynamicField.objects.create(id=1, refer="Author", group=self.group1,
             content_pane=self.content_pane, typo="Integer", name="author_age", verbose_name=u"Age")
-        self.dfield2 = DynamicField.objects.create(id=2, refer="Author", group=self.group1, 
+        self.dfield2 = DynamicField.objects.create(id=2, refer="Author", group=self.group1,
             name="author_name", verbose_name=u"Name", typo="CharField", max_length=100)
-        
+
         self.author = Author.objects.create(author_age=42, author_name="some-name")
-        self.author.groups.add(self.group1)
+        self.author.author_groups.add(self.group1)
 
         class AuthorForm(HStoreContentPaneModelForm):
             class Meta:
                 model = Author
         self.AuthorForm = AuthorForm
-            
+
     def test_assert_dynamic_fields_inside_content_pane(self):
         self.assertQuerysetEqual(
             self.content_pane.fields,
@@ -120,7 +122,7 @@ class ContentPaneTests(TestCase):
         form = self.AuthorForm(instance=self.author)
         self.assertEquals(
             form.fields.keys(),
-            ['groups', 'author_age', 'author_name']
+            ['author_groups', 'author_age', 'author_name']
         )
 
     def test_assert_fields_from_specific_content_pane(self):
@@ -129,4 +131,4 @@ class ContentPaneTests(TestCase):
             map(lambda x: x.name, author_form.filtred_fields(self.content_pane)),
             ['author_age']
         )
-        
+

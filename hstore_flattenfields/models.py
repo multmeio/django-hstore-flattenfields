@@ -312,40 +312,9 @@ class HStoreModel(models.Model):
             self._dfields = _dfields
 
 
-class BaseHStoreGroupedModel(HStoreModel):
-    class Meta:
-        abstract = True
-
-    def __init__(self, *args, **kwargs):
-        super(BaseHStoreGroupedModel, self).__init__(*args, **kwargs)
-        if not hasattr(self._meta, 'hstore_related_field'):
-            raise TypeError("'class Meta: hstore_related_field' "
-                            "must be setted with the name of your "
-                            "Relation of your Group Model")
-
-    @property
-    def related_instance(self):
-        """
-        Property created to return the object which is related from 'self'
-        and the 'self._meta.hstore_related_field' attribute.
-        """
-        raise NotImplementedError()
-
-    @property
-    def dynamic_fields(self):
-        """
-        Property created to return the DynamicFields of this instance.
-
-        If this instance has a 'related_field', it returns his fields,
-        if not, we will return just the fields without 'related_field' setted.
-        """
-        raise NotImplementedError()
-
-
 class HStoreGroupedModel(HStoreModel):
     class Meta:
         abstract = True
-        db_table = 'hstore_grouped_model'
 
     @property
     def related_instance(self):
@@ -355,6 +324,7 @@ class HStoreGroupedModel(HStoreModel):
     def dynamic_fields(self):
         refer = self.__class__.__name__
         def by_group(dynamic_field):
+            # group_related_field = [x for x in dir(self) if isinstance(getattr(self, x), DynamicFieldGroup)][0]
             return getattr(
                 dynamic_field, 'group'
             ) in [self.related_instance, None]
@@ -364,7 +334,6 @@ class HStoreGroupedModel(HStoreModel):
 class HStoreM2MGroupedModel(HStoreModel):
     class Meta:
         abstract = True
-        db_table = 'hstore_m2m_grouped_model'
 
     def __init__(self, *args, **kwargs):
         super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)

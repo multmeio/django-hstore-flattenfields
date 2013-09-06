@@ -7,12 +7,20 @@ class Something(HStoreGroupedModel):
     name = models.CharField(max_length=32)
 
     # relations
-    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='somethings', verbose_name=u'Group')
+    something_group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='somethings', verbose_name=u'Group')
+
+    class Meta:
+        # hstore
+        hstore_related_field = 'something_group'
 
 
 class Author(HStoreM2MGroupedModel):
     # relations
-    groups = models.ManyToManyField(DynamicFieldGroup, null=True, blank=True, related_name='authors', verbose_name=u'Group')
+    author_groups = models.ManyToManyField(DynamicFieldGroup, null=True, blank=True, related_name='authors', verbose_name=u'Group')
+
+    class Meta:
+        # hstore
+        hstore_related_field = 'author_groups'
 
     def __str__(self):
         if self.author_name:
