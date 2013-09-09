@@ -17,3 +17,15 @@ class SelectMultipleWidget(forms.SelectMultiple):
         html = super(SelectMultipleWidget, self).render(
             name, str2literal(value), attrs, choices)
         return mark_safe(html)
+
+
+class RealCurrencyInput(forms.TextInput):
+    def render(self, name, value, attrs=None):
+        value = value or ''
+        attrs = attrs or {}
+
+        if isinstance(value, Decimal):
+            value = floatformat(str(value), 2)
+
+        html = super(RealCurrencyInput, self).render(name, value, attrs)
+        return mark_safe(html)
