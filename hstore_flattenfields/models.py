@@ -349,10 +349,18 @@ class HStoreGroupedModel(HStoreModel):
     @property
     def dynamic_fields(self):
         refer = self.__class__.__name__
+
         def by_group(dynamic_field):
-            return getattr(
-                dynamic_field, 'group'
-            ) in [self.related_instance, None]
+            related_instance = self.related_instance
+            if related_instance:
+                return dynamic_field.group == None or \
+                    related_instance.dynamicfieldgroup_ptr == dynamic_field.group
+            try:
+                if dynamic_field.group == None: return True
+            except: # DoesNotExist
+                return True
+            else:
+                return False
         return filter(by_group, DynamicField.objects.find_dfields(refer=refer))
 
 
@@ -391,13 +399,15 @@ class HStoreM2MGroupedModel(HStoreModel):
     @property
     def dynamic_fields(self):
         refer = self.__class__.__name__
-
         def by_group(dynamic_field):
-            # FIXME: return grouped fields and generic dynamicfields
-            import ipdb; ipdb.set_trace()
-            instances = self.related_instances + [None]
-            return getattr(
-                dynamic_field, 'group'
-            ) in instances
-        dynamic_field in DynamicField.objects.find_dfields(group=instances[0])
+            instances = self.related_instances
+            if instances:
+                return bool([x for x in instances if dynamic_field.group == None or \
+                        x.dynamicfieldgroup_ptr == dynamic_field.group])
+            try:
+                if dynamic_field.group == None: return True
+            except: # DoesNotExist
+                return True
+            else:
+                return False
         return filter(by_group, DynamicField.objects.find_dfields(refer=refer))
