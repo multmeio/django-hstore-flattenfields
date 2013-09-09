@@ -19,10 +19,10 @@ from app.models import *
 
 class OneToManyDynamicFieldGroupTests(TestCase):
     def setUp(self):
-        self.group1 = DynamicFieldGroup.objects.create(id=1, name="Something Group", slug="something_group")
+        self.group1 = SomethingType.objects.create(id=1, name="Something Group", slug="something_group")
         self.dfield1 = DynamicField.objects.create(id=1, refer="Something", group=self.group1, typo="Integer", name="something_age", verbose_name=u"Age")
 
-        self.group2 = DynamicFieldGroup.objects.create(id=2, name="Something Group2", slug="something_group2")
+        self.group2 = SomethingType.objects.create(id=2, name="Something Group2", slug="something_group2")
         self.dfield2 = DynamicField.objects.create(id=2, refer="Something", group=self.group2, name="something_slug", verbose_name=u"Slug", typo="CharField", max_length=100)
         self.dfield3 = DynamicField.objects.create(id=3, refer="Something", group=self.group2, name="something_info", verbose_name=u"Info", typo="CharField", max_length=100)
 
@@ -53,8 +53,8 @@ class OneToManyDynamicFieldGroupTests(TestCase):
 
 class ManyToManyDynamicFieldGroupTests(TestCase):
     def setUp(self):
-        self.group1 = DynamicFieldGroup.objects.create(id=1, name="Author Group", slug="author_group")
-        self.group2 = DynamicFieldGroup.objects.create(id=2, name="Author Group 2", slug="author_group_2")
+        self.group1 = AuthorType.objects.create(id=1, name="Author Group", slug="author_group")
+        self.group2 = AuthorType.objects.create(id=2, name="Author Group 2", slug="author_group_2")
 
         self.dfield1 = DynamicField.objects.create(id=1, refer="Author", group=self.group1, typo="Integer", name="author_age", verbose_name=u"Age")
         self.dfield2 = DynamicField.objects.create(id=2, refer="Author", group=self.group2, name="author_name", verbose_name=u"Name", typo="CharField", max_length=100)
@@ -94,7 +94,7 @@ class ContentPaneTests(TestCase):
     def setUp(self):
         self.content_pane = ContentPane.objects.create(name="Container", slug="container")
 
-        self.group1 = DynamicFieldGroup.objects.create(id=1, name="Author Group", slug="author_group")
+        self.group1 = AuthorType.objects.create(id=1, name="Author Group", slug="author_group")
 
         self.dfield1 = DynamicField.objects.create(id=1, refer="Author", group=self.group1,
             content_pane=self.content_pane, typo="Integer", name="author_age", verbose_name=u"Age")
