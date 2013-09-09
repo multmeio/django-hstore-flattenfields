@@ -411,3 +411,9 @@ class HStoreM2MGroupedModel(HStoreModel):
             else:
                 return False
         return filter(by_group, DynamicField.objects.find_dfields(refer=refer))
+
+    @property
+    def content_panes(self):
+        fields_with_cpanes = filter(lambda x: x.content_pane, self.dynamic_fields)
+        return set(map(lambda x: x.content_pane, fields_with_cpanes))
+        

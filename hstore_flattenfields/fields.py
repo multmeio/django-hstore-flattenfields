@@ -227,6 +227,17 @@ class HstoreSelectField(models.CharField):
         return value
 
 
+class MultipleSelectField(forms.TypedMultipleChoiceField):
+    __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        self.widget = hs_widgets.SelectMultipleWidget
+        super(MultipleSelectField, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        return value
+
+
 class HstoreMultipleSelectField(models.CharField):
     __metaclass__ = models.SubfieldBase
 
@@ -236,7 +247,7 @@ class HstoreMultipleSelectField(models.CharField):
     # XXX: Override formfield
     # most code was copied from django 1.4.1: db.models.CharField.formfield)
     # only changed TypedChoiceField to MultipleChoiceField
-    def formfield(self, form_class=hs_forms.MultipleSelectFieldWidgetHandler, **kwargs):
+    def formfield(self, form_class=MultipleSelectField, **kwargs):
         """
         Returns a django.forms.Field instance for this database Field.
         """

@@ -9,7 +9,6 @@ Copyright (c) 2011 Multmeio [design+tecnologia]. All rights reserved.
 
 from django import forms
 from django.forms.models import fields_for_model
-from django.db.models import SubfieldBase
 from django.template import Context, loader
 
 import models as hs_models
@@ -47,7 +46,6 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
     def __init__(self, *args, **kwargs):
         hstore_order = kwargs.pop('keyOrder', None)
-
         super(HStoreContentPaneModelForm, self).__init__(*args, **kwargs)
 
         self._dyn_fields = self.instance.dynamic_fields
@@ -79,7 +77,6 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         for field in hs_models.DynamicField.objects.find_dfields(refer=self.instance.__class__.__name__):
             if field.name in hstore_order:
                 hstore_order.pop(hstore_order.index(field.name))
-
             hstore_order.insert(field.order or len(hstore_order), field.name)
 
         self.fields.keyOrder = hstore_order
@@ -144,15 +141,3 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                 'form': self,
             })
         )
-
-
-
-class MultipleSelectFieldWidgetHandler(forms.TypedMultipleChoiceField):
-    __metaclass__ = SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        self.widget = hs_widgets.SelectMultipleWidget
-        super(MultipleSelectFieldWidgetHandler, self).__init__(*args, **kwargs)
-
-    def clean(self, value):
-        return value
