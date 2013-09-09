@@ -3,11 +3,19 @@ from hstore_flattenfields.models import (HStoreModel, DynamicField,
                                          ContentPane, DynamicFieldGroup,
                                          HStoreGroupedModel, HStoreM2MGroupedModel)
 
+class SomethingType(DynamicFieldGroup):
+    pass
+
+
+class AuthorType(DynamicFieldGroup):
+    pass
+
+
 class Something(HStoreGroupedModel):
     name = models.CharField(max_length=32)
 
     # relations
-    something_group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='somethings', verbose_name=u'Group')
+    something_group = models.ForeignKey(SomethingType, null=True, blank=True, related_name='somethings', verbose_name=u'Group')
 
     class Meta:
         # hstore
@@ -16,7 +24,7 @@ class Something(HStoreGroupedModel):
 
 class Author(HStoreM2MGroupedModel):
     # relations
-    author_groups = models.ManyToManyField(DynamicFieldGroup, null=True, blank=True, related_name='authors', verbose_name=u'Group')
+    author_groups = models.ManyToManyField(AuthorType, null=True, blank=True, related_name='authors', verbose_name=u'Group')
 
     class Meta:
         # hstore
