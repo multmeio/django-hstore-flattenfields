@@ -29,24 +29,6 @@ models.options.DEFAULT_NAMES += (
     'hstore_related_field',
 )
 
-class ContentPane(models.Model):
-    """
-    Class to contains fields reproduced into TABs, DIVs,... on templates.
-    """
-    name = models.CharField(max_length=80, null=False, verbose_name=u'Name')
-    order = models.IntegerField(null=False, blank=False, default=0, verbose_name=u'Order')
-    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True)
-
-    class Meta:
-        ordering = ['order', 'slug']
-
-    def __unicode__(self):
-        return u"[#%s, %s] - %s" % (self.id, self.order, self.name)
-
-    @property
-    def fields(self):
-        return DynamicField.objects.find_dfields(cpane=self)
-
 
 class DynamicFieldGroup(models.Model):
     """
@@ -65,6 +47,27 @@ class DynamicFieldGroup(models.Model):
     def __unicode__(self):
         return u"%s" % self.name
 
+
+class ContentPane(models.Model):
+    """
+    Class to contains fields reproduced into TABs, DIVs,... on templates.
+    """
+    name = models.CharField(max_length=80, null=False, verbose_name=u'Name')
+    order = models.IntegerField(null=False, blank=False, default=0, verbose_name=u'Order')
+    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True)
+
+    # relations
+    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="content_panes", verbose_name="Groups")
+
+    class Meta:
+        ordering = ['order', 'slug']
+
+    def __unicode__(self):
+        return u"[#%s, %s] - %s" % (self.id, self.order, self.name)
+
+    @property
+    def fields(self):
+        return DynamicField.objects.find_dfields(cpane=self)
 
 class CacheDynamicFieldManager(models.Manager):
     def find_dfields(self, refer=None, name=None, cpane=None, group=None):
@@ -416,4 +419,4 @@ class HStoreM2MGroupedModel(HStoreModel):
     def content_panes(self):
         fields_with_cpanes = filter(lambda x: x.content_pane, self.dynamic_fields)
         return set(map(lambda x: x.content_pane, fields_with_cpanes))
-        
+
