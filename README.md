@@ -37,7 +37,7 @@ For a full example click [here](https://github.com/multmeio/django-hstore-flatte
 
 Diagram Application
 
-![diagram](https://raw.github.com/multmeio/django-hstore-flattenfields/content_pane_and_dynamic_field_group/doc/application_diagram.png)
+![diagram](https://raw.github.com/multmeio/django-hstore-flattenfields/master/doc/application_diagram.png)
 
 Development
 ------------
