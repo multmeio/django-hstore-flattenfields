@@ -1,0 +1,5 @@
+{% if form.content_panes %}
+    {% include "hstore_flattenfields/form_with_tabs.html" %}
+{% else %}
+    <p>Nao tem panes</p>
+{% endif %}

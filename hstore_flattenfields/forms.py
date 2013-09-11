@@ -124,22 +124,3 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             else:
                 field_names = [f.name for f in self._dyn_fields if f.content_pane]
                 return [f for f in fields if f.name not in field_names]
-
-    def as_tabs(self):
-        """
-        In the template:
-            {{ pretty_little_form.as_tabs }}
-
-        If that form has content_panes, so we have to using the
-        Template customized with tabs.
-        """
-        template = "bootstrap_toolkit/form.html"
-
-        if self.content_panes:
-            template = "includes/bootstrap_tabs.html"
-
-        return loader.get_template(template).render(
-            Context({
-                'form': self,
-            })
-        )
