@@ -85,6 +85,27 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             if name not in all_fields:
                 self.fields.pop(name)
 
+        try:
+            content_panes = self.instance.content_panes
+
+            grouped_panes = [{'name': u'Default',
+                              'slug': 'default',
+                              'fields': self.filtred_fields()}]
+
+            for content_pane in content_panes:
+                has_error = any([
+                    f for f in content_pane.fields \
+                        if f.name in self.errors.keys()
+                ])
+
+                grouped_panes.append({'name': content_pane.name,
+                                      'slug': content_pane.slug,
+                                      'fields': self.filtred_fields(content_pane),
+                                      'has_error': has_error})
+            self.content_panes = grouped_panes
+        except:
+            pass
+
     def filtred_fields(self, content_pane=None):
         """
         Function to returns only the fields of was joined into a ContentPane
@@ -113,28 +134,9 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         Template customized with tabs.
         """
         template = "bootstrap_toolkit/form.html"
-        try:
-            content_panes = self.instance.content_panes
-            if content_panes:
-                template = "includes/bootstrap_tabs.html"
 
-            grouped_panes = [{'name': u'Informações principais',
-                              'slug': 'informacoes_principais',
-                              'fields': self.filtred_fields()}]
-
-            for content_pane in content_panes:
-                has_error = any([
-                    f for f in content_pane.fields \
-                        if f.name in self.errors.keys()
-                ])
-
-                grouped_panes.append({'name': content_pane.name,
-                                      'slug': content_pane.slug,
-                                      'fields': self.filtred_fields(content_pane),
-                                      'has_error': has_error})
-            self.content_panes = grouped_panes
-        except:
-            pass
+        if self.content_panes:
+            template = "includes/bootstrap_tabs.html"
 
         return loader.get_template(template).render(
             Context({
