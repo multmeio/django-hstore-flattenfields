@@ -1,0 +1,7 @@
+{% load bootstrap_toolkit %}
+
+{% if form.content_panes %}
+    {% include "hstore_flattenfields/form_with_tabs.html" %}
+{% else %}
+    {{ form|as_bootstrap }}
+{% endif %}

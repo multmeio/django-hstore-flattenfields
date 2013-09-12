@@ -1,0 +1,7 @@
+<ul class="nav nav-tabs">
+    {% for tab in tabs %}
+        <li {% if forloop.first %}class="active"{% endif %}>
+            <a href="#{{ tab.slug }}" data-toggle="tab">{{ tab.name }}</a>
+        </li>
+    {% endfor %}
+</ul>
