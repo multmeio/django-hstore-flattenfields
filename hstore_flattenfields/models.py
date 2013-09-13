@@ -19,6 +19,8 @@ from django.conf import settings
 from django.db.models import get_model
 from django.contrib.contenttypes.models import ContentType
 from django_extensions.db.fields import AutoSlugField
+from django.utils.translation import ugettext as _
+
 from fields import *
 from queryset import *
 from utils import *
@@ -36,9 +38,9 @@ class DynamicFieldGroup(models.Model):
     This has to be implemented on main app, and related to
     class HstoreModel that contains _dfields.
     """
-    name = models.CharField(max_length=80, null=False, verbose_name='Name')
+    name = models.CharField(max_length=80, null=False, verbose_name=_('Name'))
     slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True)
-    description = models.TextField(null=True, blank=True, verbose_name=u'Description')
+    description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
 
     @property
     def fields(self):
@@ -52,12 +54,12 @@ class ContentPane(models.Model):
     """
     Class to contains fields reproduced into TABs, DIVs,... on templates.
     """
-    name = models.CharField(max_length=80, null=False, verbose_name=u'Name')
-    order = models.IntegerField(null=False, blank=False, default=0, verbose_name=u'Order')
+    name = models.CharField(max_length=80, null=False, verbose_name=_('Name'))
+    order = models.IntegerField(null=False, blank=False, default=0, verbose_name=_('Order'))
     slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True)
 
     # relations
-    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="content_panes", verbose_name="Groups")
+    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="content_panes", verbose_name=_("Groups"))
 
     class Meta:
         ordering = ['order', 'slug']
@@ -98,20 +100,20 @@ class CacheDynamicFieldManager(models.Manager):
 
 # dfields = []
 class DynamicField(models.Model):
-    refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name="Class name")
-    name = models.CharField(max_length=120, blank=False, db_index=True, unique=True, verbose_name="Field name")
-    verbose_name = models.CharField(max_length=120, blank=False, verbose_name="Verbose name")
-    typo = models.CharField(max_length=20, blank=False, db_index=True, verbose_name="Field type",
+    refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name=_("Class name"))
+    name = models.CharField(max_length=120, blank=False, db_index=True, unique=True, verbose_name=_("Field name"))
+    verbose_name = models.CharField(max_length=120, blank=False, verbose_name=_("Verbose name"))
+    typo = models.CharField(max_length=20, blank=False, db_index=True, verbose_name=_("Field type"),
         choices=single_list_to_tuple(FIELD_TYPES))
-    max_length = models.IntegerField(null=True, blank=True, verbose_name="Length")
-    order = models.IntegerField(null=True, blank=True, default=None, verbose_name="Order")
-    blank = models.BooleanField(default=True, verbose_name="Blank")
-    choices = models.TextField(null=True, blank=True, verbose_name="Choices")
-    default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name="Default value")
+    max_length = models.IntegerField(null=True, blank=True, verbose_name=_("Length"))
+    order = models.IntegerField(null=True, blank=True, default=None, verbose_name=_("Order"))
+    blank = models.BooleanField(default=True, verbose_name=_("Blank"))
+    choices = models.TextField(null=True, blank=True, verbose_name=_("Choices"))
+    default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name=_("Default value"))
 
     # relations
-    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="dynamic_fields", verbose_name="Groups")
-    content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name="dynamic_fields", verbose_name="Panel")
+    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Groups"))
+    content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Panel"))
 
     objects = CacheDynamicFieldManager()
 
