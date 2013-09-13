@@ -37,7 +37,7 @@ class DynamicFieldGroup(models.Model):
     class HstoreModel that contains _dfields.
     """
     name = models.CharField(max_length=80, null=False, verbose_name='Name')
-    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True)
+    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True, overwrite=True)
     description = models.TextField(null=True, blank=True, verbose_name=u'Description')
 
     @property
@@ -54,7 +54,7 @@ class ContentPane(models.Model):
     """
     name = models.CharField(max_length=80, null=False, verbose_name=u'Name')
     order = models.IntegerField(null=False, blank=False, default=0, verbose_name=u'Order')
-    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True)
+    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True, overwrite=True)
 
     # relations
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="content_panes", verbose_name="Groups")
