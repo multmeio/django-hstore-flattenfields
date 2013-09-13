@@ -50,6 +50,14 @@ class OneToManyDynamicFieldGroupTests(TestCase):
             [self.dfield2, self.dfield3]
         )
 
+    def test_assert_change_field_name(self):
+        something_type = SomethingType.objects.get(pk=1)
+
+        self.assertEqual(something_type.slug, u'something_group')
+        something_type.name = u'Something Group Change'
+        something_type.save()
+        self.assertEqual(something_type.slug, u'something_group_change')
+
 
 class ManyToManyDynamicFieldGroupTests(TestCase):
     def setUp(self):
@@ -129,4 +137,12 @@ class ContentPaneTests(TestCase):
             map(lambda x: x.name, author_form.filtred_fields(self.content_pane)),
             ['author_age']
         )
+
+    def test_assert_change_field_name(self):
+        content_pane = ContentPane.objects.get(pk=1)
+
+        self.assertEqual(content_pane.slug, u'container')
+        content_pane.name = u'Container Change'
+        content_pane.save()
+        self.assertEqual(content_pane.slug, u'container_change')
 
