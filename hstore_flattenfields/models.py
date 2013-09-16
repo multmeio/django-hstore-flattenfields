@@ -94,6 +94,8 @@ class CacheDynamicFieldManager(models.Manager):
             return filter(by_refer_group, dfields)
         elif group:
             return filter(by_group, dfields)
+        else:
+            return dfields
 
 
 # dfields = []
