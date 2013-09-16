@@ -39,7 +39,7 @@ class DynamicFieldGroup(models.Model):
     class HstoreModel that contains _dfields.
     """
     name = models.CharField(max_length=80, null=False, verbose_name=_('Name'))
-    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True)
+    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True, overwrite=True)
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
 
     @property
@@ -56,7 +56,7 @@ class ContentPane(models.Model):
     """
     name = models.CharField(max_length=80, null=False, verbose_name=_('Name'))
     order = models.IntegerField(null=False, blank=False, default=0, verbose_name=_('Order'))
-    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True)
+    slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True, overwrite=True)
 
     # relations
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="content_panes", verbose_name=_("Groups"))
@@ -76,7 +76,7 @@ class CacheDynamicFieldManager(models.Manager):
         def by_refer(x): return x.refer == refer
         def by_name(x): return x.name == name
         def by_cpane(x): return x.content_pane == cpane
-        def by_group(x): 
+        def by_group(x):
             if hasattr(group, 'dynamicfieldgroup_ptr'):
                 return x.group == group.dynamicfieldgroup_ptr
             return x.group == group
