@@ -1,0 +1,11 @@
+{% include "hstore_flattenfields/tabs.html" with tabs=form.content_panes %}
+
+<div class="tab-content">
+    {% for tab in form.content_panes %}
+        <div class="tab-pane {% if forloop.first %}active{% endif %}" id="{{ tab.slug }}">
+            {% for field in tab.fields %}
+                {% include "bootstrap_toolkit/field.html" %}
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>

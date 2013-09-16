@@ -76,7 +76,10 @@ class CacheDynamicFieldManager(models.Manager):
         def by_refer(x): return x.refer == refer
         def by_name(x): return x.name == name
         def by_cpane(x): return x.content_pane == cpane
-        def by_group(x): return x.group == group.dynamicfieldgroup_ptr
+        def by_group(x): 
+            if hasattr(group, 'dynamicfieldgroup_ptr'):
+                return x.group == group.dynamicfieldgroup_ptr
+            return x.group == group
         def by_refer_group(x): return by_refer(x) and by_group(x)
         def by_refer_cpane(x): return by_refer(x) and by_cpane(x)
         def by_refer_name(x): return by_refer(x) and by_name(x)
@@ -84,18 +87,20 @@ class CacheDynamicFieldManager(models.Manager):
         global dfields
         if refer and name:
             return filter(by_refer_name, dfields)
-        elif refer:
-            return filter(by_refer, dfields)
-        elif name:
-            return filter(by_name, dfields)
-        elif refer and cpane:
-            return filter(by_refer_cpane, dfields)
-        elif cpane:
-            return filter(by_cpane, dfields)
         elif refer and group:
             return filter(by_refer_group, dfields)
+        elif refer and cpane:
+            return filter(by_refer_cpane, dfields)
+        elif name:
+            return filter(by_name, dfields)
+        elif cpane:
+            return filter(by_cpane, dfields)
         elif group:
             return filter(by_group, dfields)
+        elif refer:
+            return filter(by_refer, dfields)
+        else:
+            return dfields
 
 
 # dfields = []
