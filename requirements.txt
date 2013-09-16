@@ -1,3 +1,4 @@
 -e git://github.com/multmeio/django-hstore.git#egg=django-hstore
 Django==1.4.3
+django-bootstrap-toolkit==2.5.4
 django-orm-extensions==3.0b3
