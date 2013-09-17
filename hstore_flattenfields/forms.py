@@ -90,6 +90,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
             grouped_panes = [{'name': u'Default',
                               'slug': 'default',
+                              'pk': '',
                               'fields': self.filtred_fields()}]
 
             for content_pane in content_panes:
@@ -100,6 +101,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
                 grouped_panes.append({'name': content_pane.name,
                                       'slug': content_pane.slug,
+                                      'pk': content_pane.pk,
                                       'fields': self.filtred_fields(content_pane),
                                       'has_error': has_error})
             self.content_panes = grouped_panes
