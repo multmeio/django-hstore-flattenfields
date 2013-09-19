@@ -32,7 +32,7 @@ FIELD_TYPES_DICT = dict(
     Date='HstoreDateField',
     DateTime='HstoreDateTimeField',
     CheckBox='HstoreMultipleSelectField',
-    RadioButton='HstoreCharField'
+    RadioButton='HstoreRadioSelectField'
 )
 FIELD_TYPES = FIELD_TYPES_DICT.keys()
 
@@ -237,6 +237,78 @@ class MultipleSelectField(forms.TypedMultipleChoiceField):
     def clean(self, value):
         return value
 
+class RadioSelectField(forms.TypedChoiceField):
+    __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        self.widget = forms.RadioSelect
+        super(RadioSelectField, self).__init__(*args, **kwargs)
+
+
+class HstoreRadioSelectField(models.CharField):
+    __metaclass__ = models.SubfieldBase
+
+    # XXX: Override formfield
+    # most code was copied from django 1.4.1: db.models.CharField.formfield)
+    # only changed TypedChoiceField to MultipleChoiceField
+    def formfield(self, form_class=RadioSelectField, **kwargs):
+        """
+        Returns a django.forms.Field instance for this database Field.
+        """
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text
+        }
+
+        if self.has_default():
+            if callable(self.default):
+                defaults['initial'] = self.default
+                defaults['show_hidden_initial'] = True
+            else:
+                defaults['initial'] = self.get_default()
+
+        if self.choices:
+            # Fields with choices get special treatment.
+            include_blank = (self.blank or \
+                            not (self.has_default() or 'initial' in kwargs))
+            defaults['choices'] = self.get_choices(include_blank=include_blank)
+            defaults['coerce'] = self.to_python
+            if self.null:
+                defaults['empty_value'] = ""
+
+            # Many of the subclass-specific formfield arguments (min_value,
+            # max_value) don't apply for choice fields, so be sure to only pass
+            # the values that TypedChoiceField will understand.
+            for k in kwargs.keys():
+                if k not in ('coerce', 'empty_value', 'choices', 'required',
+                             'widget', 'label', 'initial', 'help_text',
+                             'error_messages', 'show_hidden_initial'):
+                    del kwargs[k]
+        defaults.update(kwargs)
+        return form_class(**defaults)
+
+    def to_python(self, value):
+        if value is models.fields.NOT_PROVIDED or value is None:
+            return None
+        else:
+            return value
+
+    def get_choices(self, include_blank=False):
+        choices = []
+
+        # FIXME: this maybe mistake on fields with same name in different refers
+        try:
+            dynamic_field = hs_models.DynamicField.objects.find_dfields(name=self.name)[0]
+            if dynamic_field.has_blank_option:
+                choices = super(HstoreRadioSelectField, self).get_choices()
+        except IndexError:
+            pass
+        return choices or self._choices
+
+    def get_default(self):
+        return self.default
+
 
 class HstoreMultipleSelectField(models.CharField):
     __metaclass__ = models.SubfieldBase
@@ -321,7 +393,8 @@ def get_modelfield(typo):
 
 def crate_field_from_instance(instance):
     FieldClass = get_modelfield(instance.typo)
-
+    # import ipdb; ipdb.set_trace()
+    
     # FIXME: The Data were saved in a string: "None"
     default_value = instance.default_value
     if default_value is None:

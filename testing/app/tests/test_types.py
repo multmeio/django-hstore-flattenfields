@@ -57,6 +57,7 @@ class TypeCreateManagerTests(TestCase):
         DynamicField.objects.create(id=3, refer="Something", typo="Date", name="something_dfield_date", verbose_name = u"Dynamic Field Date",)
         DynamicField.objects.create(id=4, refer="Something", typo="DateTime", name="something_dfield_datetime", verbose_name=u"Dynamic Field DateTime")
         DynamicField.objects.create(id=6, refer="Something", typo="MultSelect", name="something_dfield_multiselect", verbose_name=u"Dynamic Field MultiSelect",)
+        DynamicField.objects.create(id=7, refer="Something", typo="RadioButton", name="something_dfield_radiobutton", verbose_name=u"Dynamic Field RadioButton", choices=['1', '2', '3', '4'])
 
         self.something = Something.objects.create(
             name=u"Some Name",
@@ -65,7 +66,8 @@ class TypeCreateManagerTests(TestCase):
             something_dfield_str=u"Dynamic Field Str",
             something_dfield_date=date.today(),
             something_dfield_datetime=datetime.now(),
-            something_dfield_multiselect=['A', 'B', 'C']
+            something_dfield_multiselect=['A', 'B', 'C'],
+            something_dfield_radiobutton='2',
         )
 
     def test_assert_int_type(self):
@@ -91,4 +93,8 @@ class TypeCreateManagerTests(TestCase):
     def test_assert_multiselect_type(self):
         value = self.something.something_dfield_multiselect
         self.assertIsInstance(value, list)
+
+    def test_assert_radiobutton_type(self):
+        value = self.something.something_dfield_radiobutton
+        self.assertIsInstance(value, basestring)
 

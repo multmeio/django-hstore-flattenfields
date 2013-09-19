@@ -113,3 +113,21 @@ class HstoreDateTimeFieldTests(TestCase):
         self.assertEqual(f.value_to_string(something), "2013-02-09T11:30:22")
         _update_obj(something, "something_dfield_datetime", None)
         self.assertEqual(f.value_to_string(something), "")
+
+
+class HstoreRadioSelectFieldTests(TestCase):
+    def test_default(self):
+        f = HstoreRadioSelectField(name="something_dfield_radioselect", default='2', choices=['1', '2', '3', '4'])
+        self.assertEqual(f.default, '2')
+
+    def test_format(self):
+        f = HstoreRadioSelectField(name="something_dfield_radioselect", choices=['1', '2', '3', '4'])
+        self.assertEqual(f.to_python("['2']"), "['2']")
+        self.assertEqual(f.to_python(['2']), ['2'])
+        self.assertEqual(f.to_python(['1', '2']), ['1', '2'])
+        self.assertEqual(f.to_python([]), [])
+        self.assertEqual(f.to_python(None), None)
+
+    def test_choices(self):
+        f = HstoreRadioSelectField(name="something_dfield_radioselect", choices=['1', '2', '3', '4'])
+        self.assertEqual(f.get_choices(), ['1', '2', '3', '4'])
