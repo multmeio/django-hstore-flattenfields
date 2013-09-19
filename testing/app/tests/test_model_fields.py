@@ -131,3 +131,20 @@ class HstoreRadioSelectFieldTests(TestCase):
     def test_choices(self):
         f = HstoreRadioSelectField(name="something_dfield_radioselect", choices=['1', '2', '3', '4'])
         self.assertEqual(f.get_choices(), ['1', '2', '3', '4'])
+
+
+class HstoreCheckboxFieldTests(TestCase):
+    def test_default(self):
+        f = HstoreCheckboxField(name="something_dfield_checkbox", default='1', choices=['1', '2', '3', '4'])
+        self.assertEqual(f.get_default(), '1')
+
+    def test_format(self):
+        f = HstoreCheckboxField(name="something_dfield_checkbox", choices=['1', '2', '3', '4'])
+        self.assertEqual(f.to_python(['2']), ['2'])
+        self.assertEqual(f.to_python(['1', '2']), ['1', '2'])
+        self.assertEqual(f.to_python([]), [])
+        self.assertEqual(f.to_python(None), [])
+
+    def test_choices(self):
+        f = HstoreCheckboxField(name="something_dfield_checkbox", choices=['1', '2', '3', '4'])
+        self.assertEqual(f.get_choices(), ['1', '2', '3', '4'])

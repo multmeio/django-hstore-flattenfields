@@ -52,12 +52,13 @@ class TypeDateObjectLevelTests(TestCase):
 class TypeCreateManagerTests(TestCase):
     def setUp(self):
         DynamicField.objects.create(id=1, refer="Something", typo="Integer", name="something_dfield_int", verbose_name = u"Dynamic Field Int")
-        DynamicField.objects.create(id=5, refer="Something", typo="Monetary", name="something_dfield_decimal", verbose_name=u"Dynamic Field Decimal",)
         DynamicField.objects.create(id=2, refer="Something", typo="CharField", name="something_dfield_str", verbose_name = u"Dynamic Field Str")
         DynamicField.objects.create(id=3, refer="Something", typo="Date", name="something_dfield_date", verbose_name = u"Dynamic Field Date",)
         DynamicField.objects.create(id=4, refer="Something", typo="DateTime", name="something_dfield_datetime", verbose_name=u"Dynamic Field DateTime")
+        DynamicField.objects.create(id=5, refer="Something", typo="Monetary", name="something_dfield_decimal", verbose_name=u"Dynamic Field Decimal",)
         DynamicField.objects.create(id=6, refer="Something", typo="MultSelect", name="something_dfield_multiselect", verbose_name=u"Dynamic Field MultiSelect",)
         DynamicField.objects.create(id=7, refer="Something", typo="RadioButton", name="something_dfield_radiobutton", verbose_name=u"Dynamic Field RadioButton", choices=['1', '2', '3', '4'])
+        DynamicField.objects.create(id=8, refer="Something", typo="CheckBox", name="something_dfield_checkbox", verbose_name=u"Dynamic Field CheckBox", choices=['1', '2', '3', '4'])
 
         self.something = Something.objects.create(
             name=u"Some Name",
@@ -68,6 +69,7 @@ class TypeCreateManagerTests(TestCase):
             something_dfield_datetime=datetime.now(),
             something_dfield_multiselect=['A', 'B', 'C'],
             something_dfield_radiobutton='2',
+            something_dfield_checkbox=['1', '2', '3'],
         )
 
     def test_assert_int_type(self):
@@ -98,3 +100,6 @@ class TypeCreateManagerTests(TestCase):
         value = self.something.something_dfield_radiobutton
         self.assertIsInstance(value, basestring)
 
+    def test_assert_checkbox_type(self):
+        value = self.something.something_dfield_checkbox
+        self.assertIsInstance(value, list)

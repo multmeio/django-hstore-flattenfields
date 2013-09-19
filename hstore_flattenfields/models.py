@@ -130,21 +130,6 @@ class DynamicField(models.Model):
         return self.blank and \
             self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION
 
-    @property
-    def widget(self):
-        widgets = {
-            "checkbox": forms.CheckboxSelectMultiple(),
-            "radiobutton": forms.RadioSelect(),
-            "textarea": forms.Textarea(attrs={"rows": "4"}),
-            "date": forms.TextInput(attrs={"data-mask": "date"}),
-            "datetime": forms.TextInput(attrs={"data-mask": "datetime"}),
-            "monetary": RealCurrencyInput(attrs={"data-mask": "monetary"}),
-        }
-
-        field_type = self.typo.lower()
-        if widgets.has_key(field_type):
-            return widgets[field_type]
-
     def save(self, *args, **kwargs):
         super(DynamicField, self).save()
         global dfields
