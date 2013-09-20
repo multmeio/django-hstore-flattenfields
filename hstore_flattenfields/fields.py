@@ -36,11 +36,28 @@ FIELD_TYPES_DICT = dict(
 )
 FIELD_TYPES = FIELD_TYPES_DICT.keys()
 
+class HstoreTextFieldFormField(forms.CharField):
+    def __init__(self, *args, **kwargs):
+        self.widget = forms.Textarea(attrs=kwargs.pop('html_attrs', {}))
+        super(HstoreTextFieldFormField, self).__init__(*args, **kwargs)
+
+
 class HstoreTextField(models.TextField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreTextField, self).__init__(*args, **kwargs)
+
+    def formfield(self, form_class=HstoreTextFieldFormField, **kwargs):
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs
+        }
+        defaults.update(kwargs)
+        return form_class(**defaults)
 
     def to_python(self, value):
         if value is models.fields.NOT_PROVIDED:
@@ -49,11 +66,28 @@ class HstoreTextField(models.TextField):
             return super(HstoreTextField, self).to_python(value)
 
 
+class HstoreNumberFormField(forms.IntegerField):
+    def __init__(self, *args, **kwargs):
+        self.widget = forms.TextInput(attrs=kwargs.pop('html_attrs', {}))
+        super(HstoreNumberFormField, self).__init__(*args, **kwargs)
+
+
 class HstoreFloatField(models.FloatField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreFloatField, self).__init__(*args, **kwargs)
+
+    def formfield(self, form_class=HstoreNumberFormField, **kwargs):
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs
+        }
+        defaults.update(kwargs)
+        return form_class(**defaults)
 
     def to_python(self, value):
         if not value or value is models.fields.NOT_PROVIDED:
@@ -69,7 +103,18 @@ class HstoreIntegerField(models.IntegerField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreIntegerField, self).__init__(*args, **kwargs)
+
+    def formfield(self, form_class=HstoreNumberFormField, **kwargs):
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs
+        }
+        defaults.update(kwargs)
+        return form_class(**defaults)
 
     def to_python(self, value):
         if not value or value is models.fields.NOT_PROVIDED:
@@ -98,8 +143,28 @@ class HstoreIntegerField(models.IntegerField):
         return value
 
 
+class HstoreCharFormField(forms.CharField):
+    def __init__(self, *args, **kwargs):
+        self.widget = forms.TextInput(attrs=kwargs.pop('html_attrs', {}))
+        super(HstoreCharFormField, self).__init__(*args, **kwargs)
+
+
 class HstoreCharField(models.CharField):
     __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
+        super(HstoreCharField, self).__init__(*args, **kwargs)
+
+    def formfield(self, form_class=HstoreCharFormField, **kwargs):
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs
+        }
+        defaults.update(kwargs)
+        return form_class(**defaults)
 
     def clean(self, value, *args):
         return unicode(value)
@@ -124,11 +189,28 @@ class HstoreCharField(models.CharField):
         return value
 
 
+class HstoreDecimalFormField(forms.DecimalField):
+    def __init__(self, *args, **kwargs):
+        self.widget = forms.TextInput(attrs=kwargs.pop('html_attrs', {}))
+        super(HstoreDecimalFormField, self).__init__(*args, **kwargs)
+
+
 class HstoreDecimalField(models.DecimalField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreDecimalField, self).__init__(*args, **kwargs)
+
+    def formfield(self, form_class=HstoreDecimalFormField, **kwargs):
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs
+        }
+        defaults.update(kwargs)
+        return form_class(**defaults)
 
     def to_python(self, value):
         """
@@ -150,11 +232,28 @@ class HstoreDecimalField(models.DecimalField):
         return unicode(value)
 
 
+class HstoreDateFormField(forms.DateField):
+    def __init__(self, *args, **kwargs):
+        self.widget = forms.DateInput(attrs=kwargs.pop('html_attrs', {}))
+        super(HstoreDateFormField, self).__init__(*args, **kwargs)
+        
+
 class HstoreDateField(models.DateField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreDateField, self).__init__(*args, **kwargs)
+
+    def formfield(self, form_class=HstoreDateFormField, **kwargs):
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs
+        }
+        defaults.update(kwargs)
+        return form_class(**defaults)
 
     def to_python(self, value):
         if not value or value is models.fields.NOT_PROVIDED or value == 'None':
@@ -179,11 +278,29 @@ class HstoreDateField(models.DateField):
             return value.isoformat()
         return ''
 
+
+class HstoreDateTimeFormField(forms.DateField):
+    def __init__(self, *args, **kwargs):
+        self.widget = forms.DateTimeInput(attrs=kwargs.pop('html_attrs', {}))
+        super(HstoreDateTimeFormField, self).__init__(*args, **kwargs)
+
+
 class HstoreDateTimeField(models.DateTimeField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreDateTimeField, self).__init__(*args, **kwargs)
+
+    def formfield(self, form_class=HstoreDateTimeFormField, **kwargs):
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs
+        }
+        defaults.update(kwargs)
+        return form_class(**defaults)
 
     def to_python(self, value):
         if not value or value is models.fields.NOT_PROVIDED or value == 'None':
@@ -231,12 +348,16 @@ class RadioSelectField(forms.TypedChoiceField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
-        self.widget = forms.RadioSelect
+        self.widget = forms.RadioSelect(attrs=kwargs.pop('html_attrs', {}))
         super(RadioSelectField, self).__init__(*args, **kwargs)
 
 
 class HstoreRadioSelectField(models.CharField):
     __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
+        super(HstoreRadioSelectField, self).__init__(*args, **kwargs)
 
     # XXX: Override formfield
     # most code was copied from django 1.4.1: db.models.CharField.formfield)
@@ -248,7 +369,8 @@ class HstoreRadioSelectField(models.CharField):
         defaults = {
             'required': not self.blank,
             'label': capfirst(self.verbose_name),
-            'help_text': self.help_text
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs
         }
 
         if self.has_default():
@@ -300,28 +422,35 @@ class HstoreRadioSelectField(models.CharField):
         return self.default
 
 
-class CheckboxField(forms.TypedMultipleChoiceField):
+class HstoreCheckboxInput(forms.TypedMultipleChoiceField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
-        self.widget = forms.CheckboxSelectMultiple
-        super(CheckboxField, self).__init__(*args, **kwargs)
+        self.widget = forms.CheckboxSelectMultiple(
+            attrs=kwargs.pop('html_attrs', {})
+        )
+        super(HstoreCheckboxInput, self).__init__(*args, **kwargs)
 
 
 class HstoreCheckboxField(models.CharField):
     __metaclass__ = models.SubfieldBase
 
+    def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
+        super(HstoreCheckboxField, self).__init__(*args, **kwargs)
+        
     # XXX: Override formfield
     # most code was copied from django 1.4.1: db.models.CharField.formfield)
     # only changed TypedChoiceField to MultipleChoiceField
-    def formfield(self, form_class=CheckboxField, **kwargs):
+    def formfield(self, form_class=HstoreCheckboxInput, **kwargs):
         """
         Returns a django.forms.Field instance for this database Field.
         """
         defaults = {
             'required': not self.blank,
             'label': capfirst(self.verbose_name),
-            'help_text': self.help_text
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs,
         }
 
         if self.has_default():
@@ -348,8 +477,14 @@ class HstoreCheckboxField(models.CharField):
                              'widget', 'label', 'initial', 'help_text',
                              'error_messages', 'show_hidden_initial'):
                     del kwargs[k]
+
         defaults.update(kwargs)
-        return form_class(**defaults)
+        formfield = form_class(**defaults)
+
+        if self.html_attrs:
+            formfield.widget.build_attrs(self.html_attrs)
+
+        return formfield
 
     def clean(self, value, *args):
         return value
@@ -381,7 +516,9 @@ class MultipleSelectField(forms.TypedMultipleChoiceField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
-        self.widget = hs_widgets.SelectMultipleWidget
+        self.widget = hs_widgets.SelectMultipleWidget(
+            attrs=kwargs.pop('html_attrs', {})
+        )
         super(MultipleSelectField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
@@ -390,6 +527,10 @@ class MultipleSelectField(forms.TypedMultipleChoiceField):
 
 class HstoreMultipleSelectField(models.CharField):
     __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
+        super(HstoreMultipleSelectField, self).__init__(*args, **kwargs)
 
     def clean(self, value, *args, **kwargs):
         return value
@@ -404,7 +545,8 @@ class HstoreMultipleSelectField(models.CharField):
         defaults = {
             'required': not self.blank,
             'label': capfirst(self.verbose_name),
-            'help_text': self.help_text
+            'help_text': self.help_text,
+            'html_attrs': self.html_attrs
         }
 
         if self.has_default():
@@ -471,7 +613,6 @@ def get_modelfield(typo):
 
 def crate_field_from_instance(instance):
     FieldClass = get_modelfield(instance.typo)
-    # import ipdb; ipdb.set_trace()
     
     # FIXME: The Data were saved in a string: "None"
     default_value = instance.default_value
@@ -485,11 +626,11 @@ def crate_field_from_instance(instance):
         null=True,
         default=default_value,
         choices=create_choices(instance.choices),
-        help_text='',
-        # XXX: HARDCODED "_dfields"
+        help_text=instance.help_text,
         db_column="_dfields->'%s'" % instance.name,
+        html_attrs=instance.html_attrs,
     )
-
+    
     field.db_type = 'dynamic_field'
     field.attname = field.name
     field.column = field.db_column
