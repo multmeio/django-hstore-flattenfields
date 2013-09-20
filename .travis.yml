@@ -8,6 +8,6 @@ install:
 before_script:
   # - psql -c 'create database postgres;' -U postgres
   # - psql -d postgres -c 'create extension hstore;' -U postgres
-  - cp testing/local_settings.py.sample testing/local_settings.py
+  - cp testing/local_settings.sample testing/local_settings.py
 script:
   - python testing/manage.py test app
