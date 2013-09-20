@@ -42,6 +42,10 @@ class DynamicFieldGroup(models.Model):
     slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True, overwrite=True)
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
 
+    class Meta:
+        verbose_name = _('Dynamic Field Group')
+        verbose_name_plural = _('Dynamic Field Groups')
+
     @property
     def fields(self):
         return DynamicField.objects.find_dfields(group=self)
@@ -62,6 +66,8 @@ class ContentPane(models.Model):
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="content_panes", verbose_name=_("Groups"))
 
     class Meta:
+        verbose_name = _('Content Pane')
+        verbose_name_plural = _('Content Panes')
         ordering = ['order', 'slug']
 
     def __unicode__(self):
@@ -116,13 +122,17 @@ class DynamicField(models.Model):
     choices = models.TextField(null=True, blank=True, verbose_name=_("Choices"))
     default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name=_("Default value"))
     help_text = models.CharField(max_length=255, null=True, blank=True, verbose_name=_('Help Text'))
-    html_attrs = hstore.DictionaryField(db_index=True, null=True, blank=False, default="", verbose_name=_("html Attributes"))
+    html_attrs = hstore.DictionaryField(db_index=True, null=True, blank=True, default={}, verbose_name=_("html Attributes"))
 
     # relations
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Groups"))
     content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Panel"))
 
     objects = CacheDynamicFieldManager()
+
+    class Meta:
+        verbose_name = _('Dynamic Field')
+        verbose_name_plural = _('Dynamic Fields')
 
     def __unicode__(self):
         return self.verbose_name or self.name
