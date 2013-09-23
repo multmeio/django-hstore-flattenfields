@@ -1,7 +1,7 @@
 from django.db import models
 from hstore_flattenfields.models import (HStoreModel, DynamicField,
-                                         ContentPane, DynamicFieldGroup,
-                                         HStoreGroupedModel, HStoreM2MGroupedModel)
+                                            ContentPane, DynamicFieldGroup,
+                                            HStoreGroupedModel, HStoreM2MGroupedModel)
 
 class SomethingType(DynamicFieldGroup):
     pass

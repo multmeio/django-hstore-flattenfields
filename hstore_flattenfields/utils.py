@@ -39,6 +39,23 @@ DATE_BR_RE = re.compile(
 REGEX_DATETIMES = [DATETIME_ISO_RE, DATETIME_ISO_MS_RE, DATETIME_BR_RE, DATETIME_BR_MS_RE]
 REGEX_DATES = [DATE_ISO_RE, DATE_BR_RE]
 
+FIELD_TYPES_WITHOUT_BLANK_OPTION = ['MultSelect', 'CheckBox', 'RadioButton']
+FIELD_TYPE_DEFAULT = 'HstoreCharField'
+FIELD_TYPES_DICT = dict(
+    Input='HstoreCharField',
+    Monetary='HstoreDecimalField',
+    Float='HstoreFloatField',
+    Integer='HstoreIntegerField',
+    TextArea='HstoreTextField',
+    SelectBox='HstoreSelectField',
+    MultSelect='HstoreMultipleSelectField',
+    Date='HstoreDateField',
+    DateTime='HstoreDateTimeField',
+    CheckBox='HstoreCheckboxField',
+    RadioButton='HstoreRadioSelectField'
+)
+FIELD_TYPES = FIELD_TYPES_DICT.keys()
+
 __all__ = ['single_list_to_tuple',
            'str2literal',
            'dec2real',
@@ -48,6 +65,11 @@ __all__ = ['single_list_to_tuple',
            'str2datetime',
            'DATE_BR_RE',
            'get_fieldnames',
+           'FIELD_TYPES_WITHOUT_BLANK_OPTION',
+           'FIELD_TYPE_DEFAULT',
+           'FIELD_TYPES_DICT',
+           'FIELD_TYPES',
+           'create_choices',
 ]
 
 
@@ -95,7 +117,7 @@ def has_any_in(chances, possibilities):
 # cache in globals
 _DYNAMIC_FIELD_TABLE_EXISTS = None
 def dynamic_field_table_exists():
-    from models import DynamicField
+    from hstore_flattenfields.models import DynamicField
     dynamic_field_table_name = DynamicField._meta.db_table
     global _DYNAMIC_FIELD_TABLE_EXISTS
     if not _DYNAMIC_FIELD_TABLE_EXISTS:
@@ -107,28 +129,8 @@ def get_fieldnames(fields, excludes=[]):
         filter(lambda f: f.name not in excludes, fields)
     )
 
-# def find_dfields(refer=None, name=None):
-#     from hstore_flattenfields.models import BaseDynamicField
-
-#     def by_refer(x): return x.refer == refer
-#     def by_name(x): return x.name == name
-#     def by_refer_name(x): return by_refer(x) and by_name(x)
-
-#     if refer and name:
-#         return filter(by_refer_name, BaseDynamicField.dfields)
-#     elif refer:
-#         return filter(by_refer, BaseDynamicField.dfields)
-#     elif name:
-#         return filter(by_name, BaseDynamicField.dfields)
-
-# def get_dynamic_field_model():
-#     "Return the DynamicField model that is used in this project"
-#     try:
-#         app_label, model_name = settings.HSTORE_DYNAMIC_MODEL.split('.')
-#     except ValueError:
-#         raise ImproperlyConfigured("HSTORE_DYNAMIC_MODEL must be of the form 'app_label.model_name'")
-#     user_model = get_model(app_label, model_name)
-#     if user_model is None:
-#         raise ImproperlyConfigured("HSTORE_DYNAMIC_MODEL refers to model '%s' that has not been installed" % settings.HSTORE_DYNAMIC_MODEL)
-#     return user_model
-
+def create_choices(choices=''):
+    if not choices: choices = ''
+    return single_list_to_tuple(
+        map(lambda x: x.strip(), choices.splitlines())
+    )

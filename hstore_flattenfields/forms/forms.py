@@ -11,16 +11,15 @@ from django import forms
 from django.forms.models import fields_for_model
 from django.template import Context, loader
 
-import models as hs_models
-import widgets as hs_widgets
-# from utils import get_dynamic_field_model
 
 class HStoreModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        from hstore_flattenfields.models import HStoreModel
+
         super(HStoreModelForm, self).__init__(*args, **kwargs)
         # Always override for fields (dynamic fields maybe deleted/included)
         opts = self._meta
-        if opts.model and issubclass(opts.model, hs_models.HStoreModel):
+        if opts.model and issubclass(opts.model, HStoreModel):
             # If a model is defined, extract dynamic form fields from it.
             if not opts.exclude:
                 opts.exclude = []
@@ -45,6 +44,8 @@ class HStoreContentPaneModelForm(HStoreModelForm):
     """
 
     def __init__(self, *args, **kwargs):
+        from hstore_flattenfields.models import DynamicField
+
         hstore_order = kwargs.pop('keyOrder', None)
         super(HStoreContentPaneModelForm, self).__init__(*args, **kwargs)
 
@@ -59,7 +60,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                                       parent_local_fields]
         for field in self._dyn_fields:
             field_name = field.name
-            if isinstance(field, hs_models.DynamicField):
+            if isinstance(field, DynamicField):
                 field_widget = field.get_modelfield.formfield().widget
             else:
                 field_widget = field.widget
@@ -74,7 +75,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         if not hstore_order:
             hstore_order = [x for x in self.fields.keyOrder if not x in dfield_names]
 
-        for field in hs_models.DynamicField.objects.find_dfields(refer=self.instance.__class__.__name__):
+        for field in DynamicField.objects.find_dfields(refer=self.instance.__class__.__name__):
             if field.name in hstore_order:
                 hstore_order.pop(hstore_order.index(field.name))
             hstore_order.insert(field.order or len(hstore_order), field.name)

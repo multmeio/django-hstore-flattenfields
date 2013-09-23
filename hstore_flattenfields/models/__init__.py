@@ -14,7 +14,6 @@ from django.db.models.fields.related import ManyToManyField
 from django.db.models.query import QuerySet
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django import forms
-from widgets import RealCurrencyInput
 from django.conf import settings
 from django.db.models import get_model
 from django.contrib.contenttypes.models import ContentType
@@ -23,7 +22,8 @@ from django.utils.translation import ugettext as _
 
 from fields import *
 from queryset import *
-from utils import *
+from manager import *
+from hstore_flattenfields.utils import *
 
 
 # Setup the "class Meta:" flattenfields custom configs
@@ -77,39 +77,7 @@ class ContentPane(models.Model):
     def fields(self):
         return DynamicField.objects.find_dfields(cpane=self)
 
-class CacheDynamicFieldManager(models.Manager):
-    def find_dfields(self, refer=None, name=None, cpane=None, group=None):
-        def by_refer(x): return x.refer == refer
-        def by_name(x): return x.name == name
-        def by_cpane(x): return x.content_pane == cpane
-        def by_group(x):
-            if hasattr(group, 'dynamicfieldgroup_ptr'):
-                return x.group == group.dynamicfieldgroup_ptr
-            return x.group == group
-        def by_refer_group(x): return by_refer(x) and by_group(x)
-        def by_refer_cpane(x): return by_refer(x) and by_cpane(x)
-        def by_refer_name(x): return by_refer(x) and by_name(x)
 
-        global dfields
-        if refer and name:
-            return filter(by_refer_name, dfields)
-        elif refer and group:
-            return filter(by_refer_group, dfields)
-        elif refer and cpane:
-            return filter(by_refer_cpane, dfields)
-        elif name:
-            return filter(by_name, dfields)
-        elif cpane:
-            return filter(by_cpane, dfields)
-        elif group:
-            return filter(by_group, dfields)
-        elif refer:
-            return filter(by_refer, dfields)
-        else:
-            return dfields
-
-
-# dfields = []
 class DynamicField(models.Model):
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name=_("Class name"))
     name = models.CharField(max_length=120, blank=False, db_index=True, unique=True, verbose_name=_("Field name"))

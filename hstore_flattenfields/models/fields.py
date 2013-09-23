@@ -13,34 +13,9 @@ from django.utils.text import capfirst
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime
 
-import models as hs_models
-import widgets as hs_widgets
-import forms as hs_forms
-from utils import *
-
-
-FIELD_TYPES_WITHOUT_BLANK_OPTION = ['MultSelect', 'CheckBox', 'RadioButton']
-FIELD_TYPE_DEFAULT = 'HstoreCharField'
-FIELD_TYPES_DICT = dict(
-    Input='HstoreCharField',
-    Monetary='HstoreDecimalField',
-    Float='HstoreFloatField',
-    Integer='HstoreIntegerField',
-    TextArea='HstoreTextField',
-    SelectBox='HstoreSelectField',
-    MultSelect='HstoreMultipleSelectField',
-    Date='HstoreDateField',
-    DateTime='HstoreDateTimeField',
-    CheckBox='HstoreCheckboxField',
-    RadioButton='HstoreRadioSelectField'
-)
-FIELD_TYPES = FIELD_TYPES_DICT.keys()
-
-class HstoreTextFieldFormField(forms.CharField):
-    def __init__(self, *args, **kwargs):
-        self.widget = forms.Textarea(attrs=kwargs.pop('html_attrs', {}))
-        super(HstoreTextFieldFormField, self).__init__(*args, **kwargs)
-
+from hstore_flattenfields.utils import *
+from hstore_flattenfields.forms.fields import *
+from __init__ import DynamicField
 
 class HstoreTextField(models.TextField):
     __metaclass__ = models.SubfieldBase
@@ -64,12 +39,6 @@ class HstoreTextField(models.TextField):
             return ''
         else:
             return super(HstoreTextField, self).to_python(value)
-
-
-class HstoreNumberFormField(forms.IntegerField):
-    def __init__(self, *args, **kwargs):
-        self.widget = forms.TextInput(attrs=kwargs.pop('html_attrs', {}))
-        super(HstoreNumberFormField, self).__init__(*args, **kwargs)
 
 
 class HstoreFloatField(models.FloatField):
@@ -143,12 +112,6 @@ class HstoreIntegerField(models.IntegerField):
         return value
 
 
-class HstoreCharFormField(forms.CharField):
-    def __init__(self, *args, **kwargs):
-        self.widget = forms.TextInput(attrs=kwargs.pop('html_attrs', {}))
-        super(HstoreCharFormField, self).__init__(*args, **kwargs)
-
-
 class HstoreCharField(models.CharField):
     __metaclass__ = models.SubfieldBase
 
@@ -174,7 +137,7 @@ class HstoreCharField(models.CharField):
 
         # FIXME: this maybe mistake on fields with same name in different refers
         try:
-            dynamic_field = hs_models.DynamicField.objects.find_dfields(name=self.name)[0]
+            dynamic_field = DynamicField.objects.find_dfields(name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreMultipleSelectField, self).get_choices()
         except IndexError:
@@ -187,12 +150,6 @@ class HstoreCharField(models.CharField):
             return ''
 
         return value
-
-
-class HstoreDecimalFormField(forms.DecimalField):
-    def __init__(self, *args, **kwargs):
-        self.widget = forms.TextInput(attrs=kwargs.pop('html_attrs', {}))
-        super(HstoreDecimalFormField, self).__init__(*args, **kwargs)
 
 
 class HstoreDecimalField(models.DecimalField):
@@ -230,12 +187,6 @@ class HstoreDecimalField(models.DecimalField):
 
     def clean(self, value, *args):
         return unicode(value)
-
-
-class HstoreDateFormField(forms.DateField):
-    def __init__(self, *args, **kwargs):
-        self.widget = forms.DateInput(attrs=kwargs.pop('html_attrs', {}))
-        super(HstoreDateFormField, self).__init__(*args, **kwargs)
         
 
 class HstoreDateField(models.DateField):
@@ -277,12 +228,6 @@ class HstoreDateField(models.DateField):
         if value and isinstance(value, date):
             return value.isoformat()
         return ''
-
-
-class HstoreDateTimeFormField(forms.DateField):
-    def __init__(self, *args, **kwargs):
-        self.widget = forms.DateTimeInput(attrs=kwargs.pop('html_attrs', {}))
-        super(HstoreDateTimeFormField, self).__init__(*args, **kwargs)
 
 
 class HstoreDateTimeField(models.DateTimeField):
@@ -344,14 +289,6 @@ class HstoreSelectField(models.CharField):
         return value
 
 
-class RadioSelectField(forms.TypedChoiceField):
-    __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        self.widget = forms.RadioSelect(attrs=kwargs.pop('html_attrs', {}))
-        super(RadioSelectField, self).__init__(*args, **kwargs)
-
-
 class HstoreRadioSelectField(models.CharField):
     __metaclass__ = models.SubfieldBase
 
@@ -411,7 +348,7 @@ class HstoreRadioSelectField(models.CharField):
 
         # FIXME: this maybe mistake on fields with same name in different refers
         try:
-            dynamic_field = hs_models.DynamicField.objects.find_dfields(name=self.name)[0]
+            dynamic_field = DynamicField.objects.find_dfields(name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreRadioSelectField, self).get_choices()
         except IndexError:
@@ -420,16 +357,6 @@ class HstoreRadioSelectField(models.CharField):
 
     def get_default(self):
         return self.default
-
-
-class HstoreCheckboxInput(forms.TypedMultipleChoiceField):
-    __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        self.widget = forms.CheckboxSelectMultiple(
-            attrs=kwargs.pop('html_attrs', {})
-        )
-        super(HstoreCheckboxInput, self).__init__(*args, **kwargs)
 
 
 class HstoreCheckboxField(models.CharField):
@@ -494,7 +421,7 @@ class HstoreCheckboxField(models.CharField):
 
         # FIXME: this maybe mistake on fields with same name in different refers
         try:
-            dynamic_field = hs_models.DynamicField.objects.find_dfields(name=self.name)[0]
+            dynamic_field = DynamicField.objects.find_dfields(name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreCheckboxField, self).get_choices()
         except IndexError:
@@ -510,19 +437,6 @@ class HstoreCheckboxField(models.CharField):
         if value is models.fields.NOT_PROVIDED or value is None:
             return []
         return str2literal(value) or value
-
-
-class MultipleSelectField(forms.TypedMultipleChoiceField):
-    __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        self.widget = hs_widgets.SelectMultipleWidget(
-            attrs=kwargs.pop('html_attrs', {})
-        )
-        super(MultipleSelectField, self).__init__(*args, **kwargs)
-
-    def clean(self, value):
-        return value
 
 
 class HstoreMultipleSelectField(models.CharField):
@@ -588,7 +502,7 @@ class HstoreMultipleSelectField(models.CharField):
 
         # FIXME: this maybe mistake on fields with same name in different refers
         try:
-            dynamic_field = hs_models.DynamicField.objects.find_dfields(name=self.name)[0]
+            dynamic_field = DynamicField.objects.find_dfields(name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreMultipleSelectField, self).get_choices()
         except IndexError:
@@ -596,13 +510,6 @@ class HstoreMultipleSelectField(models.CharField):
 
         return choices or self._choices
 
-
-def create_choices(choices=''):
-    if not choices: choices = ''
-
-    return single_list_to_tuple([
-        s.strip() for s in choices.splitlines()
-    ])
 
 def get_modelfield(typo):
     return eval(

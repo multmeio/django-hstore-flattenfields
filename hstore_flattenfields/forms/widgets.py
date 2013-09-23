@@ -10,7 +10,7 @@ Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
 from django import forms
 from django.utils.safestring import mark_safe
 
-from utils import str2literal
+from hstore_flattenfields.utils import str2literal
 
 class SelectMultipleWidget(forms.SelectMultiple):
     def render(self, name, value='', attrs={}, choices=()):

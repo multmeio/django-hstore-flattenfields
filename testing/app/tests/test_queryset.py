@@ -18,7 +18,7 @@ from operator import attrgetter
 
 from app.models import *
 # from hstore_flattenfields.models import DynamicField
-from hstore_flattenfields.aggregates import *
+from hstore_flattenfields.models.aggregates import *
 
 
 class LookupTests(TestCase):

@@ -1,16 +1,25 @@
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+fields.py
+
+Created by Luan Fonseca de Farias on 2013-09-23.
+Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
+"""
+
 import datetime
 import numbers
+import operator
+
 from django.utils import tree
 from django.core.exceptions import FieldError
 from django.db.models.sql.constants import LOOKUP_SEP
 from django.db.models.fields import FieldDoesNotExist
-from django_orm.postgresql import hstore
 from django.db.models.sql.where import ExtraWhere
 from django_orm.core.sql.tree import AND, OR
 from django.db.models.query import *
-import operator
 
-from utils import *
+from hstore_flattenfields.utils import *
 
 class HStoreConstraint():
     value_operators = {
@@ -34,15 +43,6 @@ class HStoreConstraint():
         self.alias = alias
         self.field = field
         self.values = [value]
-
-        # if lookup_type == 'contains':
-        #     if isinstance(value, basestring):
-        #         self.operator = '?'
-        #     elif isinstance(value, (list, tuple)):
-        #         self.operator = '?&'
-        #         self.values = [list(value)]
-            # else:
-            #     raise ValueError('invalid value %r' % value)
 
         if lookup_type in self.value_operators:
             self.operator = self.value_operators[lookup_type]
@@ -255,8 +255,3 @@ class FlattenFieldsFilterQuerySet(QuerySet):
 
         clone.query.where.add(ExtraWhere([_sql], _params), "AND")
         return clone
-
-class FlattenFieldsFilterManager(hstore.HStoreManager):
-    def get_query_set(self):
-        return FlattenFieldsFilterQuerySet(model=self.model, using=self._db)
-

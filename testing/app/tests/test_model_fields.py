@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from datetime import date, datetime
 
-from hstore_flattenfields.fields import *
+from hstore_flattenfields.models.fields import *
 # from hstore_flattenfields.models import DynamicField
 
 from app.models import Something, DynamicField
