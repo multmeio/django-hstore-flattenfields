@@ -601,14 +601,14 @@ class LookupTests(TestCase):
                 '<Book: foo>',
                 '<Book: fooo>'
             ])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'fo*'),
-    #         [
-    #             '<Book: f>',
-    #             '<Book: fo>',
-    #             '<Book: foo>',
-    #             '<Book: fooo>',
-    #             '<Book: hey-Foo>',
-    #         ])
+        self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'fo*'),
+            [
+                '<Book: f>',
+                '<Book: fo>',
+                '<Book: foo>',
+                '<Book: fooo>',
+                '<Book: hey-Foo>',
+            ])
     #     # one-or-more
     #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'fo+'),
     #         ['<Book: fo>', '<Book: foo>', '<Book: fooo>'])
