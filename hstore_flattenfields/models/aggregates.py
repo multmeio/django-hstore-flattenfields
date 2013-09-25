@@ -9,7 +9,7 @@ __all__ = [
     'HstoreMin',
 ]
 
-base_sql_template = "%(function)s(CAST(NULLIF(%(field)s, '') AS {0}))"
+base_sql_template = "%(function)s(NULLIF(%(field)s, '')::{0})"
 
 class HstoreAggregate(models.Aggregate):
     """
