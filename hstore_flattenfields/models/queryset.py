@@ -31,6 +31,8 @@ class HStoreConstraint():
         'istartswith': 'ILIKE',
         'endswith': 'LIKE',
         'iendswith': 'ILIKE',
+        'regex': '~',
+        'iregex': '~*',
         'in': 'IN',
         'lt': '<',
         'lte': '<=',
@@ -118,6 +120,8 @@ class HQ(tree.Node):
         'istartswith',
         'endswith',
         'iendswith',
+        'regex',
+        'iregex',
     ]
 
     def __init__(self, **kwargs):

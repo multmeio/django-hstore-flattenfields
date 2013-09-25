@@ -579,28 +579,28 @@ class LookupTests(TestCase):
                 '<Book: Book 7>',
             ])
 
-    # def test_regex(self):
-    #     # Create some articles with a bit more interesting names for testing field lookups:
-    #     for a in Book.objects.all():
-    #         a.delete()
-    #     now = datetime.now()
-    #     b1 = Book.objects.create(pubdate=now, title='f')
-    #     b2 = Book.objects.create(pubdate=now, title='fo')
-    #     b3 = Book.objects.create(pubdate=now, title='foo')
-    #     b4 = Book.objects.create(pubdate=now, title='fooo')
-    #     b5 = Book.objects.create(pubdate=now, title='hey-Foo')
-    #     b6 = Book.objects.create(pubdate=now, title='bar')
-    #     b7 = Book.objects.create(pubdate=now, title='AbBa')
-    #     b8 = Book.objects.create(pubdate=now, title='baz')
-    #     b9 = Book.objects.create(pubdate=now, title='baxZ')
-    #     # zero-or-more
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'fo*'),
-    #         [
-    #             '<Book: f>',
-    #             '<Book: fo>',
-    #             '<Book: foo>',
-    #             '<Book: fooo>'
-    #         ])
+    def test_regex(self):
+        # Create some articles with a bit more interesting names for testing field lookups:
+        for a in Book.objects.all():
+            a.delete()
+        now = datetime.now()
+        b1 = Book.objects.create(pubdate=now, title='f')
+        b2 = Book.objects.create(pubdate=now, title='fo')
+        b3 = Book.objects.create(pubdate=now, title='foo')
+        b4 = Book.objects.create(pubdate=now, title='fooo')
+        b5 = Book.objects.create(pubdate=now, title='hey-Foo')
+        b6 = Book.objects.create(pubdate=now, title='bar')
+        b7 = Book.objects.create(pubdate=now, title='AbBa')
+        b8 = Book.objects.create(pubdate=now, title='baz')
+        b9 = Book.objects.create(pubdate=now, title='baxZ')
+        # zero-or-more        
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'fo*'),
+            [
+                '<Book: f>',
+                '<Book: fo>',
+                '<Book: foo>',
+                '<Book: fooo>'
+            ])
     #     self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'fo*'),
     #         [
     #             '<Book: f>',
