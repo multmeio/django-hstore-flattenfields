@@ -703,17 +703,25 @@ class LookupTests(TestCase):
                 '<Book: bazbaRFOO>'
             ])
 
-    # def test_nonfield_lookups(self):
-    #     """
-    #     Ensure that a lookup query containing non-fields raises the proper
-    #     exception.
-    #     """
-    #     with self.assertRaises(FieldError):
-    #         Book.objects.filter(name__blahblah=99)
-    #     with self.assertRaises(FieldError):
-    #         Book.objects.filter(name__blahblah__exact=99)
-    #     with self.assertRaises(FieldError):
-    #         Book.objects.filter(blahblah=99)
+    def test_nonfield_lookups(self):
+        """
+        Ensure that a lookup query containing non-fields DONT 
+        raises the any exception.
+        Because we dont have know what kind of name the
+        Dynamic Fields in each DB Register.
+        """
+        self.assertQuerysetEqual(
+            Book.objects.filter(name__blahblah=99),
+            []
+        )
+        self.assertQuerysetEqual(
+            Book.objects.filter(name__blahblah__exact=99),
+            []
+        )
+        self.assertQuerysetEqual(
+            Book.objects.filter(blahblah=99),
+            []
+        )
 
     # def test_lookup_collision(self):
     #     """
