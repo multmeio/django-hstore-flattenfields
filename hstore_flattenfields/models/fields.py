@@ -187,7 +187,7 @@ class HstoreDecimalField(models.DecimalField):
 
     def clean(self, value, *args):
         return unicode(value)
-        
+
 
 class HstoreDateField(models.DateField):
     __metaclass__ = models.SubfieldBase
@@ -275,6 +275,7 @@ class HstoreSelectField(models.CharField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+        self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreSelectField, self).__init__(*args, **kwargs)
 
     def clean(self, value, *args):
@@ -365,7 +366,7 @@ class HstoreCheckboxField(models.CharField):
     def __init__(self, *args, **kwargs):
         self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreCheckboxField, self).__init__(*args, **kwargs)
-        
+
     # XXX: Override formfield
     # most code was copied from django 1.4.1: db.models.CharField.formfield)
     # only changed TypedChoiceField to MultipleChoiceField
@@ -520,7 +521,7 @@ def get_modelfield(typo):
 
 def crate_field_from_instance(instance):
     FieldClass = get_modelfield(instance.typo)
-    
+
     # FIXME: The Data were saved in a string: "None"
     default_value = instance.default_value
     if default_value is None:
@@ -537,7 +538,7 @@ def crate_field_from_instance(instance):
         db_column="_dfields->'%s'" % instance.name,
         html_attrs=instance.html_attrs,
     )
-    
+
     field.db_type = 'dynamic_field'
     field.attname = field.name
     field.column = field.db_column
