@@ -66,8 +66,7 @@ class HStoreConstraint():
                 raise ValueError('invalid value %r' % test_value)
 
             if cast_type:
-                self.lvalue = "CAST(NULLIF(%%s->'%s', '') AS %s)" % (key, cast_type)
-                # self.lvalue = "NULLIF(%%s->'%s', '')::%s" % (key, cast_type)
+                self.lvalue = "NULLIF(%%s->'%s', '')::%s" % (key, cast_type)
             else:
                 self.lvalue = "%%s->'%s'" % key
         else:
