@@ -22,32 +22,14 @@ from django.db.models.query import *
 from hstore_flattenfields.utils import *
 
 class HStoreConstraint():
-    value_operators = {
-        'exact': '=',
-        'iexact': 'ILIKE',
-        'contains': 'LIKE',
-        'icontains': 'ILIKE',
-        'startswith': 'LIKE',
-        'istartswith': 'ILIKE',
-        'endswith': 'LIKE',
-        'iendswith': 'ILIKE',
-        'regex': '~',
-        'iregex': '~*',
-        'in': 'IN',
-        'lt': '<',
-        'lte': '<=',
-        'gt': '>',
-        'gte': '>=',
-    }
-
     def __init__(self, alias, field, value, lookup_type, key=None):
         self.lvalue = '%s'
         self.alias = alias
         self.field = field
         self.values = [value]
 
-        if lookup_type in self.value_operators:
-            self.operator = self.value_operators[lookup_type]
+        if lookup_type in VALUE_OPERATORS:
+            self.operator = VALUE_OPERATORS[lookup_type]
             
             if lookup_type in SPECIAL_CHARS_OPERATORS and has_any_in(SPECIAL_CHARS, value):
                 for char in [x for x in value if x in SPECIAL_CHARS]:
@@ -106,23 +88,7 @@ class HQ(tree.Node):
     AND = 'AND'
     OR = 'OR'
     default = AND
-    query_terms = [
-        'exact',
-        'iexact',
-        'lt',
-        'lte',
-        'gt',
-        'gte',
-        'in',
-        'contains',
-        'icontains',
-        'startswith',
-        'istartswith',
-        'endswith',
-        'iendswith',
-        'regex',
-        'iregex',
-    ]
+    query_terms = VALUE_OPERATORS.keys()
 
     def __init__(self, **kwargs):
         super(HQ, self).__init__(children=kwargs.items())

@@ -73,6 +73,24 @@ SPECIAL_CHARS_OPERATORS = [
     'in',
 ]
 
+VALUE_OPERATORS = {
+    'exact': '=',
+    'iexact': 'ILIKE',
+    'contains': 'LIKE',
+    'icontains': 'ILIKE',
+    'startswith': 'LIKE',
+    'istartswith': 'ILIKE',
+    'endswith': 'LIKE',
+    'iendswith': 'ILIKE',
+    'regex': '~',
+    'iregex': '~*',
+    'in': 'IN',
+    'lt': '<',
+    'lte': '<=',
+    'gt': '>',
+    'gte': '>=',
+}
+
 __all__ = ['single_list_to_tuple',
            'str2literal',
            'dec2real',
@@ -89,6 +107,7 @@ __all__ = ['single_list_to_tuple',
            'create_choices',
            'SPECIAL_CHARS',
            'SPECIAL_CHARS_OPERATORS',
+           'VALUE_OPERATORS',
 ]
 
 
