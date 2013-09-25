@@ -199,13 +199,13 @@ class LookupTests(TestCase):
         # because iterator() uses database-level iteration.
         self.assertQuerysetEqual(Book.objects.values('id', 'title').iterator(),
             [
-                {'title': 'Book 1', 'id': self.b1.id},
-                {'title': 'Book 2', 'id': self.b2.id},
-                {'title': 'Book 3', 'id': self.b3.id},
-                {'title': 'Book 4', 'id': self.b4.id},
-                {'title': 'Book 5', 'id': self.b5.id},
-                {'title': 'Book 6', 'id': self.b6.id},
-                {'title': 'Book 7', 'id': self.b7.id},
+                {'id': self.b1.id, 'title': self.b1.title},
+                {'id': self.b2.id, 'title': self.b2.title},
+                {'id': self.b3.id, 'title': self.b3.title},
+                {'id': self.b4.id, 'title': self.b4.title},
+                {'id': self.b5.id, 'title': self.b5.title},
+                {'id': self.b6.id, 'title': self.b6.title},
+                {'id': self.b7.id, 'title': self.b7.title},
             ],
             transform=self.identity)
 
@@ -304,30 +304,30 @@ class LookupTests(TestCase):
         # If you don't specify field names to values(), all are returned.
         self.assertQuerysetEqual(Book.objects.filter(id=self.b5.id).values(),
             [{
-                'pubdate': '2005-08-01 09:00:00',
-                'title': str(self.b5),
-                'author': 2,
-                '_dfields': {
-                    'pages': '5', 
-                    'pubdate': '2005-08-01 09:00:00', 
-                    'title': str(self.b5)
-                }, 
-                'id': 5, 
-                'tag': 86, 
-                'pages': '5', 
-                'tags': None
-            }, {
-                'pubdate': '2005-08-01 09:00:00', 
-                'title': str(self.b5), 
+                u'pubdate': u'2005-08-01 09:00:00', 
+                u'title': u'Book 5', 
                 'author': 2, 
                 '_dfields': {
-                    'pages': '5', 
-                    'pubdate': '2005-08-01 09:00:00', 
-                    'title': str(self.b5)
+                    u'pages': u'5', 
+                    u'pubdate': u'2005-08-01 09:00:00', 
+                    u'title': u'Book 5'
                 }, 
                 'id': 5, 
-                'tag': 87, 
-                'pages': '5', 
+                'tag': self.t2.pk, 
+                u'pages': u'5', 
+                'tags': None
+            }, {
+                u'pubdate': u'2005-08-01 09:00:00', 
+                u'title': u'Book 5', 
+                'author': 2, 
+                '_dfields': {
+                    u'pages': u'5', 
+                    u'pubdate': u'2005-08-01 09:00:00', 
+                    u'title': u'Book 5'
+                }, 
+                'id': 5, 
+                'tag': self.t3.pk, 
+                u'pages': u'5', 
                 'tags': None
             }], transform=self.identity)
 
@@ -454,41 +454,49 @@ class LookupTests(TestCase):
     #         repr(self.b2.get_previous_by_pubdate()),
     #          '<Book: Book 1>')
 
-    # def test_queryset_values_changed(self):
-    #     # Underscores, percent signs and backslashes have special meaning in the
-    #     # underlying SQL code, but Django handles the quoting of them automatically.
-    #     Book.objects.create(title='Book_ with underscore', pubdate=datetime(2005, 11, 20), id=8)
-    #     self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book'),
-    #         [
-    #             '<Book: Book 1>',
-    #             '<Book: Book 2>',
-    #             '<Book: Book 3>',
-    #             '<Book: Book 4>',
-    #             '<Book: Book 5>',
-    #             '<Book: Book 6>',
-    #             '<Book: Book 7>',
-    #             '<Book: Book_ with underscore>',
-    #         ])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book_'),
-    #                              ['<Book: Book_ with underscore>'])
-    #     Book.objects.create(title='Book% with percent sign', pubdate=datetime(2005, 11, 21), id=9)
-    #     self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book'),
-    #         [
-    #             '<Book: Book% with percent sign>',
-    #             '<Book: Book_ with underscore>',
-    #             '<Book: Book 5>',
-    #             '<Book: Book 6>',
-    #             '<Book: Book 4>',
-    #             '<Book: Book 2>',
-    #             '<Book: Book 3>',
-    #             '<Book: Book 7>',
-    #             '<Book: Book 1>',
-    #         ])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book%'),
-    #                              ['<Book: Book% with percent sign>'])
-    #     Book.objects.create(title='Book with \\ backslash', pubdate=datetime(2005, 11, 22))
-    #     self.assertQuerysetEqual(Book.objects.filter(title__contains='\\'),
-    #                              ['<Book: Book with \ backslash>'])
+    def test_queryset_values_changed(self):
+        # Underscores, percent signs and backslashes have special meaning in the
+        # underlying SQL code, but Django handles the quoting of them automatically.
+        Book.objects.create(title='Book_ with underscore', pubdate=datetime(2005, 11, 20), id=8)
+        self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book'),
+            [
+                '<Book: Book 1>',
+                '<Book: Book 2>',
+                '<Book: Book 3>',
+                '<Book: Book 4>',
+                '<Book: Book 5>',
+                '<Book: Book 6>',
+                '<Book: Book 7>',
+                '<Book: Book_ with underscore>',
+            ])
+        self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book_'),
+            [
+                '<Book: Book_ with underscore>'
+            ])
+
+        Book.objects.create(title='Book% with percent sign', pubdate=datetime(2005, 11, 21), id=9)
+        self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book'),
+            [
+              '<Book: Book 1>',
+                '<Book: Book 2>',
+                '<Book: Book 3>',
+                '<Book: Book 4>',
+                '<Book: Book 5>',
+                '<Book: Book 6>',
+                '<Book: Book 7>',
+                '<Book: Book_ with underscore>',
+                '<Book: Book% with percent sign>',
+            ])
+        self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book%'),
+            [
+                '<Book: Book% with percent sign>'
+            ])
+
+        Book.objects.create(title='Book with \\ backslash', pubdate=datetime(2005, 11, 22), id=10)
+        self.assertQuerysetEqual(Book.objects.filter(title__contains='\\'),
+            [
+                '<Book: Book with \ backslash>'
+            ])
 
     def test_exclude(self):
         Book.objects.create(title='Book_ with underscore', pubdate=datetime(2005, 11, 20), id=8)
@@ -507,18 +515,18 @@ class LookupTests(TestCase):
                 '<Book: Book 6>',
                 '<Book: Book 7>',
             ])
-    #     self.assertQuerysetEqual(Book.objects.exclude(title__startswith="Book_"),
-    #         [
-    #             '<Book: Book 1>',
-    #             '<Book: Book 2>',
-    #             '<Book: Book 3>',
-    #             '<Book: Book 4>',
-    #             '<Book: Book 5>',
-    #             '<Book: Book 6>',
-    #             '<Book: Book 7>',
-    #             '<Book: Book with \\ backslash>',
-    #             '<Book: Book% with percent sign>',
-    #         ])
+        self.assertQuerysetEqual(Book.objects.exclude(title__startswith="Book_"),
+            [
+                '<Book: Book 1>',
+                '<Book: Book 2>',
+                '<Book: Book 3>',
+                '<Book: Book 4>',
+                '<Book: Book 5>',
+                '<Book: Book 6>',
+                '<Book: Book 7>',
+                '<Book: Book% with percent sign>', 
+                '<Book: Book with \ backslash>'
+            ])
 
         self.assertQuerysetEqual(Book.objects.exclude(title="Book 7"),
             [
@@ -535,16 +543,31 @@ class LookupTests(TestCase):
 
     def test_none(self):
        # none() returns a QuerySet that behaves like any other QuerySet object
-        self.assertQuerysetEqual(Book.objects.none(), [])
-        # self.assertQuerysetEqual(Book.objects.none().filter(title__startswith='Book'), [])
-        self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book').none(), [])
-        self.assertEqual(Book.objects.none().count(), 0)
-        self.assertEqual(Book.objects.none().update(title="This should not take effect"), 0)
-        self.assertQuerysetEqual([article for article in Book.objects.none().iterator()],[])
+        self.assertQuerysetEqual(
+            Book.objects.none(), 
+            []
+            )
+        self.assertQuerysetEqual(
+            Book.objects.none().filter(title__startswith='Book'), 
+            []
+            )
+        self.assertQuerysetEqual(
+            Book.objects.filter(title__startswith='Book').none(), 
+            []
+            )
+        self.assertEqual(Book.objects.none().count(), 
+            0)
+        self.assertEqual(Book.objects.none().update(title="This should not take effect"), 
+            0)
+        self.assertQuerysetEqual(
+            [article for article in Book.objects.none().iterator()],
+            []
+            )
 
     def test_in(self):
         # using __in with an empty list should return an empty query set
-        self.assertQuerysetEqual(Book.objects.filter(id__in=[]), [])
+        self.assertQuerysetEqual(Book.objects.filter(id__in=[]), 
+            [])
         self.assertQuerysetEqual(Book.objects.exclude(id__in=[]),
             [
                 '<Book: Book 1>',

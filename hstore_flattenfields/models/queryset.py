@@ -46,7 +46,11 @@ class HStoreConstraint():
 
         if lookup_type in self.value_operators:
             self.operator = self.value_operators[lookup_type]
-
+            
+            if lookup_type in SPECIAL_CHARS_OPERATORS and has_any_in(SPECIAL_CHARS, value):
+                for char in [x for x in value if x in SPECIAL_CHARS]:
+                    value = value.replace(char, '\%s' % char)
+               
             if self.operator == 'IN':
                 test_value = value[0]
                 self.values = [tuple(value)]
@@ -79,6 +83,7 @@ class HStoreConstraint():
 
             if cast_type:
                 self.lvalue = "CAST(NULLIF(%%s->'%s', '') AS %s)" % (key, cast_type)
+                # self.lvalue = "NULLIF(%%s->'%s', '')::%s" % (key, cast_type)
             else:
                 self.lvalue = "%%s->'%s'" % key
         else:

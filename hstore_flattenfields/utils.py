@@ -56,6 +56,23 @@ FIELD_TYPES_DICT = dict(
 )
 FIELD_TYPES = FIELD_TYPES_DICT.keys()
 
+SPECIAL_CHARS = [
+    '_',
+    '%',
+    '\\',
+]
+
+SPECIAL_CHARS_OPERATORS = [
+    'iexact',
+    'contains',
+    'icontains',
+    'startswith',
+    'istartswith',
+    'endswith',
+    'iendswith',
+    'in',
+]
+
 __all__ = ['single_list_to_tuple',
            'str2literal',
            'dec2real',
@@ -70,6 +87,8 @@ __all__ = ['single_list_to_tuple',
            'FIELD_TYPES_DICT',
            'FIELD_TYPES',
            'create_choices',
+           'SPECIAL_CHARS',
+           'SPECIAL_CHARS_OPERATORS',
 ]
 
 
