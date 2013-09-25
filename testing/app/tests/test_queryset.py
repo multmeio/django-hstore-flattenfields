@@ -609,82 +609,81 @@ class LookupTests(TestCase):
                 '<Book: fooo>',
                 '<Book: hey-Foo>',
             ])
-    #     # one-or-more
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'fo+'),
-    #         ['<Book: fo>', '<Book: foo>', '<Book: fooo>'])
-    #     # wildcard
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'fooo?'),
-    #         ['<Book: foo>', '<Book: fooo>'])
-    #     # leading anchor
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'^b'),
-    #         ['<Book: bar>', '<Book: baxZ>', '<Book: baz>'])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'^a'),
-    #         ['<Book: AbBa>'])
-    #     # trailing anchor
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'z$'),
-    #         ['<Book: baz>'])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'z$'),
-    #         ['<Book: baxZ>', '<Book: baz>'])
-    #     # character sets
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'ba[rz]'),
-    #         ['<Book: bar>', '<Book: baz>'])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'ba.[RxZ]'),
-    #         ['<Book: baxZ>'])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'ba[RxZ]'),
-    #         ['<Book: bar>', '<Book: baxZ>', '<Book: baz>'])
+        # one-or-more
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'fo+'),
+            ['<Book: fo>', '<Book: foo>', '<Book: fooo>'])
+        # wildcard
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'fooo?'),
+            ['<Book: foo>', '<Book: fooo>'])
+        # leading anchor
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'^b'),
+            ['<Book: bar>', '<Book: baz>', '<Book: baxZ>'])
+        self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'^a'),
+            ['<Book: AbBa>'])
+        # trailing anchor
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'z$'),
+            ['<Book: baz>'])
+        self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'z$'),
+            ['<Book: baz>', '<Book: baxZ>'])
+        # character sets
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'ba[rz]'),
+            ['<Book: bar>', '<Book: baz>'])
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'ba.[RxZ]'),
+            ['<Book: baxZ>'])
+        self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'ba[RxZ]'),
+            ['<Book: bar>', '<Book: baz>', '<Book: baxZ>'])
 
-    #     # and more articles:
-    #     b10 = Book(pubdate=now, title='foobar')
-    #     b10.save()
-    #     b11 = Book(pubdate=now, title='foobaz')
-    #     b11.save()
-    #     b12 = Book(pubdate=now, title='ooF')
-    #     b12.save()
-    #     b13 = Book(pubdate=now, title='foobarbaz')
-    #     b13.save()
-    #     b14 = Book(pubdate=now, title='zoocarfaz')
-    #     b14.save()
-    #     b15 = Book(pubdate=now, title='barfoobaz')
-    #     b15.save()
-    #     b16 = Book(pubdate=now, title='bazbaRFOO')
-    #     b16.save()
+        # and more articles:
+        b10 = Book.objects.create(pubdate=now, title='foobar')
+        b11 = Book.objects.create(pubdate=now, title='foobaz')
+        b12 = Book.objects.create(pubdate=now, title='ooF')
+        b13 = Book.objects.create(pubdate=now, title='foobarbaz')
+        b14 = Book.objects.create(pubdate=now, title='zoocarfaz')
+        b15 = Book.objects.create(pubdate=now, title='barfoobaz')
+        b16 = Book.objects.create(pubdate=now, title='bazbaRFOO')
+        
+        # alternation
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'oo(f|b)'),
+            [
+                '<Book: foobar>', 
+                '<Book: foobaz>', 
+                '<Book: foobarbaz>', 
+                '<Book: barfoobaz>'
+            ])
+        self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'oo(f|b)'),
+            [
+                '<Book: foobar>', 
+                '<Book: foobaz>', 
+                '<Book: ooF>', 
+                '<Book: foobarbaz>', 
+                '<Book: barfoobaz>'
+            ])
+        
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'^foo(f|b)'),
+            [
+                '<Book: foobar>', 
+                '<Book: foobaz>', 
+                '<Book: foobarbaz>'
+            ])
 
-    #     # alternation
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'oo(f|b)'),
-    #         [
-    #             '<Book: barfoobaz>',
-    #             '<Book: foobar>',
-    #             '<Book: foobarbaz>',
-    #             '<Book: foobaz>',
-    #         ])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'oo(f|b)'),
-    #         [
-    #             '<Book: barfoobaz>',
-    #             '<Book: foobar>',
-    #             '<Book: foobarbaz>',
-    #             '<Book: foobaz>',
-    #             '<Book: ooF>',
-    #         ])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'^foo(f|b)'),
-    #         ['<Book: foobar>', '<Book: foobarbaz>', '<Book: foobaz>'])
+        # greedy matching
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'b.*az'),
+            [
+                '<Book: baz>', 
+                '<Book: foobaz>', 
+                '<Book: foobarbaz>', 
+                '<Book: barfoobaz>', 
+                '<Book: bazbaRFOO>'
+            ])
 
-    #     # greedy matching
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'b.*az'),
-    #         [
-    #             '<Book: barfoobaz>',
-    #             '<Book: baz>',
-    #             '<Book: bazbaRFOO>',
-    #             '<Book: foobarbaz>',
-    #             '<Book: foobaz>',
-    #         ])
-    #     self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'b.*ar'),
-    #         [
-    #             '<Book: bar>',
-    #             '<Book: barfoobaz>',
-    #             '<Book: bazbaRFOO>',
-    #             '<Book: foobar>',
-    #             '<Book: foobarbaz>',
-    #         ])
+        self.assertQuerysetEqual(Book.objects.filter(title__iregex=r'b.*ar'),
+            [
+                '<Book: bar>', 
+                '<Book: foobar>', 
+                '<Book: foobarbaz>', 
+                '<Book: barfoobaz>', 
+                '<Book: bazbaRFOO>'
+            ])
 
     # @skipUnlessDBFeature('supports_regex_backreferencing')
     # def test_regex_backreferencing(self):
