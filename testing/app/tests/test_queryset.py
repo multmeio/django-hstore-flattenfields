@@ -686,22 +686,22 @@ class LookupTests(TestCase):
             ])
 
     # @skipUnlessDBFeature('supports_regex_backreferencing')
-    # def test_regex_backreferencing(self):
-    #     # grouping and backreferences
-    #     now = datetime.now()
-    #     b10 = Book.objects.create(pubdate=now, title='foobar', id=10)
-    #     b11 = Book.objects.create(pubdate=now, title='foobaz', id=11)
-    #     b12 = Book.objects.create(pubdate=now, title='ooF', id=12)
-    #     b13 = Book.objects.create(pubdate=now, title='foobarbaz', id=13)
-    #     b14 = Book.objects.create(pubdate=now, title='zoocarfaz', id=14)
-    #     b15 = Book.objects.create(pubdate=now, title='barfoobaz', id=15)
-    #     b16 = Book.objects.create(pubdate=now, title='bazbaRFOO', id=16)
-    #     self.assertQuerysetEqual(Book.objects.filter(title__regex=r'b(.).*b\1'),
-    #         [
-    #             '<Book: barfoobaz>',
-    #             '<Book: bazbaRFOO>',
-    #             '<Book: foobarbaz>'
-    #         ])
+    def test_regex_backreferencing(self):
+        # grouping and backreferences
+        now = datetime.now()
+        b10 = Book.objects.create(pubdate=now, title='foobar', id=10)
+        b11 = Book.objects.create(pubdate=now, title='foobaz', id=11)
+        b12 = Book.objects.create(pubdate=now, title='ooF', id=12)
+        b13 = Book.objects.create(pubdate=now, title='foobarbaz', id=13)
+        b14 = Book.objects.create(pubdate=now, title='zoocarfaz', id=14)
+        b15 = Book.objects.create(pubdate=now, title='barfoobaz', id=15)
+        b16 = Book.objects.create(pubdate=now, title='bazbaRFOO', id=16)
+        self.assertQuerysetEqual(Book.objects.filter(title__regex=r'b(.).*b\1'),
+            [
+                '<Book: foobarbaz>', 
+                '<Book: barfoobaz>', 
+                '<Book: bazbaRFOO>'
+            ])
 
     # def test_nonfield_lookups(self):
     #     """
