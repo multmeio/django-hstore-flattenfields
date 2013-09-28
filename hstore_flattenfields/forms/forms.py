@@ -26,7 +26,7 @@ class HStoreModelForm(forms.ModelForm):
             # hide dfields
             opts.exclude.append('_dfields')
             self.fields = fields_for_model(opts.model, opts.fields,
-                                              opts.exclude, opts.widgets)
+                                           opts.exclude, opts.widgets)
 
 
 class HStoreContentPaneModelForm(HStoreModelForm):
@@ -55,9 +55,9 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
         # FIXME: Adding Inherit fields
         parent_local_fields = self.instance.__class__.__base__._meta.local_fields
-        all_fields = [f.name for f in opts.local_fields + \
-                                      opts.many_to_many + \
-                                      parent_local_fields]
+        all_fields = [f.name for f in opts.local_fields +
+                      opts.many_to_many +
+                      parent_local_fields]
         for field in self._dyn_fields:
             field_name = field.name
             if isinstance(field, DynamicField):
@@ -96,8 +96,8 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
             for content_pane in content_panes:
                 has_error = any([
-                    f for f in content_pane.fields \
-                        if f.name in self.errors.keys()
+                    f for f in content_pane.fields
+                    if f.name in self.errors.keys()
                 ])
 
                 grouped_panes.append({'name': content_pane.name,
@@ -125,5 +125,6 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                 field_names = [f.name for f in content_pane.fields]
                 return [f for f in fields if f.name in field_names]
             else:
-                field_names = [f.name for f in self._dyn_fields if f.content_pane]
+                field_names = [
+                    f.name for f in self._dyn_fields if f.content_pane]
                 return [f for f in fields if f.name not in field_names]

@@ -11,6 +11,7 @@ __all__ = [
 
 base_sql_template = "%(function)s(NULLIF(%(field)s, '')::{0})"
 
+
 class HstoreAggregate(models.Aggregate):
     """
     Class created to handle the Aggregate in DynamicFields

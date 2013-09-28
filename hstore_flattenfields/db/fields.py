@@ -15,7 +15,8 @@ from datetime import date, datetime
 
 from hstore_flattenfields.utils import *
 from hstore_flattenfields.forms.fields import *
-from __init__ import DynamicField
+from hstore_flattenfields.models import DynamicField
+
 
 class HstoreTextField(models.TextField):
     __metaclass__ = models.SubfieldBase
@@ -135,9 +136,11 @@ class HstoreCharField(models.CharField):
     def get_choices(self, include_blank=False):
         choices = []
 
-        # FIXME: this maybe mistake on fields with same name in different refers
+        # FIXME: this maybe mistake on fields with same name in different
+        # refers
         try:
-            dynamic_field = DynamicField.objects.find_dfields(name=self.name)[0]
+            dynamic_field = DynamicField.objects.find_dfields(
+                name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreMultipleSelectField, self).get_choices()
         except IndexError:
@@ -279,9 +282,10 @@ class HstoreSelectField(models.CharField):
         super(HstoreSelectField, self).__init__(*args, **kwargs)
 
     def clean(self, value, *args):
-        #FIXME: At the beginning of the project there was
+        # FIXME: At the beginning of the project there was
         #       a bug that was saving the value as a string: 'None'
-        if value == 'None' or not value: return ''
+        if value == 'None' or not value:
+            return ''
         return value
 
     def to_python(self, value):
@@ -320,8 +324,8 @@ class HstoreRadioSelectField(models.CharField):
 
         if self.choices:
             # Fields with choices get special treatment.
-            include_blank = (self.blank or \
-                            not (self.has_default() or 'initial' in kwargs))
+            include_blank = (self.blank or
+                             not (self.has_default() or 'initial' in kwargs))
             defaults['choices'] = self.get_choices(include_blank=include_blank)
             defaults['coerce'] = self.to_python
             if self.null:
@@ -347,9 +351,11 @@ class HstoreRadioSelectField(models.CharField):
     def get_choices(self, include_blank=False):
         choices = []
 
-        # FIXME: this maybe mistake on fields with same name in different refers
+        # FIXME: this maybe mistake on fields with same name in different
+        # refers
         try:
-            dynamic_field = DynamicField.objects.find_dfields(name=self.name)[0]
+            dynamic_field = DynamicField.objects.find_dfields(
+                name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreRadioSelectField, self).get_choices()
         except IndexError:
@@ -390,8 +396,8 @@ class HstoreCheckboxField(models.CharField):
 
         if self.choices:
             # Fields with choices get special treatment.
-            include_blank = (self.blank or \
-                            not (self.has_default() or 'initial' in kwargs))
+            include_blank = (self.blank or
+                             not (self.has_default() or 'initial' in kwargs))
             defaults['choices'] = self.get_choices(include_blank=include_blank)
             defaults['coerce'] = self.to_python
             if self.null:
@@ -420,9 +426,11 @@ class HstoreCheckboxField(models.CharField):
     def get_choices(self, include_blank=False):
         choices = []
 
-        # FIXME: this maybe mistake on fields with same name in different refers
+        # FIXME: this maybe mistake on fields with same name in different
+        # refers
         try:
-            dynamic_field = DynamicField.objects.find_dfields(name=self.name)[0]
+            dynamic_field = DynamicField.objects.find_dfields(
+                name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreCheckboxField, self).get_choices()
         except IndexError:
@@ -473,8 +481,8 @@ class HstoreMultipleSelectField(models.CharField):
 
         if self.choices:
             # Fields with choices get special treatment.
-            include_blank = (self.blank or \
-                            not (self.has_default() or 'initial' in kwargs))
+            include_blank = (self.blank or
+                             not (self.has_default() or 'initial' in kwargs))
             defaults['choices'] = self.get_choices(include_blank=include_blank)
             defaults['coerce'] = self.to_python
             if self.null:
@@ -501,47 +509,14 @@ class HstoreMultipleSelectField(models.CharField):
     def get_choices(self, include_blank=False):
         choices = []
 
-        # FIXME: this maybe mistake on fields with same name in different refers
+        # FIXME: this maybe mistake on fields with same name in different
+        # refers
         try:
-            dynamic_field = DynamicField.objects.find_dfields(name=self.name)[0]
+            dynamic_field = DynamicField.objects.find_dfields(
+                name=self.name)[0]
             if dynamic_field.has_blank_option:
                 choices = super(HstoreMultipleSelectField, self).get_choices()
         except IndexError:
             pass
 
         return choices or self._choices
-
-
-def get_modelfield(typo):
-    return eval(
-        FIELD_TYPES_DICT.get(
-            typo, FIELD_TYPE_DEFAULT
-        )
-    )
-
-def crate_field_from_instance(instance):
-    FieldClass = get_modelfield(instance.typo)
-
-    # FIXME: The Data were saved in a string: "None"
-    default_value = instance.default_value
-    if default_value is None:
-        default_value = ""
-
-    field = FieldClass(name=instance.name,
-        verbose_name=instance.verbose_name,
-        max_length=instance.max_length or 255,
-        blank=instance.blank,
-        null=True,
-        default=default_value,
-        choices=create_choices(instance.choices),
-        help_text=instance.help_text,
-        db_column="_dfields->'%s'" % instance.name,
-        html_attrs=instance.html_attrs,
-    )
-
-    field.db_type = 'dynamic_field'
-    field.attname = field.name
-    field.column = field.db_column
-
-    instance.get_modelfield = field
-    return field

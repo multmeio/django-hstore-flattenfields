@@ -21,6 +21,7 @@ from django.db.models.query import *
 
 from hstore_flattenfields.utils import *
 
+
 class HStoreConstraint():
     def __init__(self, alias, field, value, lookup_type, key=None):
         self.lvalue = '%s'
@@ -30,11 +31,11 @@ class HStoreConstraint():
 
         if lookup_type in VALUE_OPERATORS:
             self.operator = VALUE_OPERATORS[lookup_type]
-            
+
             if lookup_type in SPECIAL_CHARS_OPERATORS and has_any_in(SPECIAL_CHARS, value):
                 for char in [x for x in value if x in SPECIAL_CHARS]:
                     value = value.replace(char, '\%s' % char)
-               
+
             if self.operator == 'IN':
                 test_value = value[0]
                 self.values = [tuple(value)]
@@ -83,6 +84,7 @@ class HStoreConstraint():
         expr = '%s %s %%s' % (lvalue, self.operator)
         return (expr, self.values)
 
+
 class HQ(tree.Node):
     AND = 'AND'
     OR = 'OR'
@@ -117,7 +119,7 @@ class HQ(tree.Node):
 
     def add_to_node(self, where_node, query=None, used_aliases=None):
         for child in self.children:
-            if  isinstance(child, HQ):
+            if isinstance(child, HQ):
                 node = query.where_class()
                 child.add_to_node(node, query, used_aliases)
                 where_node.add(node, self.connector)
@@ -126,7 +128,7 @@ class HQ(tree.Node):
                 parts = field.split(LOOKUP_SEP)
                 if not parts:
                     raise FieldError("Cannot parse keyword query %r" % field)
-                lookup_type = self.query_terms[0] # Default lookup type
+                lookup_type = self.query_terms[0]  # Default lookup type
                 num_parts = len(parts)
                 if len(parts) > 1 and parts[-1] in self.query_terms:
                     # Traverse the lookup query to distinguish related fields from
@@ -137,7 +139,8 @@ class HQ(tree.Node):
                             continue
 
                         try:
-                            lookup_field = lookup_model._meta.get_field(field_name)
+                            lookup_field = lookup_model._meta.get_field(
+                                field_name)
                         except FieldDoesNotExist:
                             # Not a field. Bail out.
                             lookup_type = parts.pop()
@@ -161,8 +164,10 @@ class HQ(tree.Node):
                 opts = query.get_meta()
                 alias = query.get_initial_alias()
                 field, target, opts, join_list, last, extra = query.setup_joins(parts, opts, alias, True)
-                col, alias, join_list = query.trim_joins(target, join_list, last, False, False)
-                where_node.add(HStoreConstraint(alias, col, value, lookup_type, key), self.connector)
+                col, alias, join_list = query.trim_joins(
+                    target, join_list, last, False, False)
+                where_node.add(HStoreConstraint(
+                    alias, col, value, lookup_type, key), self.connector)
 
         if self.negated:
             where_node.negate()

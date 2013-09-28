@@ -14,7 +14,8 @@ from django.db.models import get_model
 from django.conf import settings
 from ast import literal_eval
 from datetime import datetime, date
-import re, six
+import re
+import six
 
 
 DATETIME_ISO_RE = re.compile(
@@ -36,7 +37,8 @@ DATE_BR_RE = re.compile(
     r'(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{4})$'
 )
 
-REGEX_DATETIMES = [DATETIME_ISO_RE, DATETIME_ISO_MS_RE, DATETIME_BR_RE, DATETIME_BR_MS_RE]
+REGEX_DATETIMES = [DATETIME_ISO_RE, DATETIME_ISO_MS_RE, DATETIME_BR_RE,
+                   DATETIME_BR_MS_RE]
 REGEX_DATES = [DATE_ISO_RE, DATE_BR_RE]
 
 FIELD_TYPES_WITHOUT_BLANK_OPTION = ['MultSelect', 'CheckBox', 'RadioButton']
@@ -108,11 +110,15 @@ __all__ = ['single_list_to_tuple',
            'SPECIAL_CHARS',
            'SPECIAL_CHARS_OPERATORS',
            'VALUE_OPERATORS',
+           'get_modelfield',
+           'create_field_from_instance',
+           'get_dynamic_field_model',
 ]
 
 
 def single_list_to_tuple(list_values):
     return [(v, v) for v in list_values]
+
 
 def str2literal(string):
     try:
@@ -120,40 +126,52 @@ def str2literal(string):
     except:
         return ''
 
+
 def dec2real(value):
     return floatformat(value, 2)
 
+
 def str2datetime(value):
-    if isinstance(value, datetime): return value
-    if not value: return ''
+    if isinstance(value, datetime):
+        return value
+    if not value:
+        return ''
 
     for regex in REGEX_DATETIMES:
         match = regex.match(value)
-        if match: break
+        if match:
+            break
 
     if match:
         kw = dict((k, int(v)) for k, v in six.iteritems(match.groupdict()))
         return datetime(**kw)
     raise ValidationError("Invalid datetime format for %s" % value)
 
+
 def str2date(value):
-    if isinstance(value, date): return value
-    if not value: return ''
+    if isinstance(value, date):
+        return value
+    if not value:
+        return ''
 
     for regex in REGEX_DATES:
         match = regex.match(value)
-        if match: break
+        if match:
+            break
 
     if match:
         kw = dict((k, int(v)) for k, v in six.iteritems(match.groupdict()))
         return date(**kw)
     raise ValidationError("Invalid date format for %s" % value)
 
+
 def has_any_in(chances, possibilities):
     return any([x for x in chances if x in possibilities])
 
 # cache in globals
 _DYNAMIC_FIELD_TABLE_EXISTS = None
+
+
 def dynamic_field_table_exists():
     from hstore_flattenfields.models import DynamicField
     dynamic_field_table_name = DynamicField._meta.db_table
@@ -162,13 +180,59 @@ def dynamic_field_table_exists():
         _DYNAMIC_FIELD_TABLE_EXISTS = dynamic_field_table_name in connection.introspection.table_names()
     return _DYNAMIC_FIELD_TABLE_EXISTS
 
+
 def get_fieldnames(fields, excludes=[]):
     return map(lambda f: f.name,
-        filter(lambda f: f.name not in excludes, fields)
-    )
+       filter(lambda f: f.name not in excludes, fields)
+   )
+
 
 def create_choices(choices=''):
-    if not choices: choices = ''
+    if not choices:
+        choices = ''
     return single_list_to_tuple(
         map(lambda x: x.strip(), choices.splitlines())
     )
+
+
+def get_modelfield(typo):
+    from hstore_flattenfields.db import fields
+    class_name = FIELD_TYPES_DICT.get(typo, FIELD_TYPE_DEFAULT)
+    return getattr(fields, class_name)
+
+
+def create_field_from_instance(instance):
+    FieldClass = get_modelfield(instance.typo)
+
+    # FIXME: The Data were saved in a string: "None"
+    default_value = instance.default_value
+    if default_value is None:
+        default_value = ""
+
+    field = FieldClass(name=instance.name,
+        verbose_name=instance.verbose_name,
+        max_length=instance.max_length or 255,
+        blank=instance.blank,
+        null=True,
+        default=default_value,
+        choices=create_choices(instance.choices),
+        help_text=instance.help_text,
+        db_column="_dfields->'%s'" % instance.name,
+        html_attrs=instance.html_attrs,
+    )
+
+    field.db_type = 'dynamic_field'
+    field.attname = field.name
+    field.column = field.db_column
+
+    instance.get_modelfield = field
+    return field
+
+def get_dynamic_field_model():
+    """
+    Function created to return the DynamicField
+    class, to handle the Circular Imports
+    against the .py Files.
+    """
+    from hstore_flattenfields.models import DynamicField
+    return DynamicField

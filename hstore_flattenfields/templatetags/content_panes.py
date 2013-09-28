@@ -17,7 +17,7 @@ def as_tabs(form):
     if not isinstance(form, HStoreContentPaneModelForm):
         return ''
 
-    context = Context({ 'form': form })
+    context = Context({'form': form})
     template = 'hstore_flattenfields/form.html'
 
     return loader.get_template(template).render(context)

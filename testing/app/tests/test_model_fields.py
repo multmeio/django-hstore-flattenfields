@@ -3,10 +3,10 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from datetime import date, datetime
 
-from hstore_flattenfields.models.fields import *
-# from hstore_flattenfields.models import DynamicField
+from hstore_flattenfields.db.fields import *
+from hstore_flattenfields.models import DynamicField
 
-from app.models import Something, DynamicField
+from app.models import Something
 
 def _update_obj(obj, field, value):
     setattr(obj, field, value); obj.save()

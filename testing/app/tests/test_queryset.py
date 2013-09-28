@@ -11,14 +11,13 @@ Replace this with more appropriate tests for your application.
 from django.test import TestCase, skipUnlessDBFeature
 from django.core.exceptions import FieldError
 from django.db.models import Sum
-from django.utils import six
 from datetime import date, datetime
 from decimal import Decimal
 from operator import attrgetter
 
 from app.models import *
 # from hstore_flattenfields.models import DynamicField
-from hstore_flattenfields.models.aggregates import *
+from hstore_flattenfields.db.aggregates import *
 
 
 class LookupTests(TestCase):

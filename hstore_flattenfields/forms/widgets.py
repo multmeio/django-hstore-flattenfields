@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 
 from hstore_flattenfields.utils import str2literal
 
+
 class SelectMultipleWidget(forms.SelectMultiple):
     def render(self, name, value='', attrs={}, choices=()):
         html = super(SelectMultipleWidget, self).render(
