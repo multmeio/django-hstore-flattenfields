@@ -13,7 +13,13 @@ import operator
 
 from django.utils import tree
 from django.core.exceptions import FieldError
-from django.db.models.sql.constants import LOOKUP_SEP
+
+try:
+    from django.db.models.sql.constants import LOOKUP_SEP
+except ImportError:
+    # FIXME: Changed in django>=1.5
+    from django.db.models.constants import LOOKUP_SEP
+
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.sql.where import ExtraWhere
 from django_orm.core.sql.tree import AND, OR

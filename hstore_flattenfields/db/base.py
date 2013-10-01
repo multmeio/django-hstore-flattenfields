@@ -1,6 +1,11 @@
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 
+try:
+    ModelBase = models.Model.__metaclass__
+except AttributeError:
+    from django.db.models.base import ModelBase
+
 from django_orm.postgresql import hstore
 
 from hstore_flattenfields.db.manager import FlattenFieldsFilterManager
@@ -13,7 +18,7 @@ from hstore_flattenfields.utils import (
 )
 
 
-class HStoreModelMeta(models.Model.__metaclass__):
+class HStoreModelMeta(ModelBase):
     def __new__(cls, name, bases, attrs):
         new_class = super(HStoreModelMeta, cls).__new__(
             cls, name, bases, attrs
