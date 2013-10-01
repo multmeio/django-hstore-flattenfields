@@ -8,6 +8,9 @@ Copyright (c) 2011 Multmeio [design+tecnologia]. All rights reserved.
 """
 
 from django.contrib import admin
-# from models import DynamicField
 
-# admin.site.register(DynamicField)
+from .models import *
+
+admin.site.register(DynamicFieldGroup)
+admin.site.register(ContentPane)
+admin.site.register(DynamicField)
