@@ -23,8 +23,10 @@ class OneToManyDynamicFieldGroupTests(TestCase):
         self.dfield1 = DynamicField.objects.create(id=1, refer="Something", group=self.group1, typo="Integer", name="something_age", verbose_name=u"Age")
 
         self.group2 = SomethingType.objects.create(id=2, name="Something Group2", slug="something_group2")
+        
         self.dfield2 = DynamicField.objects.create(id=2, refer="Something", group=self.group2, name="something_slug", verbose_name=u"Slug", typo="CharField", max_length=100)
         self.dfield3 = DynamicField.objects.create(id=3, refer="Something", group=self.group2, name="something_info", verbose_name=u"Info", typo="CharField", max_length=100)
+        self.dfield4 = DynamicField.objects.create(id=4, refer="Something", name="something_description", verbose_name=u"Description", typo="TextArea", max_length=100)
 
     def test_assert_all_dynamic_fields(self):
         self.something = Something.objects.create(
@@ -35,7 +37,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
         )
         self.assertEqual(
             self.something.dynamic_fields,
-            [self.dfield1]
+            [self.dfield1, self.dfield4]
         )
 
     def test_assert_specific_dynamic_fields(self):
@@ -47,7 +49,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
         )
         self.assertEqual(
             self.something.dynamic_fields,
-            [self.dfield2, self.dfield3]
+            [self.dfield2, self.dfield3, self.dfield4]
         )
 
     def test_assert_change_field_name(self):
