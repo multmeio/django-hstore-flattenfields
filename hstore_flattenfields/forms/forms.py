@@ -8,6 +8,7 @@ Copyright (c) 2011 Multmeio [design+tecnologia]. All rights reserved.
 """
 
 from django import forms
+from django.contrib.contenttypes.models import ContentType
 from django.forms.models import fields_for_model
 from django.template import Context, loader
 
@@ -87,8 +88,14 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                 self.fields.pop(name)
 
         try:
-            content_panes = self.instance.content_panes
-
+            content_panes = set(self.instance.content_panes)
+            
+            content_panes.update(
+                ContentType.objects.get_for_model(
+                    self.instance.__class__
+                ).content_panes.all()
+            )
+            
             grouped_panes = [{'name': u'Default',
                               'slug': 'default',
                               'pk': '',

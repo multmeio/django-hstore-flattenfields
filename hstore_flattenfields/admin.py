@@ -11,6 +11,8 @@ from django.contrib import admin
 
 from .models import *
 
-admin.site.register(DynamicFieldGroup)
-admin.site.register(ContentPane)
-admin.site.register(DynamicField)
+for Model in [DynamicFieldGroup, ContentPane, DynamicField]:
+    try:
+        admin.site.register(Model)
+    except: 
+        pass
