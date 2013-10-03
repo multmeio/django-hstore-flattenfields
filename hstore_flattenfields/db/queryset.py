@@ -145,8 +145,7 @@ class HQ(tree.Node):
                             continue
 
                         try:
-                            lookup_field = lookup_model._meta.get_field(
-                                field_name)
+                            lookup_field = lookup_model._meta.get_field(field_name)
                         except FieldDoesNotExist:
                             # Not a field. Bail out.
                             lookup_type = parts.pop()
@@ -209,7 +208,12 @@ class FlattenFieldsFilterQuerySet(QuerySet):
     def values(self, *fields):
         if not fields:
             fields = self.all_field_names
-        return super(FlattenFieldsFilterQuerySet, self).values(*fields)
+        return parse_queryset(
+            self.model, 
+            super(FlattenFieldsFilterQuerySet, self).values(
+                *fields
+            )
+        )
 
     def values_list(self, *fields, **kwargs):
         if not fields and not kwargs.get('flat', False):

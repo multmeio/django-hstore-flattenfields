@@ -113,6 +113,7 @@ __all__ = ['single_list_to_tuple',
            'get_modelfield',
            'create_field_from_instance',
            'get_dynamic_field_model',
+           'parse_queryset',
 ]
 
 
@@ -236,3 +237,22 @@ def get_dynamic_field_model():
     """
     from hstore_flattenfields.models import DynamicField
     return DynamicField
+
+def intersec(l1, l2):
+    return filter(
+        lambda item: item, 
+        set(l1).intersection(l2)
+    )
+
+def parse_queryset(model, result):
+    dfield_names = model._meta.get_all_dynamic_field_names()
+    for res in result:
+        for item in intersec(dfield_names, res.keys()):
+            try:
+                parsed_value = model._meta.\
+                    get_field_by_name(item)[0].\
+                        to_python(res.get(item))
+            except: continue
+            else:
+                res.update({item:parsed_value})
+    return result

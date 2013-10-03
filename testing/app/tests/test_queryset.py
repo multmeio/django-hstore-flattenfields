@@ -20,6 +20,27 @@ from app.models import *
 from hstore_flattenfields.db.aggregates import *
 
 
+class IntegrityTests(TestCase):
+    def setUp(self):
+        DynamicField.objects.create(refer="Book", name="pages", verbose_name=u"Pages", typo="Integer")
+        DynamicField.objects.create(refer="Book", name="title", verbose_name=u"Title", typo="CharField", max_length=200)
+        self.b1 = Book.objects.create(pages=20, title="20 Pages")
+        Book.objects.create(pages=4, title="4 Pages")
+        self.identity = lambda x: x
+
+    def test_assert_id_filter(self):
+        self.assertQuerysetEqual(
+            Book.objects.filter(id=self.b1.id),
+            ['<Book: 20 Pages>']
+        )
+
+    def test_assert_id_exclude(self):
+        self.assertQuerysetEqual(
+            Book.objects.exclude(id=self.b1.id),
+            ['<Book: 4 Pages>']
+        )
+
+
 class LookupTests(TestCase):
     def setUp(self):
         # Create a few DynamicFields.
@@ -299,36 +320,20 @@ class LookupTests(TestCase):
                 {'author_name': self.au2.author_name, 'book__title': self.b7.title},
             ], transform=self.identity)
 
+    def test_values_with_especifies(self):
+        # If you don't specify field names to values(), all are returned.
+        self.assertQuerysetEqual(
+            Book.objects.filter(id=self.b5.id).values('pubdate', 'title'),
+            [{
+                u'pubdate': datetime(2005, 8, 1, 9, 0), 
+                u'title': u'Book 5',
+            }], transform=self.identity)
+    
     def test_values_without_especifies(self):
         # If you don't specify field names to values(), all are returned.
-        self.assertQuerysetEqual(Book.objects.filter(id=self.b5.id).values(),
-            [{
-                u'pubdate': u'2005-08-01 09:00:00', 
-                u'title': u'Book 5', 
-                'author': 2, 
-                '_dfields': {
-                    u'pages': u'5', 
-                    u'pubdate': u'2005-08-01 09:00:00', 
-                    u'title': u'Book 5'
-                }, 
-                'id': 5, 
-                'tag': self.t2.pk, 
-                u'pages': u'5', 
-                'tags': None
-            }, {
-                u'pubdate': u'2005-08-01 09:00:00', 
-                u'title': u'Book 5', 
-                'author': 2, 
-                '_dfields': {
-                    u'pages': u'5', 
-                    u'pubdate': u'2005-08-01 09:00:00', 
-                    u'title': u'Book 5'
-                }, 
-                'id': 5, 
-                'tag': self.t3.pk, 
-                u'pages': u'5', 
-                'tags': None
-            }], transform=self.identity)
+        self.assertQuerysetEqual(
+            Book.objects.filter(id=self.b5.id).values(),
+            [{u'pubdate': datetime(2005, 8, 1, 9, 0), u'title': u'Book 5', 'author': 2, '_dfields': {u'pages': u'5', u'pubdate': u'2005-08-01 09:00:00', u'title': u'Book 5'}, 'id': 5, 'tag': 101, u'pages': 5, 'tags': None}, {u'pubdate': datetime(2005, 8, 1, 9, 0), u'title': u'Book 5', 'author': 2, '_dfields': {u'pages': u'5', u'pubdate': u'2005-08-01 09:00:00', u'title': u'Book 5'}, 'id': 5, 'tag': 102, u'pages': 5, 'tags': None}], transform=self.identity)
 
     def test_values_list__title(self):
         # values_list() is similar to values(), except that the results are
