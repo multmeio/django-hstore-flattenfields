@@ -32,8 +32,9 @@ setup(
     ],
     zip_safe=False,
     install_requires=[
-        'Django<=1.4.3',
+        'Django>=1.4.3',
         'django-bootstrap-toolkit==2.5.4',
     	'django-orm-extensions==3.0b3',
+        'django-extensions>=0.9',
     ]
 )
