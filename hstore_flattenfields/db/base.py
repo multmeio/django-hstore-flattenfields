@@ -211,6 +211,10 @@ class HStoreModel(models.Model):
         super(HStoreModel, self).__init__(*args, **kwargs)
         if _dfields: self._dfields = _dfields
 
+    @property
+    def dynamic_fields(self):
+        return self.__class__._meta.dynamic_fields
+
 
 class HStoreGroupedModel(HStoreModel):
     class Meta:
