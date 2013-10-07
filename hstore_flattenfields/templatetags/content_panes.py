@@ -10,7 +10,7 @@ register = template.Library()
 
 
 @register.filter(name='as_tabs')
-def as_tabs(form):
+def as_tabs(form, template='hstore_flattenfields/form.html'):
     """
     Shows the form fields grouped in tabs.
     """
@@ -18,6 +18,5 @@ def as_tabs(form):
         return ''
 
     context = Context({'form': form})
-    template = 'hstore_flattenfields/form.html'
 
     return loader.get_template(template).render(context)
