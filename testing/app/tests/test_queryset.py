@@ -9,7 +9,7 @@ Replace this with more appropriate tests for your application.
 """
 
 from django.test import TestCase, skipUnlessDBFeature
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, ValidationError
 from django.db.models import Sum
 from datetime import date, datetime
 from decimal import Decimal
@@ -19,6 +19,14 @@ from app.models import *
 # from hstore_flattenfields.models import DynamicField
 from hstore_flattenfields.db.aggregates import *
 
+
+# class NameCollisionTests(TestCase):
+#     def test_raise_exception(self):
+#         self.assertRaises(
+#             ValidationError,
+#             DynamicField.objects.create, 
+#             refer="Something", name="name", verbose_name=u"Name", typo="CharField"
+#         )
 
 class IntegrityTests(TestCase):
     def setUp(self):
@@ -296,15 +304,15 @@ class LookupTests(TestCase):
     def test_values_author__author_name_and_title(self):
         # You can specify fields from forward and reverse relations, just like filter().
         self.assertQuerysetEqual(
-            Book.objects.values('title', 'author__author_name'),
+            Book.objects.values('author__author_name', 'title'),
             [
-                {'author__author_name': u'Author 1', 'title': u'Book 1'},
-                {'author__author_name': u'Author 1', 'title': u'Book 2'},
-                {'author__author_name': u'Author 1', 'title': u'Book 3'},
-                {'author__author_name': u'Author 1', 'title': u'Book 4'},
-                {'author__author_name': u'Author 2', 'title': u'Book 5'},
-                {'author__author_name': u'Author 2', 'title': u'Book 6'},
-                {'author__author_name': u'Author 2', 'title': u'Book 7'},
+                {'author__author_name': self.au1.author_name, 'title': u'Book 1'},
+                {'author__author_name': self.au1.author_name, 'title': u'Book 2'},
+                {'author__author_name': self.au1.author_name, 'title': u'Book 3'},
+                {'author__author_name': self.au1.author_name, 'title': u'Book 4'},
+                {'author__author_name': self.au2.author_name, 'title': u'Book 5'},
+                {'author__author_name': self.au2.author_name, 'title': u'Book 6'},
+                {'author__author_name': self.au2.author_name, 'title': u'Book 7'},
             ], transform=self.identity)
 
     def test_values_author__author_name_and_book_title_with_order_by(self):

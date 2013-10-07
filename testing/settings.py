@@ -121,7 +121,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
 
     'hstore_flattenfields',
-    'south',
+    # 'south',
     'django_hstore',
 
     'app',
