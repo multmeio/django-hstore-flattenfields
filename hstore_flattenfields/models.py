@@ -87,7 +87,7 @@ class DynamicField(models.Model):
     blank = models.BooleanField(default=True, verbose_name=_("Blank"))
     choices = models.TextField(null=True, blank=True, verbose_name=_("Choices"))
     default_value = models.CharField(max_length=80, null=True, blank=True, verbose_name=_("Default value"))
-    help_text = models.CharField(max_length=255, null=True, blank=True, verbose_name=_('Help Text'), default={})
+    help_text = models.CharField(max_length=255, null=True, blank=True, verbose_name=_('Help Text'))
     html_attrs = hstore.DictionaryField(db_index=True, null=True, blank=True, verbose_name=_("html Attributes"))
 
     # relations
