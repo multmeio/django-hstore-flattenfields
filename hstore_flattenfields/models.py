@@ -68,7 +68,6 @@ class ContentPane(models.Model):
     class Meta:
         verbose_name = _('Content Pane')
         verbose_name_plural = _('Content Panes')
-        ordering = ['order', 'slug']
 
     def __unicode__(self):
         return u"[#%s, %s] - %s" % (self.id, self.order, self.name)

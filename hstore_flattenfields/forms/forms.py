@@ -100,8 +100,8 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                               'slug': 'default',
                               'pk': '',
                               'fields': self.filtred_fields()}]
-
-            for content_pane in content_panes:
+            
+            for content_pane in sorted(content_panes, key=lambda x: x.order):
                 has_error = any([
                     f for f in content_pane.fields
                     if f.name in self.errors.keys()
@@ -110,6 +110,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                 grouped_panes.append({'name': content_pane.name,
                                       'slug': content_pane.slug,
                                       'pk': content_pane.pk,
+                                      'order': content_pane.order,
                                       'fields': self.filtred_fields(content_pane),
                                       'has_error': has_error})
             self.content_panes = grouped_panes
