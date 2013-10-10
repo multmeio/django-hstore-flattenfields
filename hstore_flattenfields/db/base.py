@@ -296,6 +296,9 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def content_panes(self):
-        fields_with_cpanes = filter(
-            lambda x: x.content_pane, self.dynamic_fields)
-        return set(map(lambda x: x.content_pane, fields_with_cpanes))
+        from hstore_flattenfields.models import ContentPane
+        return ContentPane.objects.filter(
+            models.Q(content_type__model=self.__class__.__name__.lower()) |\
+            models.Q(dynamic_fields__in=self.dynamic_fields)
+        )
+

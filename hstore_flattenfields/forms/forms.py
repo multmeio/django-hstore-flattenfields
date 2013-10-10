@@ -87,36 +87,25 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             if name not in all_fields:
                 self.fields.pop(name)
 
-        try:
-            content_panes = set(self.instance.content_panes)
-            
-            content_panes.update(
-                ContentType.objects.get_for_model(
-                    self.instance.__class__
-                ).content_panes.all()
-            )
-            
-            grouped_panes = [{'name': u'Default',
-                              'slug': 'default',
-                              'pk': '',
-                              'fields': self.filtred_fields()}]
-            
-            for content_pane in sorted(content_panes, key=lambda x: x.order):
-                has_error = any([
-                    f for f in content_pane.fields
-                    if f.name in self.errors.keys()
-                ])
+        grouped_panes = [{'name': u'Default',
+                          'slug': 'default',
+                          'pk': '',
+                          'fields': self.filtred_fields()}]
+        
+        for content_pane in self.instance.content_panes:
+            has_error = any([
+                f for f in content_pane.fields
+                if f.name in self.errors.keys()
+            ])
 
-                grouped_panes.append({'name': content_pane.name,
-                                      'slug': content_pane.slug,
-                                      'pk': content_pane.pk,
-                                      'order': content_pane.order,
-                                      'fields': self.filtred_fields(content_pane),
-                                      'has_error': has_error})
-            self.content_panes = grouped_panes
-        except:
-            pass
-
+            grouped_panes.append({'name': content_pane.name,
+                                  'slug': content_pane.slug,
+                                  'pk': content_pane.pk,
+                                  'order': content_pane.order,
+                                  'fields': self.filtred_fields(content_pane),
+                                  'has_error': has_error})
+        self.content_panes = grouped_panes
+    
     def filtred_fields(self, content_pane=None):
         """
         Function to returns only the fields of was joined into a ContentPane
