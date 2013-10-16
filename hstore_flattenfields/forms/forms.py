@@ -49,7 +49,8 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
         hstore_order = kwargs.pop('keyOrder', None)
         super(HStoreContentPaneModelForm, self).__init__(*args, **kwargs)
-
+        
+        model_name = self.Meta.model.__name__
         self._dyn_fields = self.instance.dynamic_fields
         opts = self._meta.model._meta
         dfield_names = []
@@ -87,10 +88,13 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             if name not in all_fields:
                 self.fields.pop(name)
 
-        grouped_panes = [{'name': u'Default',
-                          'slug': 'default',
-                          'pk': '',
-                          'fields': self.filtred_fields()}]
+        grouped_panes = [{
+            'name': u'Default',
+            'slug': 'default',
+            'pk': '',
+            'model': model_name,
+            'fields': self.filtred_fields()
+        }]
         
         for content_pane in self.instance.content_panes:
             has_error = any([
@@ -98,13 +102,17 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                 if f.name in self.errors.keys()
             ])
 
-            grouped_panes.append({'name': content_pane.name,
-                                  'slug': content_pane.slug,
-                                  'pk': content_pane.pk,
-                                  'order': content_pane.order,
-                                  'fields': self.filtred_fields(content_pane),
-                                  'has_error': has_error})
+            grouped_panes.append({
+                'name': content_pane.name,
+                'slug': content_pane.slug,
+                'pk': content_pane.pk,
+                'model': model_name,
+                'order': content_pane.order,
+                'fields': self.filtred_fields(content_pane),
+                'has_error': has_error
+            })
         self.content_panes = grouped_panes
+        
     
     def filtred_fields(self, content_pane=None):
         """
