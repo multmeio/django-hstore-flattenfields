@@ -156,6 +156,10 @@ LOGGING = {
     }
 }
 
+SOUTH_TESTS_MIGRATE = False
+SOUTH_DATABASE_ADAPTERS = {
+    'default': 'south.db.postgresql_psycopg2'
+}
 
 try:
     from local_settings import *
