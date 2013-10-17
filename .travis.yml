@@ -5,17 +5,13 @@ services:
 python:
   - "2.7"
 env:
-  - PG_USER="postgres"
-  - PG_PASSWORD=""
-  - PG_DBNAME="postgres"
+  - PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres"
 install:
   - "pip install . --use-mirrors"
   - "pip install -r tests/requirements.txt --use-mirrors"
   - "pip install coveralls -U --use-mirrors"
 before_script:
-  # Creating the database and adding the hstore extension
-  - "psql -c 'DROP DATABASE IF EXISTS postgres;' -U postgres"
-  - "psql -c 'create database postgres;' -U postgres"
+  # Adding the hstore extension
   - "psql -d postgres -c 'create extension hstore;' -U postgres"
 
   # Changing the DATABASES settings configs
