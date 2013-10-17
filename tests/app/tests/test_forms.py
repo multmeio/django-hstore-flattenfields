@@ -18,7 +18,7 @@ from decimal import Decimal
 from hstore_flattenfields.forms import HStoreModelForm
 from hstore_flattenfields.models import DynamicField
 
-from app.models import Something
+from tests.app.models import *
 
 
 class SomethingForm(HStoreModelForm):

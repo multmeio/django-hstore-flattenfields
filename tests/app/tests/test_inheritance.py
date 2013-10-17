@@ -12,7 +12,7 @@ from django.test import TestCase
 from django.core.exceptions import ValidationError
 from datetime import date, datetime
 
-from app.models import *
+from tests.app.models import *
 
 
 class AuthorSpecializedInheritanceTests(TestCase):

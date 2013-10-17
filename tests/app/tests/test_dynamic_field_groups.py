@@ -14,7 +14,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from hstore_flattenfields.forms import HStoreContentPaneModelForm
-from app.models import *
+from tests.app.models import *
 
 
 class OneToManyDynamicFieldGroupTests(TestCase):

@@ -6,6 +6,6 @@ Created on 13/10/2012
 from hstore_flattenfields.models import DynamicField
 from django.contrib import admin
 
-from app.models import Something
+from tests.app.models import Something
 
 admin.site.register(Something)

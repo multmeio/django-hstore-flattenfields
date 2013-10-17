@@ -6,7 +6,7 @@ from datetime import date, datetime
 from hstore_flattenfields.db.fields import *
 from hstore_flattenfields.models import DynamicField
 
-from app.models import Something
+from tests.app.models import *
 
 def _update_obj(obj, field, value):
     setattr(obj, field, value); obj.save()

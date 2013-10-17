@@ -124,7 +124,7 @@ INSTALLED_APPS = (
     # 'south',
     'django_hstore',
 
-    'app',
+    'tests.app',
 )
 
 # A sample logging configuration. The only tangible logging

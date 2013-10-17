@@ -1,0 +1,6 @@
+[run]
+source = hstore_flattenfields
+omit = */migrations/*, *__init__*
+
+[html]
+directory = doc/cov_report

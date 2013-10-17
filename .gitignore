@@ -1,5 +1,6 @@
 *.pyc
 .project
 .pydevproject
+.coverage
 django_hstore_flattenfields.egg*
 local_settings.py
