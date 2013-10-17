@@ -9,7 +9,6 @@ install:
   - "pip install -r tests/requirements.txt --use-mirrors"
   - "pip install coveralls -U --use-mirrors"
 before_script:
-  - "psql -c 'create database postgres;' -U postgres"
   - "psql -d postgres -c 'create extension hstore;' -U postgres"
   - "cp tests/local_settings.sample tests/local_settings.py"
 script:
