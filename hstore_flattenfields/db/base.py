@@ -300,5 +300,5 @@ class HStoreM2MGroupedModel(HStoreModel):
         return ContentPane.objects.filter(
             models.Q(content_type__model=self.__class__.__name__.lower()) |\
             models.Q(dynamic_fields__in=self.dynamic_fields)
-        )
+        ).distinct()
 
