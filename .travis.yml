@@ -14,9 +14,9 @@ install:
   - "pip install coveralls -U --use-mirrors"
 before_script:
   # Creating the database and adding the hstore extension
-  - "psql -c 'DROP DATABASE IF EXISTS $PG_DBNAME;' -U $PG_USER"
-  - "psql -c 'create database $PG_DBNAME;' -U $PG_USER"
-  - "psql -d $PG_DBNAME -c 'create extension hstore;' -U $PG_USER"
+  - "psql -c 'DROP DATABASE IF EXISTS postgres;' -U postgres"
+  - "psql -c 'create database postgres;' -U postgres"
+  - "psql -d postgres -c 'create extension hstore;' -U postgres"
 
   # Changing the DATABASES settings configs
   - "cp tests/local_settings.sample tests/local_settings.py"
