@@ -97,6 +97,10 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         }]
         
         for content_pane in self.instance.content_panes:
+            # Skip if the actual content_pane already is in grouped_panes
+            if content_pane.pk in map(lambda x: x['pk'], grouped_panes):
+                continue
+
             has_error = any([
                 f for f in content_pane.fields
                 if f.name in self.errors.keys()
