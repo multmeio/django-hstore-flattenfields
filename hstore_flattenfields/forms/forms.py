@@ -11,7 +11,8 @@ from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import fields_for_model
 from django.template import Context, loader
-
+from django.utils.translation import ugettext as _
+from django.conf import settings
 
 class HStoreModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -89,12 +90,12 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                 self.fields.pop(name)
         
         grouped_panes = [{
-            'name': u'Default',
+            'name': getattr(settings, 'DEFAULT_CONTENT_PANE_NAME', 'Main Information'),
             'slug': 'default',
             'pk': '',
             'model': model_name,
             'fields': self.filtred_fields()
-        }] if self.instance.content_panes else []
+        }]
         
         for content_pane in self.instance.content_panes:
             # Skip if the actual content_pane already is in grouped_panes
