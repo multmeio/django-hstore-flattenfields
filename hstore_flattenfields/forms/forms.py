@@ -87,14 +87,14 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         for name in self.fields.keys():
             if name not in all_fields:
                 self.fields.pop(name)
-
+        
         grouped_panes = [{
             'name': u'Default',
             'slug': 'default',
             'pk': '',
             'model': model_name,
             'fields': self.filtred_fields()
-        }]
+        }] if self.instance.content_panes else []
         
         for content_pane in self.instance.content_panes:
             # Skip if the actual content_pane already is in grouped_panes
