@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name='django_hstore_flattenfields',
-    version='0.7.7',
+    version='0.7.8',
     description='Django with dynamic fields in hstore',
     author=u'Iuri Diniz',
     author_email='iuridiniz@gmail.com',
