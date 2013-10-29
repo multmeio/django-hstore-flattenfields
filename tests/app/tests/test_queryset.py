@@ -15,9 +15,9 @@ from datetime import date, datetime
 from decimal import Decimal
 from operator import attrgetter
 
-from tests.app.models import *
-# from hstore_flattenfields.models import DynamicField
 from hstore_flattenfields.db.aggregates import *
+
+from tests.app.models import *
 
 
 # class NameCollisionTests(TestCase):

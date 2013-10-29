@@ -14,6 +14,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from hstore_flattenfields.forms import HStoreContentPaneModelForm
+
 from tests.app.models import *
 
 

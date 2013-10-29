@@ -9,13 +9,14 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.settings")
 def parse_args():
     parser = optparse.OptionParser()
     args = parser.parse_args()[1]
-
-    # Build labels
-    labels = ['app']
-    if args:
-        labels = map(lambda x: "app.%s" % x, args)
-
-    return labels
+    
+    # NOTE: When the test mode is called from setup.py
+    try:
+        args.remove('test')
+    except ValueError:
+        pass
+    
+    return args or ['app', 'hstore_flattenfields']
 
 
 def configure_settings():

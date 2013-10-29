@@ -5,7 +5,7 @@
     
     
     <meta http-equiv='X-UA-Compatible' content='IE=emulateIE7' />
-    <title>Coverage for hstore_flattenfields/db/manager: 78%</title>
+    <title>Coverage for hstore_flattenfields/db/manager: 85%</title>
     <link rel='stylesheet' href='style.css' type='text/css'>
     
     <script type='text/javascript' src='jquery.min.js'></script>
@@ -21,13 +21,13 @@
 <div id='header'>
     <div class='content'>
         <h1>Coverage for <b>hstore_flattenfields/db/manager</b> :
-            <span class='pc_cov'>78%</span>
+            <span class='pc_cov'>85%</span>
         </h1>
         <img id='keyboard_icon' src='keybd_closed.png'>
         <h2 class='stats'>
             41 statements &nbsp;
-            <span class='run hide_run shortkey_r button_toggle_run'>32 run</span>
-            <span class='mis shortkey_m button_toggle_mis'>9 missing</span>
+            <span class='run hide_run shortkey_r button_toggle_run'>35 run</span>
+            <span class='mis shortkey_m button_toggle_mis'>6 missing</span>
             <span class='exc shortkey_x button_toggle_exc'>0 excluded</span>
             
         </h2>
@@ -96,9 +96,9 @@
 <p id='n33' class='stm run hide_run'><a href='#n33'>33</a></p>
 <p id='n34' class='pln'><a href='#n34'>34</a></p>
 <p id='n35' class='stm run hide_run'><a href='#n35'>35</a></p>
-<p id='n36' class='stm mis'><a href='#n36'>36</a></p>
+<p id='n36' class='stm run hide_run'><a href='#n36'>36</a></p>
 <p id='n37' class='stm mis'><a href='#n37'>37</a></p>
-<p id='n38' class='stm mis'><a href='#n38'>38</a></p>
+<p id='n38' class='stm run hide_run'><a href='#n38'>38</a></p>
 <p id='n39' class='pln'><a href='#n39'>39</a></p>
 <p id='n40' class='stm run hide_run'><a href='#n40'>40</a></p>
 <p id='n41' class='stm mis'><a href='#n41'>41</a></p>
@@ -120,7 +120,7 @@
 <p id='n57' class='stm run hide_run'><a href='#n57'>57</a></p>
 <p id='n58' class='stm run hide_run'><a href='#n58'>58</a></p>
 <p id='n59' class='stm run hide_run'><a href='#n59'>59</a></p>
-<p id='n60' class='stm mis'><a href='#n60'>60</a></p>
+<p id='n60' class='stm run hide_run'><a href='#n60'>60</a></p>
 <p id='n61' class='stm run hide_run'><a href='#n61'>61</a></p>
 <p id='n62' class='stm run hide_run'><a href='#n62'>62</a></p>
 <p id='n63' class='pln'><a href='#n63'>63</a></p>
@@ -163,9 +163,9 @@
 <p id='t33' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>return</span> <span class='nam'>x</span><span class='op'>.</span><span class='nam'>content_pane</span> <span class='op'>==</span> <span class='nam'>cpane</span><span class='strut'>&nbsp;</span></p>
 <p id='t34' class='pln'><span class='strut'>&nbsp;</span></p>
 <p id='t35' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>by_group</span><span class='op'>(</span><span class='nam'>x</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t36' class='stm mis'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>if</span> <span class='nam'>hasattr</span><span class='op'>(</span><span class='nam'>group</span><span class='op'>,</span> <span class='str'>&#39;dynamicfieldgroup_ptr&#39;</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t36' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>if</span> <span class='nam'>hasattr</span><span class='op'>(</span><span class='nam'>group</span><span class='op'>,</span> <span class='str'>&#39;dynamicfieldgroup_ptr&#39;</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
 <p id='t37' class='stm mis'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>return</span> <span class='nam'>x</span><span class='op'>.</span><span class='nam'>group</span> <span class='op'>==</span> <span class='nam'>group</span><span class='op'>.</span><span class='nam'>dynamicfieldgroup_ptr</span><span class='strut'>&nbsp;</span></p>
-<p id='t38' class='stm mis'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>return</span> <span class='nam'>x</span><span class='op'>.</span><span class='nam'>group</span> <span class='op'>==</span> <span class='nam'>group</span><span class='strut'>&nbsp;</span></p>
+<p id='t38' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>return</span> <span class='nam'>x</span><span class='op'>.</span><span class='nam'>group</span> <span class='op'>==</span> <span class='nam'>group</span><span class='strut'>&nbsp;</span></p>
 <p id='t39' class='pln'><span class='strut'>&nbsp;</span></p>
 <p id='t40' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>by_refer_group</span><span class='op'>(</span><span class='nam'>x</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
 <p id='t41' class='stm mis'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>return</span> <span class='nam'>by_refer</span><span class='op'>(</span><span class='nam'>x</span><span class='op'>)</span> <span class='key'>and</span> <span class='nam'>by_group</span><span class='op'>(</span><span class='nam'>x</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
@@ -187,7 +187,7 @@
 <p id='t57' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>elif</span> <span class='nam'>cpane</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
 <p id='t58' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>return</span> <span class='nam'>filter</span><span class='op'>(</span><span class='nam'>by_cpane</span><span class='op'>,</span> <span class='nam'>dfields</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
 <p id='t59' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>elif</span> <span class='nam'>group</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t60' class='stm mis'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>return</span> <span class='nam'>filter</span><span class='op'>(</span><span class='nam'>by_group</span><span class='op'>,</span> <span class='nam'>dfields</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t60' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>return</span> <span class='nam'>filter</span><span class='op'>(</span><span class='nam'>by_group</span><span class='op'>,</span> <span class='nam'>dfields</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
 <p id='t61' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>elif</span> <span class='nam'>refer</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
 <p id='t62' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>return</span> <span class='nam'>filter</span><span class='op'>(</span><span class='nam'>by_refer</span><span class='op'>,</span> <span class='nam'>dfields</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
 <p id='t63' class='pln'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>else</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>

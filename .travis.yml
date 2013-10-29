@@ -1,23 +1,23 @@
 language: 
-  - "python"
+  - python
 services: 
-  - "postgresql"
+  - postgresql
 python:
   - "2.7"
 env:
   - PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres"
 install:
-  - "pip install . --use-mirrors"
-  - "pip install -r tests/requirements.txt --use-mirrors"
-  - "pip install coveralls -U --use-mirrors"
+  - pip install . --use-mirrors
+  - pip install -r tests/requirements.txt --use-mirrors
+  - pip install coveralls -U --use-mirrors
 before_script:
   # Adding the hstore extension
-  - "psql -d postgres -c 'create extension hstore;' -U postgres"
+  - psql -d postgres -c 'create extension hstore;' -U postgres
 
   # Changing the DATABASES settings configs
-  - "cp tests/local_settings.sample tests/local_settings.py"
+  - cp tests/local_settings.sample tests/local_settings.py
 script:
-  - "coverage run runtests.py"
+  - coverage run setup.py test
 after_success:
-  - "coverage html"
-  - "coveralls"
+  - coverage html
+  - coveralls

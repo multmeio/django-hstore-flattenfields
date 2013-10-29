@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 # encoding: utf-8
-"""
-utils.py
 
-Created by Luís Antônio Araújo Brito on 2012-10-16.
-Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
+"""
+hstore_flattenfields.utils
+-------------
+
+The Models file where places all the stored classes
+used in hstore_flattenfields application.
+
+:copyright: 2012, multmeio (http://www.multmeio.com.br)
+:author: 2012, Luís Antônio Araújo Brito <iuridiniz@gmail.com>
+:license: BSD, see LICENSE for more details.
 """
 
-from django.template.defaultfilters import slugify, floatformat
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.db import connection
 from django.db.models import get_model
@@ -95,7 +100,6 @@ VALUE_OPERATORS = {
 
 __all__ = ['single_list_to_tuple',
            'str2literal',
-           'dec2real',
            'has_any_in',
            'dynamic_field_table_exists',
            'str2date',
@@ -118,21 +122,49 @@ __all__ = ['single_list_to_tuple',
 
 
 def single_list_to_tuple(list_values):
+    """
+    >>> single_list_to_tuple([1, 2, 3, 4]) 
+    [(1, 1), (2, 2), (3, 3), (4, 4)]
+    >>> single_list_to_tuple(['a', 'b', 'c', 'd']) 
+    [('a', 'a'), ('b', 'b'), ('c', 'c'), ('d', 'd')]
+    """
     return [(v, v) for v in list_values]
 
 
 def str2literal(string):
+    """
+    >>> str2literal("{'foo': 'bar'}")
+    {'foo': 'bar'}
+    >>> str2literal("")
+    ''
+    >>> str2literal(20)
+    ''
+    """
     try:
         return literal_eval(string)
     except:
         return ''
 
 
-def dec2real(value):
-    return floatformat(value, 2)
-
-
 def str2datetime(value):
+    """
+    >>> str2datetime('2009-04-20 00:00:20')
+    datetime.datetime(2009, 4, 20, 0, 0, 20)
+    >>> str2datetime('10/04/2013 10:20:30')
+    datetime.datetime(2013, 4, 10, 10, 20, 30)
+    >>> from datetime import datetime
+    >>> dt = datetime(2013, 5, 8, 20, 10, 30)
+    >>> str2datetime(dt)
+    datetime.datetime(2013, 5, 8, 20, 10, 30)
+    >>> str2datetime(None)
+    ''
+    >>> str2datetime('')
+    ''
+    >>> str2datetime('20@04@2009')
+    Traceback (most recent call last):
+        ...
+    ValidationError: [u'Invalid datetime format for 20@04@2009']
+    """
     if isinstance(value, datetime):
         return value
     if not value:
@@ -150,6 +182,24 @@ def str2datetime(value):
 
 
 def str2date(value):
+    """
+    >>> str2date('2009-04-20')
+    datetime.date(2009, 4, 20)
+    >>> str2date('10/04/2013')
+    datetime.date(2013, 4, 10)
+    >>> from datetime import date
+    >>> dt = date(2013, 5, 8)
+    >>> str2date(dt)
+    datetime.date(2013, 5, 8)
+    >>> str2date(None)
+    ''
+    >>> str2date('')
+    ''
+    >>> str2date('20@04@2009')
+    Traceback (most recent call last):
+        ...
+    ValidationError: [u'Invalid date format for 20@04@2009']
+    """
     if isinstance(value, date):
         return value
     if not value:
@@ -167,6 +217,14 @@ def str2date(value):
 
 
 def has_any_in(chances, possibilities):
+    """
+    >>> has_any_in(range(5), range(3, 6))
+    True
+    >>> has_any_in(range(5), range(6, 10))
+    False
+    >>> has_any_in(range(5), range(5))
+    True
+    """
     return any([x for x in chances if x in possibilities])
 
 # cache in globals
@@ -183,12 +241,28 @@ def dynamic_field_table_exists():
 
 
 def get_fieldnames(fields, excludes=[]):
+    """
+    >>> from tests.app.models import Author
+    >>> get_fieldnames(Author._meta.fields)
+    ['id', '_dfields']
+    >>> from tests.app.models import Author
+    >>> get_fieldnames(Author._meta.fields, ['_dfields'])
+    ['id']
+    """
     return map(lambda f: f.name,
        filter(lambda f: f.name not in excludes, fields)
    )
 
 
 def create_choices(choices=''):
+    """
+    >>> create_choices([])
+    []
+    >>> create_choices('choice_01\\nchoice_02')
+    [('choice_01', 'choice_01'), ('choice_02', 'choice_02')]
+    >>> create_choices('choice_04 \\n choice_04')
+    [('choice_04', 'choice_04'), ('choice_04', 'choice_04')]
+    """
     if not choices:
         choices = ''
     return single_list_to_tuple(
@@ -197,12 +271,26 @@ def create_choices(choices=''):
 
 
 def get_modelfield(typo):
+    """
+    >>> get_modelfield('Input')
+    <class 'hstore_flattenfields.db.fields.HstoreCharField'>
+    >>> get_modelfield('Integer')
+    <class 'hstore_flattenfields.db.fields.HstoreIntegerField'>
+    >>> get_modelfield('Random')
+    <class 'hstore_flattenfields.db.fields.HstoreCharField'>
+    """
     from hstore_flattenfields.db import fields
     class_name = FIELD_TYPES_DICT.get(typo, FIELD_TYPE_DEFAULT)
     return getattr(fields, class_name)
 
 
 def create_field_from_instance(instance):
+    """
+    >>> from hstore_flattenfields.models import DynamicField
+    >>> df = DynamicField(refer="Author", typo="Input", name="author_name", verbose_name=u"Name")
+    >>> create_field_from_instance(df)
+    <hstore_flattenfields.db.fields.HstoreCharField: author_name>
+    """
     FieldClass = get_modelfield(instance.typo)
 
     # FIXME: The Data were saved in a string: "None"
@@ -239,20 +327,35 @@ def get_dynamic_field_model():
     return DynamicField
 
 def intersec(l1, l2):
+    """
+    >>> intersec(set(range(5)), set(range(2, 7))) 
+    [2, 3, 4]
+    """
     return filter(
         lambda item: item, 
         set(l1).intersection(l2)
     )
 
 def parse_queryset(model, result):
+    """
+    >>> from hstore_flattenfields.models import DynamicField
+    >>> from tests.app.models import Author
+    >>> DynamicField.objects.create(refer="Author", name="age", verbose_name=u"Age", typo="Integer")
+    <DynamicField: Age>
+    >>> DynamicField.objects.create(refer="Author", name="birth_date", verbose_name=u"Birth Date", typo="Date")
+    <DynamicField: Birth Date>
+    >>> Author.objects.create(age=20, birth_date='24/05/1992')
+    <Author: Author object>
+    >>> parse_queryset(Author, Author.objects.values('age'))
+    [{'age': 20}]
+    >>> parse_queryset(Author, Author.objects.values('birth_date'))
+    [{'birth_date': datetime.date(1992, 5, 24)}]
+    """
     dfield_names = model._meta.get_all_dynamic_field_names()
     for res in result:
         for item in intersec(dfield_names, res.keys()):
-            try:
-                parsed_value = model._meta.\
-                    get_field_by_name(item)[0].\
-                        to_python(res.get(item))
-            except: continue
-            else:
-                res.update({item:parsed_value})
+            field = model._meta.get_field_by_name(item)[0]
+            res.update({
+                item: field.to_python(res.get(item))
+            })
     return result

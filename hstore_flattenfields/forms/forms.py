@@ -63,11 +63,8 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                       parent_local_fields]
         for field in self._dyn_fields:
             field_name = field.name
-            if isinstance(field, DynamicField):
-                field_widget = field.get_modelfield.formfield().widget
-            else:
-                field_widget = field.widget
-
+            field_widget = field.get_modelfield.formfield().widget
+        
             dfield_names.append(field_name)
             all_fields.append(field_name)
 
@@ -89,11 +86,32 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             if name not in all_fields:
                 self.fields.pop(name)
         
+    def filtred_fields(self, content_pane=None):
+        """
+        Function to returns only the fields of was joined into a ContentPane
+        Used in the template_filter named 'as_tabs'.
+
+        If doesnt had content_pane, we have to iterate over
+        all dynamic_fields and return the name of those field
+        what have association with content_panes.
+        """
+        fields = self.visible_fields()
+
+        if self.instance:
+            if content_pane:
+                field_names = [f.name for f in content_pane.fields]
+                return [f for f in fields if f.name in field_names]
+            else:
+                field_names = [f.name for f in self._dyn_fields if f.content_pane]
+                return [f for f in fields if f.name not in field_names]
+
+    @property
+    def content_panes(self):
         grouped_panes = [{
             'name': getattr(settings, 'DEFAULT_CONTENT_PANE_NAME', 'Main Information'),
             'slug': 'default',
             'pk': '',
-            'model': model_name,
+            'model': self.Meta.model.__name__,
             'fields': self.filtred_fields()
         }]
         
@@ -111,30 +129,9 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                 'name': content_pane.name,
                 'slug': content_pane.slug,
                 'pk': content_pane.pk,
-                'model': model_name,
+                'model': self.Meta.model.__name__,
                 'order': content_pane.order,
                 'fields': self.filtred_fields(content_pane),
                 'has_error': has_error
             })
-        self.content_panes = grouped_panes
-        
-    
-    def filtred_fields(self, content_pane=None):
-        """
-        Function to returns only the fields of was joined into a ContentPane
-        Used in the template_filter named 'as_tabs'.
-
-        If doesnt had content_pane, we have to iterate over
-        all dynamic_fields and return the name of those field
-        what have association with content_panes.
-        """
-        fields = self.visible_fields()
-
-        if self.instance:
-            if content_pane:
-                field_names = [f.name for f in content_pane.fields]
-                return [f for f in fields if f.name in field_names]
-            else:
-                field_names = [
-                    f.name for f in self._dyn_fields if f.content_pane]
-                return [f for f in fields if f.name not in field_names]
+        return grouped_panes

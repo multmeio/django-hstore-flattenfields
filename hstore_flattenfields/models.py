@@ -1,12 +1,19 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-'''
-Created on 13/10/2012
+"""
+hstore_flattenfields.models
+-------------
 
-@author: iuri
-'''
+The Models file where places all the stored classes
+used in hstore_flattenfields application.
 
+:copyright: 2013, multmeio (http://www.multmeio.com.br)
+:author: 2013, Iuri Diniz <iuridiniz@gmail.com>
+:license: BSD, see LICENSE for more details.
+"""
+
+import sys
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext as _
@@ -35,7 +42,20 @@ class DynamicFieldGroup(models.Model):
     """
     Class context to fields in the use case.
     This has to be implemented on main app, and related to
-    class HstoreModel that contains _dfields.
+    class HstoreModel that contains ``_dfields``.
+    
+    :param name: The name of the Group.
+    :param slug: Auto-slug which was generated using the ``name`` as a seed.
+    :param description: The text description about what this Group means in your logic.
+    
+    >>> group = DynamicFieldGroup.objects.create(name="Test Group")
+    >>> group.slug
+    u'test_group'
+
+    >>> group.name = "New Group"
+    >>> group.save()
+    >>> group.slug
+    u'new_group'
     """
     name = models.CharField(max_length=80, null=False, verbose_name=_('Name'))
     slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True, overwrite=True)
@@ -47,15 +67,41 @@ class DynamicFieldGroup(models.Model):
 
     @property
     def fields(self):
+        """
+        Returns all the related ``DynamicField`` instances from cache.
+        
+        >>> group = DynamicFieldGroup.objects.create(name="Test Group")
+        >>> DynamicField.objects.create(refer="Something", group=group, name="something_age", verbose_name=u"Age")
+        <DynamicField: Age>
+        >>> group.fields
+        [<DynamicField: Age>]
+        """
         return DynamicField.objects.find_dfields(group=self)
 
     def __unicode__(self):
+        """
+        Returns a pretty representation of this object.
+        
+        >>> group = DynamicFieldGroup.objects.create(name="Test Group")
+        >>> unicode(group)
+        u'Test Group'
+        """
         return u"%s" % self.name
 
 
 class ContentPane(models.Model):
     """
     Class to contains fields reproduced into TABs, DIVs,... on templates.
+    
+    :param name: The name of the ``ContentPane``.
+    :param slug: Auto-slug which was generated using the ``name`` as a seed.
+    :param order: The 0-indexed order which the ``ContentPane`` is places inside the ``Form``.
+    :param content_type: The ``ContentType`` which the ``ContentPane`` will be shown.
+    :param group: The ``DynamicFieldGroup`` instance which the ``ContentPane`` is owned.
+    
+    >>> content_pane = ContentPane.objects.create(name="Test Content Pane")
+    >>> content_pane.slug
+    u'test_content_pane'
     """
     name = models.CharField(max_length=80, null=False, verbose_name=_('Name'))
     order = models.IntegerField(null=False, blank=False, default=0, verbose_name=_('Order'))
@@ -71,14 +117,45 @@ class ContentPane(models.Model):
         ordering = ['order', 'slug']
 
     def __unicode__(self):
-        return u"[#%s, %s] - %s" % (self.id, self.order, self.name)
+        """
+        Returns a pretty representation of this object.
+        
+        >>> content_pane = ContentPane.objects.create(name="Test Content Pane")
+        >>> unicode(content_pane)
+        u'Test Content Pane'
+        """
+        return u"%s" % self.name
 
     @property
     def fields(self):
+        """
+        Returns all the related ``DynamicField`` instances from cache.
+        
+        >>> content_pane = ContentPane.objects.create(name="Test Content Pane")
+        >>> DynamicField.objects.create(refer="MyModel", content_pane=content_pane, name="my_model_age", verbose_name=u"Age")
+        <DynamicField: Age>
+        >>> DynamicField.objects.create(refer="MyModel", name="my_model_foobar", verbose_name=u"Foobar")
+        <DynamicField: Foobar>
+        >>> content_pane.fields
+        [<DynamicField: Age>]
+        """
         return DynamicField.objects.find_dfields(cpane=self)
 
 
 class DynamicField(models.Model):
+    """
+    Created to represent the Django Model's field information,
+    we use him to fill the Field instances when the ``refer``
+    instances will be build.
+    
+    :param refer: The name of the Model of the ``DynamicField``.
+    :param name: The name of the ``DynamicField``.
+    :param verbose_name: The Verbose Name of the ``DynamicField``.
+    :param order: The 0-indexed order which the ``DynamicField`` is places inside the ``Form``.
+    :param content_type: The ``ContentType`` which the ``ContentPane`` will be shown.
+    :param group: The ``DynamicFieldGroup`` instance which the ``ContentPane`` is owned.
+    
+    """
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name=_("Class name"))
     name = models.CharField(max_length=120, blank=False, db_index=True,unique=True, verbose_name=_("Field name"))
     verbose_name = models.CharField(max_length=120, blank=False, verbose_name=_("Verbose name"))
@@ -112,11 +189,13 @@ class DynamicField(models.Model):
     def save(self, *args, **kwargs):
         super(DynamicField, self).save()
         global dfields
-        dfields = self.__class__.objects.all()
+        dfields = DynamicField.objects.all()
 
     def delete(self):
         super(DynamicField, self).delete()
         global dfields
-        dfields = self.__class__.objects.all()
+        dfields = DynamicField.objects.all()
 
-dfields = DynamicField.objects.all()
+
+# NOTE: Skip the cache when we use the Test Mode
+dfields = [] if 'test' in sys.argv else DynamicField.objects.all()

@@ -161,6 +161,8 @@ SOUTH_DATABASE_ADAPTERS = {
     'default': 'south.db.postgresql_psycopg2'
 }
 
+TEST_RUNNER = 'tests.runner.DjangoWithDoctestTestRunner'
+
 try:
     from local_settings import *
 except ImportError:

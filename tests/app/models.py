@@ -31,16 +31,21 @@ class Author(HStoreM2MGroupedModel):
         hstore_related_field = 'author_groups'
 
     def __str__(self):
-        if self.author_name:
+        if hasattr(self, 'author_name'):
             return self.author_name
+        else:
+            return super(Author, self).__str__()
 
 
 class Tag(HStoreModel):
     articles = models.ManyToManyField('Book')
 
     def __str__(self):
-        if self.tag_name:
+        if hasattr(self, 'tag_name'):
             return self.tag_name
+        else:
+            return super(Author, self).__str__()
+
 
 
 class Book(HStoreModel):
@@ -48,26 +53,35 @@ class Book(HStoreModel):
     tags = models.ManyToManyField('Tag')
 
     def __str__(self):
-        return self.title or "Book %s" % self.pk
+        if hasattr(self, 'title'):
+            return self.title
+        else:
+            return "Book %s" % self.pk
 
 
 class Season(HStoreModel):
     def __str__(self):
-        if self.year:
+        if hasattr(self, 'year'):
             return self.year
+        else:
+            return super(Author, self).__str__()
 
 
 class Game(HStoreModel):
     season = models.ForeignKey(Season, related_name='games')
 
     def __str__(self):
-        if self.away and self.home:
+        if hasattr(self, 'away') and hasattr(self, 'home') :
             return "%s at %s" % (self.away, self.home)
+        else:
+            return super(Author, self).__str__()
 
 
 class Player(HStoreModel):
     games = models.ManyToManyField(Game, related_name='players')
 
     def __str__(self):
-        if self.player_name:
+        if hasattr(self, 'player_name'):
             return self.player_name
+        else:
+            return super(Author, self).__str__()

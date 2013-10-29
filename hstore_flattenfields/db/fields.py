@@ -210,12 +210,12 @@ class HstoreDateField(models.DateField):
         return form_class(**defaults)
 
     def to_python(self, value):
-        if not value or value is models.fields.NOT_PROVIDED or value == 'None':
+        if not value or value is models.fields.NOT_PROVIDED:
             return None
         return str2date(value)
 
     def clean(self, value, *args):
-        if value == 'None' or not value:
+        if not value:
             return ''
         return value
 
@@ -251,12 +251,12 @@ class HstoreDateTimeField(models.DateTimeField):
         return form_class(**defaults)
 
     def to_python(self, value):
-        if not value or value is models.fields.NOT_PROVIDED or value == 'None':
+        if not value or value is models.fields.NOT_PROVIDED:
             return None
         return str2datetime(value)
 
     def clean(self, value, *args):
-        if value == 'None' or not value:
+        if not value:
             return ''
         return value
 
@@ -284,7 +284,7 @@ class HstoreSelectField(models.CharField):
     def clean(self, value, *args):
         # FIXME: At the beginning of the project there was
         #       a bug that was saving the value as a string: 'None'
-        if value == 'None' or not value:
+        if not value:
             return ''
         return value
 

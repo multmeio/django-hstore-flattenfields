@@ -14,7 +14,6 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from tests.app.models import *
-# from hstore_flattenfields.models import DynamicField
 
 
 class TypeDateObjectLevelTests(TestCase):

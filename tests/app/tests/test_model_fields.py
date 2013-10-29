@@ -8,6 +8,7 @@ from hstore_flattenfields.models import DynamicField
 
 from tests.app.models import *
 
+
 def _update_obj(obj, field, value):
     setattr(obj, field, value); obj.save()
 

@@ -268,23 +268,29 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def related_instances(self):
+        from hstore_flattenfields.models import DynamicFieldGroup
+        instances = []
         try:
-            return filter(
-                lambda related_dynamic_field: related_dynamic_field,
-                getattr(self, self._meta.hstore_related_field).all()
-            )
+            instances = getattr(self, self._meta.hstore_related_field).all()
+
+            # NOTE: In cases of Inheritance between DynamicFieldGroup
+            # we had to get the parent of that instances to the rest of Query work on.
+            QueyrModel = instances.query.model
+            if QueyrModel != DynamicFieldGroup and \
+               issubclass(QueyrModel, DynamicFieldGroup):
+                instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
         except (AttributeError, ValueError):
-            return []
+            pass
+        return instances
 
     @property
     def dynamic_fields(self):
         refer = self.__class__.__name__
-
         def by_group(dynamic_field):
             instances = self.related_instances
             if instances:
                 return bool([x for x in instances if dynamic_field.group == None or
-                             x.dynamicfieldgroup_ptr == dynamic_field.group])
+                             x == dynamic_field.group])
             try:
                 if dynamic_field.group == None:
                     return True
@@ -297,8 +303,10 @@ class HStoreM2MGroupedModel(HStoreModel):
     @property
     def content_panes(self):
         from hstore_flattenfields.models import ContentPane
+        
         return ContentPane.objects.filter(
-            models.Q(content_type__model=self.__class__.__name__.lower()) |\
+            models.Q(content_type__model=self.__class__.__name__.lower()),
+            models.Q(dynamic_fields__group__in=self.related_instances) |\
+            models.Q(dynamic_fields__group__isnull=True) &\
             models.Q(dynamic_fields__in=self.dynamic_fields)
         ).distinct()
-
