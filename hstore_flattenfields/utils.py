@@ -244,10 +244,10 @@ def get_fieldnames(fields, excludes=[]):
     """
     >>> from tests.app.models import Author
     >>> get_fieldnames(Author._meta.fields)
-    ['id', '_dfields']
+    [u'id', '_dfields']
     >>> from tests.app.models import Author
     >>> get_fieldnames(Author._meta.fields, ['_dfields'])
-    ['id']
+    [u'id']
     """
     return map(lambda f: f.name,
        filter(lambda f: f.name not in excludes, fields)

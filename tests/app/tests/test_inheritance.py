@@ -17,20 +17,20 @@ from tests.app.models import *
 
 class AuthorSpecializedInheritanceTests(TestCase):
     def setUp(self):
-        self.group1 = DynamicFieldGroup.objects.create(id=1, name="Something Group", slug="something_group")
+        self.group1 = AuthorType.objects.create(id=1, name="Something Group", slug="something_group")
 
-        self.dfield1 = DynamicField.objects.create(id=1, refer="AuthorSpecialized", group=self.group1, 
+        self.dfield1 = DynamicField.objects.create(id=1, refer="Author", group=self.group1, 
            	typo="Integer", name="author_specialized_age", verbose_name=u"Age")
-        self.dfield2 = DynamicField.objects.create(id=2, refer="AuthorSpecialized", group=self.group1, 
+        self.dfield2 = DynamicField.objects.create(id=2, refer="Author", group=self.group1, 
             name="author_specialized_name", verbose_name=u"Name", typo="CharField", max_length=100)
-        self.dfield3 = DynamicField.objects.create(id=3, refer="AuthorSpecialized", 
+        self.dfield3 = DynamicField.objects.create(id=3, refer="Author", 
             name="author_specialized_information", verbose_name=u"Information", typo="CharField", max_length=100)
 
     def test_assert_all_dynamic_fields(self):
-        self.author_specialized = AuthorSpecialized.objects.create(
+        self.author_specialized = Author.objects.create(
         	author_specialized_age=42, author_specialized_name="some-name"
         )
-        self.author_specialized.groups.add(self.group1)
+        self.author_specialized.author_groups.add(self.group1)
         self.assertEqual(
             self.author_specialized.dynamic_fields,
             [self.dfield1, self.dfield2, self.dfield3]

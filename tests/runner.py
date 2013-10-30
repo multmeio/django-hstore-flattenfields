@@ -10,20 +10,24 @@ import imp
 EXCLUDE_FILES = ['__init__.py', 'tests.py', 'models.py']
 
 def is_testable(filename):
-    return filename.endswith(".py") and filename not in EXCLUDE_FILES
+    return filename.endswith(".py") and \
+           filename not in EXCLUDE_FILES
+
+def pretty_pkgs(pkgs):
+    return map(
+        lambda x: re.sub('\.py$', '', x), 
+        filter(is_testable, pkgs)
+    )
 
 def find_modules(package):
-    pkg_files = [(p,f) for p,d,f in os.walk(os.path.dirname(package.__file__)) \
-                 if len(d) > 0 and not d[0] == "tests"]
-    loaded_modules = []
-    for pkg in pkg_files:
-        loaded_modules.extend(
-            [imp.load_module(file, *imp.find_module(file, [pkg[0]])) \
-            for file in map(lambda x: re.sub('\.py$', '', x), 
-                filter(is_testable, pkg[1])
-            )]
-        )
-    return loaded_modules
+    for pkg in os.walk(os.path.dirname(package.__file__)):
+        for file in pretty_pkgs(pkg[2]):
+            try:
+                yield imp.load_module(
+                    file, *imp.find_module(file, [pkg[0]])
+                )
+            except IndexError:
+                continue
     
 class DjangoWithDoctestTestRunner(DjangoTestSuiteRunner):
     def build_suite(self, test_labels, extra_tests=None, **kwargs):
@@ -33,7 +37,12 @@ class DjangoWithDoctestTestRunner(DjangoTestSuiteRunner):
         for label in test_labels:
             parts = label.split('.')
             for module in find_modules(get_app(parts[0])):
-                old_suite.addTest(
-                    doctest.DocTestSuite(module, runner=DocTestRunner)
-                )
+                try:
+                    test_obj = doctest.DocTestSuite(
+                        module, runner=DocTestRunner
+                    )
+                except ValueError:
+                    continue
+                else:
+                    old_suite.addTest(test_obj)
         return old_suite

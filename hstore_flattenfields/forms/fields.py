@@ -9,7 +9,7 @@ Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
 
 from django import forms
 
-from .widgets import SelectMultipleWidget
+from hstore_flattenfields.forms.widgets import SelectMultipleWidget
 
 
 class HstoreTextFieldFormField(forms.CharField):
