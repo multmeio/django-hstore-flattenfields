@@ -26,7 +26,7 @@ def find_modules(package):
                 yield imp.load_module(
                     file, *imp.find_module(file, [pkg[0]])
                 )
-            except IndexError:
+            except:
                 continue
     
 class DjangoWithDoctestTestRunner(DjangoTestSuiteRunner):
