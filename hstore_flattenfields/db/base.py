@@ -308,7 +308,6 @@ class HStoreM2MGroupedModel(HStoreModel):
             models.Q(content_type__model=self.__class__.__name__.lower()),
             models.Q(dynamic_fields__group__in=self.related_instances) |\
             models.Q(dynamic_fields__group__isnull=True) &\
-            models.Q(dynamic_fields__in=self.dynamic_fields).\
-                prefetch_related('dynamic_fields').\
-                select_related('dynamicfieldgroup')
-        ).distinct()
+            models.Q(dynamic_fields__in=self.dynamic_fields)
+        ).prefetch_related('dynamic_fields').\
+          select_related('dynamicfieldgroup').distinct()
