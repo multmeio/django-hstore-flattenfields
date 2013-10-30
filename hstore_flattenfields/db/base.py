@@ -275,9 +275,9 @@ class HStoreM2MGroupedModel(HStoreModel):
 
             # NOTE: In cases of Inheritance between DynamicFieldGroup
             # we had to get the parent of that instances to the rest of Query work on.
-            QueyrModel = instances.query.model
-            if QueyrModel != DynamicFieldGroup and \
-               issubclass(QueyrModel, DynamicFieldGroup):
+            QueryModel = instances.query.model
+            if QueryModel != DynamicFieldGroup and \
+               issubclass(QueryModel, DynamicFieldGroup):
                 instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
         except (AttributeError, ValueError):
             pass
