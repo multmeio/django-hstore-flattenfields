@@ -303,10 +303,12 @@ class HStoreM2MGroupedModel(HStoreModel):
     @property
     def content_panes(self):
         from hstore_flattenfields.models import ContentPane
-        
+
         return ContentPane.objects.filter(
             models.Q(content_type__model=self.__class__.__name__.lower()),
             models.Q(dynamic_fields__group__in=self.related_instances) |\
             models.Q(dynamic_fields__group__isnull=True) &\
-            models.Q(dynamic_fields__in=self.dynamic_fields)
+            models.Q(dynamic_fields__in=self.dynamic_fields).\
+                prefetch_related('dynamic_fields').\
+                select_related('dynamicfieldgroup')
         ).distinct()
