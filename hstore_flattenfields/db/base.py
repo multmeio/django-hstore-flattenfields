@@ -19,7 +19,6 @@ from hstore_flattenfields.utils import (
 
 
 class HStoreModelMeta(ModelBase):
-    dfieldXXX = None
     def __new__(cls, name, bases, attrs):
         new_class = super(HStoreModelMeta, cls).__new__(
             cls, name, bases, attrs
@@ -29,13 +28,9 @@ class HStoreModelMeta(ModelBase):
         old_getattribute = new_class.__getattribute__
 
         def __getattribute__(self, key):
-            print ".",
             from django.core.cache import cache
             queryset = cache.get('dynamic_fields')
-            if not self.dfieldXXX:
-                self.dfieldXXX = [f for f in queryset if f.name==key]
-            field = self.dfieldXXX
-            # field = [f for f in queryset if f.name==key]
+            field = [f for f in queryset if f.name==key]
             # field = get_dynamic_field_model().objects.find_dfields(name=key)
             if field:
                 field = get_modelfield(field[0].typo)()
