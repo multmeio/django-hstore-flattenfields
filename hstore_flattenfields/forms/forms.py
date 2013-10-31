@@ -50,7 +50,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
         hstore_order = kwargs.pop('keyOrder', None)
         super(HStoreContentPaneModelForm, self).__init__(*args, **kwargs)
-        
+
         model_name = self.Meta.model.__name__
         self._dyn_fields = self.instance.dynamic_fields
         opts = self._meta.model._meta
@@ -63,8 +63,11 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                       parent_local_fields]
         for field in self._dyn_fields:
             field_name = field.name
-            field_widget = field.get_modelfield.formfield().widget
-        
+            try:
+                field_widget = field.get_modelfield.formfield().widget
+            except AttributeError:
+                continue
+
             dfield_names.append(field_name)
             all_fields.append(field_name)
 
@@ -75,7 +78,10 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         if not hstore_order:
             hstore_order = [x for x in self.fields.keyOrder if not x in dfield_names]
 
-        for field in DynamicField.objects.find_dfields(refer=self.instance.__class__.__name__):
+        from django.core.cache import cache
+        queryset = cache.get('dynamic_fields')
+
+        for field in [f for f in queryset if f.refer==self.instance.__class__.__name__]:
             if field.name in hstore_order:
                 hstore_order.pop(hstore_order.index(field.name))
             hstore_order.insert(field.order or len(hstore_order), field.name)
@@ -85,7 +91,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         for name in self.fields.keys():
             if name not in all_fields:
                 self.fields.pop(name)
-        
+
     def filtred_fields(self, content_pane=None):
         """
         Function to returns only the fields of was joined into a ContentPane
@@ -114,7 +120,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             'model': self.Meta.model.__name__,
             'fields': self.filtred_fields()
         }]
-        
+
         for content_pane in self.instance.content_panes:
             # Skip if the actual content_pane already is in grouped_panes
             if content_pane.pk in map(lambda x: x['pk'], grouped_panes):

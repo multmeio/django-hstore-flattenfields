@@ -17,11 +17,11 @@ import sys
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext as _
-
+from django.core.cache import cache
 from django_orm.postgresql import hstore
 from django_extensions.db.fields import AutoSlugField
 
-from db.manager import CacheDynamicFieldManager
+# from db.manager import CacheDynamicFieldManager
 from db.base import (
     HStoreModel,
     HStoreM2MGroupedModel,
@@ -43,11 +43,11 @@ class DynamicFieldGroup(models.Model):
     Class context to fields in the use case.
     This has to be implemented on main app, and related to
     class HstoreModel that contains ``_dfields``.
-    
+
     :param name: The name of the Group.
     :param slug: Auto-slug which was generated using the ``name`` as a seed.
     :param description: The text description about what this Group means in your logic.
-    
+
     >>> group = DynamicFieldGroup.objects.create(name="Test Group")
     >>> group.slug
     u'test_group'
@@ -69,7 +69,7 @@ class DynamicFieldGroup(models.Model):
     def fields(self):
         """
         Returns all the related ``DynamicField`` instances from cache.
-        
+
         >>> group = DynamicFieldGroup.objects.create(name="Test Group")
         >>> DynamicField.objects.create(refer="Something", group=group, name="something_age", verbose_name=u"Age")
         <DynamicField: Age>
@@ -81,7 +81,7 @@ class DynamicFieldGroup(models.Model):
     def __unicode__(self):
         """
         Returns a pretty representation of this object.
-        
+
         >>> group = DynamicFieldGroup.objects.create(name="Test Group")
         >>> unicode(group)
         u'Test Group'
@@ -92,13 +92,13 @@ class DynamicFieldGroup(models.Model):
 class ContentPane(models.Model):
     """
     Class to contains fields reproduced into TABs, DIVs,... on templates.
-    
+
     :param name: The name of the ``ContentPane``.
     :param slug: Auto-slug which was generated using the ``name`` as a seed.
     :param order: The 0-indexed order which the ``ContentPane`` is places inside the ``Form``.
     :param content_type: The ``ContentType`` which the ``ContentPane`` will be shown.
     :param group: The ``DynamicFieldGroup`` instance which the ``ContentPane`` is owned.
-    
+
     >>> content_pane = ContentPane.objects.create(name="Test Content Pane")
     >>> content_pane.slug
     u'test_content_pane'
@@ -119,7 +119,7 @@ class ContentPane(models.Model):
     def __unicode__(self):
         """
         Returns a pretty representation of this object.
-        
+
         >>> content_pane = ContentPane.objects.create(name="Test Content Pane")
         >>> unicode(content_pane)
         u'Test Content Pane'
@@ -130,7 +130,7 @@ class ContentPane(models.Model):
     def fields(self):
         """
         Returns all the related ``DynamicField`` instances from cache.
-        
+
         >>> content_pane = ContentPane.objects.create(name="Test Content Pane")
         >>> DynamicField.objects.create(refer="MyModel", content_pane=content_pane, name="my_model_age", verbose_name=u"Age")
         <DynamicField: Age>
@@ -147,14 +147,14 @@ class DynamicField(models.Model):
     Created to represent the Django Model's field information,
     we use him to fill the Field instances when the ``refer``
     instances will be build.
-    
+
     :param refer: The name of the Model of the ``DynamicField``.
     :param name: The name of the ``DynamicField``.
     :param verbose_name: The Verbose Name of the ``DynamicField``.
     :param order: The 0-indexed order which the ``DynamicField`` is places inside the ``Form``.
     :param content_type: The ``ContentType`` which the ``ContentPane`` will be shown.
     :param group: The ``DynamicFieldGroup`` instance which the ``ContentPane`` is owned.
-    
+
     """
     refer = models.CharField(max_length=120, blank=False, db_index=True, verbose_name=_("Class name"))
     name = models.CharField(max_length=120, blank=False, db_index=True,unique=True, verbose_name=_("Field name"))
@@ -172,7 +172,7 @@ class DynamicField(models.Model):
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Groups"))
     content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Panel"))
 
-    objects = CacheDynamicFieldManager()
+    # objects = CacheDynamicFieldManager()
 
     class Meta:
         verbose_name = _('Dynamic Field')
@@ -188,14 +188,38 @@ class DynamicField(models.Model):
 
     def save(self, *args, **kwargs):
         super(DynamicField, self).save()
-        global dfields
-        dfields = DynamicField.objects.all()
+        charge_cache()
+        # global dfields
+        # dfields = DynamicField.objects.all()
 
     def delete(self):
         super(DynamicField, self).delete()
-        global dfields
-        dfields = DynamicField.objects.all()
+        charge_cache()
+        # global dfields
+        # dfields = DynamicField.objects.all()
 
+
+
+def charge_cache(entity='dynamic_field'):
+    """
+    Load the main models in the cache to improve database
+    hit reduction.
+    """
+    if entity == 'content_pane':
+        cache.set('content_panes', ContentPane.objects.all().\
+                prefetch_related('dynamic_fields').\
+                select_related('dynamicfieldgroup', 'content_type'))
+    elif entity == 'dynamic_field_group':
+        cache.set('dynamic_field_groups', DynamicFieldGroup.objects.all().\
+                prefetch_related('dynamic_fields', 'content_panes'))
+    else:
+        cache.set('dynamic_fields', DynamicField.objects.all().\
+                select_related('content_pane', 'dynamicfieldgroup'))
+
+# Initial cache charge
+charge_cache()
+charge_cache('content_pane')
+charge_cache('dynamic_field_group')
 
 # NOTE: Skip the cache when we use the Test Mode
-dfields = [] if 'test' in sys.argv else DynamicField.objects.all()
+# dfields = [] if 'test' in sys.argv else DynamicField.objects.all()

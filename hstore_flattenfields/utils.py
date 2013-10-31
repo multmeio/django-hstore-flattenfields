@@ -116,16 +116,16 @@ __all__ = ['single_list_to_tuple',
            'VALUE_OPERATORS',
            'get_modelfield',
            'create_field_from_instance',
-           'get_dynamic_field_model',
+           # 'get_dynamic_field_model',
            'parse_queryset',
 ]
 
 
 def single_list_to_tuple(list_values):
     """
-    >>> single_list_to_tuple([1, 2, 3, 4]) 
+    >>> single_list_to_tuple([1, 2, 3, 4])
     [(1, 1), (2, 2), (3, 3), (4, 4)]
-    >>> single_list_to_tuple(['a', 'b', 'c', 'd']) 
+    >>> single_list_to_tuple(['a', 'b', 'c', 'd'])
     [('a', 'a'), ('b', 'b'), ('c', 'c'), ('d', 'd')]
     """
     return [(v, v) for v in list_values]
@@ -317,22 +317,22 @@ def create_field_from_instance(instance):
     instance.get_modelfield = field
     return field
 
-def get_dynamic_field_model():
-    """
-    Function created to return the DynamicField
-    class, to handle the Circular Imports
-    against the .py Files.
-    """
-    from hstore_flattenfields.models import DynamicField
-    return DynamicField
+# def get_dynamic_field_model():
+#     """
+#     Function created to return the DynamicField
+#     class, to handle the Circular Imports
+#     against the .py Files.
+#     """
+#     from hstore_flattenfields.models import DynamicField
+#     return DynamicField
 
 def intersec(l1, l2):
     """
-    >>> intersec(set(range(5)), set(range(2, 7))) 
+    >>> intersec(set(range(5)), set(range(2, 7)))
     [2, 3, 4]
     """
     return filter(
-        lambda item: item, 
+        lambda item: item,
         set(l1).intersection(l2)
     )
 
