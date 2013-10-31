@@ -6,8 +6,8 @@ try:
 except AttributeError:
     from django.db.models.base import ModelBase
 
+from django.core.cache import cache
 from django_orm.postgresql import hstore
-
 from hstore_flattenfields.db.manager import FlattenFieldsFilterManager
 from hstore_flattenfields.utils import (
     get_fieldnames,
@@ -28,7 +28,7 @@ class HStoreModelMeta(ModelBase):
         old_getattribute = new_class.__getattribute__
 
         def __getattribute__(self, key):
-            from django.core.cache import cache
+            # from django.core.cache import cache
             queryset = cache.get('dynamic_fields')
             field = [f for f in queryset if f.name==key]
             # field = get_dynamic_field_model().objects.find_dfields(name=key)
@@ -58,9 +58,10 @@ class HStoreModelMeta(ModelBase):
 
         old_setattr = new_class.__setattr__
         def __setattr__(self, key, value):
-            # print "called __setattr__(%r, %r)" % (key, value)
+            if key == 'cache_key':
+                return
             if hasattr(self, '_dfields') and not key in dir(new_class):
-                from django.core.cache import cache
+                # from django.core.cache import cache
                 queryset = cache.get('dynamic_fields')
                 dfield = [f for f in queryset if f.refer==new_class.__name__ and\
                           f.name==key]
@@ -71,6 +72,7 @@ class HStoreModelMeta(ModelBase):
                     if value is not None:
                         self._dfields[key] = unicode(value)
                     return
+            # print "called __setattr__(%r, %r)" % (key, value)
             old_setattr(self, key, value)
         new_class.__setattr__ = __setattr__
 
@@ -144,9 +146,13 @@ class HStoreModelMeta(ModelBase):
                 fields = []
                 if not dynamic_field_table_exists():
                     return fields
-                from django.core.cache import cache
+                # from django.core.cache import cache
                 queryset = cache.get('dynamic_fields')
-                metafields = [f for f in queryset if f.refer==new_class.__name__]
+                try:
+                    metafields = [f for f in queryset if f.refer==new_class.__name__]
+                except:
+                    import ipdb; ipdb.set_trace()
+
                 # metafields = get_dynamic_field_model().objects.find_dfields(
                 #     refer=new_class.__name__)
 
@@ -285,21 +291,22 @@ class HStoreM2MGroupedModel(HStoreModel):
                     value = getattr(parent, name, '')
                     setattr(self, name, value)
 
-        from django.core.cache import cache
-        # self.cache_key = "%s_%s" % (self._meta.hstore_related_field, self.pk)
-        # self.cache_key = "blabla"
+        # from django.core.cache import cache
+        self.cache_key = "%s_%s" % (self._meta.hstore_related_field, self.pk)
         if not cache.get(self.cache_key):
             related_instances = getattr(self, self._meta.hstore_related_field).all().\
                 select_related('dynamicfieldgroup_ptr')
             cache.set(self.cache_key, related_instances)
 
     def __del__(self, *args, **kwargs):
+        # from django.core.cache import cache
         cache.delete(self.cache_key)
         super(HStoreM2MGroupedModel, self).__del__(*args, **kwargs)
 
     @property
     def related_instances(self):
-        from django.core.cache import cache
+        # print "CacheKey: %s" % self.cache_key
+        # from django.core.cache import cache
         instances = cache.get(self.cache_key)
         if not instances:
             return []
@@ -344,19 +351,15 @@ class HStoreM2MGroupedModel(HStoreModel):
             else:
                 return False
 
-        from django.core.cache import cache
+        # from django.core.cache import cache
         queryset = cache.get('dynamic_fields')
         return filter(by_group, [f for f in queryset if f.refer==refer])
         # return filter(by_group, get_dynamic_field_model().objects.find_dfields(refer=refer))
         # return queryset.filter(refer=refer, models.Q(group__in=self.related_instances) | models.Q(group__isnull=True))
 
     @property
-    def content_panes(self):
+    def cache_content_panes(self):
         from hstore_flattenfields.models import ContentPane
-        from django.core.cache import cache
-        queryset = cache.get('content_panes')
-
-
         def by_group_in_dfields(dynamic_field):
             instances = self.related_instances
             if instances:
@@ -377,6 +380,8 @@ class HStoreM2MGroupedModel(HStoreModel):
         def by_dfields(content_pane):
             return has_any_in(content_pane.dynamic_fields, self.dynamic_fields)
 
+        # from django.core.cache import cache
+        queryset = cache.get('content_panes')
         content_panes = [cp for cp in queryset if cp.content_type.model==self.__class__.__name__.lower()]
         content_panes = filter(by_group, content_panes)
         content_panes = filter(by_dfields, content_panes)

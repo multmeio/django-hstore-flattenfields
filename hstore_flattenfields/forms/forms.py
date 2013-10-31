@@ -46,7 +46,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
     """
 
     def __init__(self, *args, **kwargs):
-        from hstore_flattenfields.models import DynamicField
+        # from hstore_flattenfields.models import DynamicField
 
         hstore_order = kwargs.pop('keyOrder', None)
         super(HStoreContentPaneModelForm, self).__init__(*args, **kwargs)
@@ -120,8 +120,8 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             'model': self.Meta.model.__name__,
             'fields': self.filtred_fields()
         }]
-
-        for content_pane in self.instance.content_panes:
+        # for content_pane in self.instance.content_panes:
+        for content_pane in self.instance.cache_content_panes:
             # Skip if the actual content_pane already is in grouped_panes
             if content_pane.pk in map(lambda x: x['pk'], grouped_panes):
                 continue
