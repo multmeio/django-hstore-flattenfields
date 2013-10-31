@@ -373,15 +373,12 @@ class HStoreM2MGroupedModel(HStoreModel):
         content_panes = [cp for cp in queryset if cp.content_type.model==self.__class__.__name__.lower()]
         content_panes = filter(by_group, content_panes)
         content_panes = filter(by_dfields, content_panes)
-        import ipdb; ipdb.set_trace()
 
         return content_panes
-
-
-        return queryset.filter(
-                models.Q(content_type__model=self.__class__.__name__.lower()),
-                models.Q(dynamic_fields__group__in=self.related_instances) |\
-                models.Q(dynamic_fields__group__isnull=True) &\
-                models.Q(dynamic_fields__in=self.dynamic_fields)
-            ).prefetch_related('dynamic_fields').\
-              select_related('dynamicfieldgroup').distinct()
+        # return queryset.filter(
+        #         models.Q(content_type__model=self.__class__.__name__.lower()),
+        #         models.Q(dynamic_fields__group__in=self.related_instances) |\
+        #         models.Q(dynamic_fields__group__isnull=True) &\
+        #         models.Q(dynamic_fields__in=self.dynamic_fields)
+        #     ).prefetch_related('dynamic_fields').\
+        #       select_related('dynamicfieldgroup').distinct()
