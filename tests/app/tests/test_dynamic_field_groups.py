@@ -38,7 +38,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
         )
         self.assertEqual(
             self.something.dynamic_fields,
-            [self.dfield1, self.dfield4]
+            [self.dfield4, self.dfield1]
         )
 
     def test_assert_specific_dynamic_fields(self):
@@ -50,7 +50,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
         )
         self.assertEqual(
             self.something.dynamic_fields,
-            [self.dfield2, self.dfield3, self.dfield4]
+            [self.dfield4, self.dfield3, self.dfield2]
         )
 
     def test_assert_change_field_name(self):
