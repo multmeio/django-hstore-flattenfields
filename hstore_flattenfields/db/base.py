@@ -28,6 +28,8 @@ class HStoreModelMeta(ModelBase):
         old_getattribute = new_class.__getattribute__
 
         def __getattribute__(self, key):
+            if key == 'custom_cache_key':
+                return
             # from django.core.cache import cache
             queryset = cache.get('dynamic_fields')
             field = [f for f in queryset if f.name==key]
@@ -58,7 +60,7 @@ class HStoreModelMeta(ModelBase):
 
         old_setattr = new_class.__setattr__
         def __setattr__(self, key, value):
-            if key == 'cache_key':
+            if key == 'custom_cache_key':
                 return
             if hasattr(self, '_dfields') and not key in dir(new_class):
                 # from django.core.cache import cache
@@ -260,10 +262,6 @@ class HStoreM2MGroupedModel(HStoreModel):
     class Meta:
         abstract = True
 
-    @property
-    def cache_key(self):
-        return "bla"
-
     def __init__(self, *args, **kwargs):
         super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)
         if not self.pk:
@@ -285,22 +283,26 @@ class HStoreM2MGroupedModel(HStoreModel):
                     setattr(self, name, value)
 
         # from django.core.cache import cache
-        self.cache_key = "%s_%s" % (self._meta.hstore_related_field, self.pk)
-        if not cache.get(self.cache_key):
+        self.custom_cache_key = "%s_%s" % (self._meta.hstore_related_field, self.pk)
+        # import ipdb; ipdb.set_trace()
+        print "CacheKey #: %s" % self.custom_cache_key
+
+        if not cache.get(self.custom_cache_key):
+
             related_instances = getattr(self, self._meta.hstore_related_field).all().\
                 select_related('dynamicfieldgroup_ptr')
-            cache.set(self.cache_key, related_instances)
+            cache.set(self.custom_cache_key, related_instances)
 
     def __del__(self, *args, **kwargs):
         # from django.core.cache import cache
-        cache.delete(self.cache_key)
+        cache.delete(self.custom_cache_key)
         super(HStoreM2MGroupedModel, self).__del__(*args, **kwargs)
 
     @property
     def related_instances(self):
-        # print "CacheKey: %s" % self.cache_key
+        print "CacheKey: %s" % self.custom_cache_key
         # from django.core.cache import cache
-        instances = cache.get(self.cache_key)
+        instances = cache.get(self.custom_cache_key)
         if not instances:
             return []
 
@@ -309,9 +311,6 @@ class HStoreM2MGroupedModel(HStoreModel):
         if QueryModel != DynamicFieldGroup and \
            issubclass(QueryModel, DynamicFieldGroup):
             return map(lambda x: x.dynamicfieldgroup_ptr, instances)
-
-
-
 
         # from hstore_flattenfields.models import DynamicFieldGroup
         # instances = []
@@ -352,7 +351,7 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def cache_content_panes(self):
-        from hstore_flattenfields.models import ContentPane
+        # from hstore_flattenfields.models import ContentPane
         def by_group_in_dfields(dynamic_field):
             instances = self.related_instances
             if instances:
