@@ -81,7 +81,7 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
         self.author.author_groups.add(self.group2)
         self.assertEqual(
             self.author.dynamic_fields,
-            [self.dfield1, self.dfield2, self.dfield3]
+            [self.dfield3, self.dfield2, self.dfield1]
         )
 
     def test_assert_all_dynamic_fields_without_group(self):
@@ -98,7 +98,7 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
         self.author.author_groups.add(self.group1)
         self.assertEqual(
             self.author.dynamic_fields,
-            [self.dfield1, self.dfield3]
+            [self.dfield3, self.dfield1]
         )
 
 class ContentPaneTests(TestCase):

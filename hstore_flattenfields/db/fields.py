@@ -10,12 +10,17 @@ Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
 from django import forms
 from django.db import models
 from django.utils.text import capfirst
+from django.core.cache import cache
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime
 
 from hstore_flattenfields.utils import *
 from hstore_flattenfields.forms.fields import *
 from hstore_flattenfields.models import DynamicField
+
+def get_dynamic_from_cache(name):
+    return [f for f in cache.get('dynamic_fields') \
+            if f.name == name][0]
 
 
 class HstoreTextField(models.TextField):
@@ -139,8 +144,7 @@ class HstoreCharField(models.CharField):
         # FIXME: this maybe mistake on fields with same name in different
         # refers
         try:
-            dynamic_field = DynamicField.objects.find_dfields(
-                name=self.name)[0]
+            dynamic_field = get_dynamic_from_cache(self.name)
             if dynamic_field.has_blank_option:
                 choices = super(HstoreMultipleSelectField, self).get_choices()
         except IndexError:
@@ -354,8 +358,7 @@ class HstoreRadioSelectField(models.CharField):
         # FIXME: this maybe mistake on fields with same name in different
         # refers
         try:
-            dynamic_field = DynamicField.objects.find_dfields(
-                name=self.name)[0]
+            dynamic_field = get_dynamic_from_cache(self.name)
             if dynamic_field.has_blank_option:
                 choices = super(HstoreRadioSelectField, self).get_choices()
         except IndexError:
@@ -429,8 +432,7 @@ class HstoreCheckboxField(models.CharField):
         # FIXME: this maybe mistake on fields with same name in different
         # refers
         try:
-            dynamic_field = DynamicField.objects.find_dfields(
-                name=self.name)[0]
+            dynamic_field = get_dynamic_from_cache(self.name)
             if dynamic_field.has_blank_option:
                 choices = super(HstoreCheckboxField, self).get_choices()
         except IndexError:
@@ -512,8 +514,7 @@ class HstoreMultipleSelectField(models.CharField):
         # FIXME: this maybe mistake on fields with same name in different
         # refers
         try:
-            dynamic_field = DynamicField.objects.find_dfields(
-                name=self.name)[0]
+            dynamic_field = get_dynamic_from_cache(self.name)
             if dynamic_field.has_blank_option:
                 choices = super(HstoreMultipleSelectField, self).get_choices()
         except IndexError:
