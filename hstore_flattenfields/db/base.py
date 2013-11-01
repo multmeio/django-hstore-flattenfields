@@ -28,6 +28,8 @@ class HStoreModelMeta(ModelBase):
         old_getattribute = new_class.__getattribute__
 
         def __getattribute__(self, key):
+            if key == 'custom_cache_key':
+                return
             # from django.core.cache import cache
 
             try:
@@ -59,7 +61,7 @@ class HStoreModelMeta(ModelBase):
 
         old_setattr = new_class.__setattr__
         def __setattr__(self, key, value):
-            if key == 'hstore_cache_key':
+            if key == 'custom_cache_key':
                 return
             if hasattr(self, '_dfields') and not key in dir(new_class):
                 # from django.core.cache import cache
@@ -266,11 +268,11 @@ class HStoreM2MGroupedModel(HStoreModel):
         abstract = True
 
     @property
-    def hstore_cache_key(self):
+    def custom_cache_key(self):
         return "%s_%s" % (self._meta.hstore_related_field, self.pk)
 
-    def hstore_cache_builder(self):
-        self._hstore_cached = False
+    def _cache_builder(self):
+        self._is_cached = False
         try:
             related_instances = getattr(
                 self, self._meta.hstore_related_field
@@ -281,12 +283,12 @@ class HStoreM2MGroupedModel(HStoreModel):
             #       do not have pk or was not filled out by the Django
             pass
         else:
-            cache.set(self.hstore_cache_key, related_instances)
-            self._hstore_cached = True
+            cache.set(self.custom_cache_key, related_instances)
+            self._is_cached = True
 
     def __init__(self, *args, **kwargs):
         super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)
-        self.hstore_cache_builder()
+        self._cache_builder()
 
         if not self.pk:
             return
@@ -305,20 +307,18 @@ class HStoreM2MGroupedModel(HStoreModel):
                     value = getattr(parent, name, '')
                     setattr(self, name, value)
 
-
     def __del__(self, *args, **kwargs):
-        # from django.core.cache import cache
-        cache.delete(self.hstore_cache_key)
+        cache.delete(self.custom_cache_key)
         super(HStoreM2MGroupedModel, self).__del__(*args, **kwargs)
 
     @property
     def related_instances(self):
-        if not self._hstore_cached:
+        if not self._is_cached:
             # NOTE: We had to rebuild the cache in this case
             #       because in this case, we can just retrieve the
             #       DynamicFieldGroup`s after the object get his id
-            self.hstore_cache_builder()
-        instances = cache.get(self.hstore_cache_key)
+            self._cache_builder()
+        instances = cache.get(self.custom_cache_key)
         
         from django.db.models.query import QuerySet
         if not isinstance(instances, QuerySet):
@@ -370,7 +370,7 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def cache_content_panes(self):
-        from hstore_flattenfields.models import ContentPane
+        # from hstore_flattenfields.models import ContentPane
         def by_group_in_dfields(dynamic_field):
             instances = self.related_instances
             if instances:
