@@ -163,6 +163,12 @@ SOUTH_DATABASE_ADAPTERS = {
 
 TEST_RUNNER = 'tests.runner.DjangoWithDoctestTestRunner'
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
 try:
     from local_settings import *
 except ImportError:

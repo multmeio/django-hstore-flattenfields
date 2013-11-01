@@ -76,7 +76,12 @@ class DynamicFieldGroup(models.Model):
         >>> group.fields
         [<DynamicField: Age>]
         """
-        return DynamicField.objects.find_dfields(group=self)
+        dynamic_fields = cache.get('dynamic_fields')
+        def by_group(dynamic_field):
+            if hasattr(self, 'dynamicfieldgroup_ptr'):
+                return dynamic_field.group == self.dynamicfieldgroup_ptr
+            return dynamic_field.group == self
+        return filter(by_group, dynamic_fields)
 
     def __unicode__(self):
         """
@@ -139,7 +144,12 @@ class ContentPane(models.Model):
         >>> content_pane.fields
         [<DynamicField: Age>]
         """
-        return DynamicField.objects.find_dfields(cpane=self)
+        # return DynamicField.objects.find_dfields(cpane=self)
+        dynamic_fields = cache.get('dynamic_fields')
+        def by_cpane(dynamic_field):
+            return dynamic_field.content_pane == self
+        return filter(by_cpane, dynamic_fields)
+
 
 
 class DynamicField(models.Model):

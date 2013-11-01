@@ -241,6 +241,7 @@ class HStoreGroupedModel(HStoreModel):
 
     @property
     def dynamic_fields(self):
+        from django.core.cache import cache
         refer = self.__class__.__name__
 
         def by_group(dynamic_field):
@@ -255,7 +256,13 @@ class HStoreGroupedModel(HStoreModel):
                 return True
             else:
                 return False
-        return filter(by_group, get_dynamic_field_model().objects.find_dfields(refer=refer))
+        def by_refer(dynamic_field):
+            return dynamic_field.refer == refer
+
+        return filter(
+            by_group, 
+            filter(by_refer, cache.get('dynamic_fields'))
+        )
 
 
 class HStoreM2MGroupedModel(HStoreModel):
