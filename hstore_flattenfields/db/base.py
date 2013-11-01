@@ -267,25 +267,6 @@ class HStoreM2MGroupedModel(HStoreModel):
     class Meta:
         abstract = True
 
-    @property
-    def custom_cache_key(self):
-        return "%s_%s" % (self._meta.hstore_related_field, self.pk)
-
-    def _cache_builder(self):
-        self._is_cached = False
-        try:
-            related_instances = getattr(
-                self, self._meta.hstore_related_field
-            ).select_related('dynamicfieldgroup_ptr')
-        except (AttributeError, ValueError):
-            # NOTE: The AttributeError, ValueError is raised when
-            #       We Try to add a HStoreModel object and him
-            #       do not have pk or was not filled out by the Django
-            pass
-        else:
-            cache.set(self.custom_cache_key, related_instances)
-            self._is_cached = True
-
     def __init__(self, *args, **kwargs):
         super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)
         self._cache_builder()
@@ -312,6 +293,25 @@ class HStoreM2MGroupedModel(HStoreModel):
         super(HStoreM2MGroupedModel, self).__del__(*args, **kwargs)
 
     @property
+    def custom_cache_key(self):
+        return "%s_%s" % (self._meta.hstore_related_field, self.pk)
+
+    def _cache_builder(self):
+        self._is_cached = False
+        try:
+            related_instances = getattr(
+                self, self._meta.hstore_related_field
+            ).select_related('dynamicfieldgroup_ptr')
+        except (AttributeError, ValueError):
+            # NOTE: The AttributeError, ValueError is raised when
+            #       We Try to add a HStoreModel object and him
+            #       do not have pk or was not filled out by the Django
+            pass
+        else:
+            cache.set(self.custom_cache_key, related_instances)
+            self._is_cached = True
+
+    @property
     def related_instances(self):
         if not self._is_cached:
             # NOTE: We had to rebuild the cache in this case
@@ -328,7 +328,9 @@ class HStoreM2MGroupedModel(HStoreModel):
         QueryModel = instances.query.model
         if QueryModel != DynamicFieldGroup and \
            issubclass(QueryModel, DynamicFieldGroup):
-            return map(lambda x: x.dynamicfieldgroup_ptr, instances)
+            instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
+        
+        return instances
 
         # from hstore_flattenfields.models import DynamicFieldGroup
         # instances = []
@@ -349,18 +351,8 @@ class HStoreM2MGroupedModel(HStoreModel):
     def dynamic_fields(self):
         refer = self.__class__.__name__
         def by_group(dynamic_field):
-            instances = self.related_instances
-            if instances:
-                return bool([x for x in instances \
-                             if dynamic_field.group == None or \
-                             dynamic_field.group == x])
-            try:
-                if dynamic_field.group == None:
-                    return True
-            except:  # DoesNotExist
-                return True
-            else:
-                return False
+            return dynamic_field.group == None or \
+                   dynamic_field.group in self.related_instances
 
         # from django.core.cache import cache
         queryset = cache.get('dynamic_fields')
