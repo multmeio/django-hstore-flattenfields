@@ -150,9 +150,9 @@ class HStoreModelMeta(ModelBase):
                 if not dynamic_field_table_exists():
                     return fields
                 # from django.core.cache import cache
-                queryset = cache.get('dynamic_fields')
+                queryset = cache.get('dynamic_fields', [])
                 metafields = [f for f in queryset if f.refer==new_class.__name__]
-                
+
                 # metafields = get_dynamic_field_model().objects.find_dfields(
                 #     refer=new_class.__name__)
 
@@ -258,7 +258,7 @@ class HStoreGroupedModel(HStoreModel):
             return dynamic_field.refer == refer
 
         return filter(
-            by_group, 
+            by_group,
             filter(by_refer, cache.get('dynamic_fields'))
         )
 
@@ -319,7 +319,7 @@ class HStoreM2MGroupedModel(HStoreModel):
             #       DynamicFieldGroup`s after the object get his id
             self._cache_builder()
         instances = cache.get(self.custom_cache_key)
-        
+
         from django.db.models.query import QuerySet
         if not isinstance(instances, QuerySet):
             return []
