@@ -14,6 +14,8 @@ from django.template import Context, loader
 from django.utils.translation import ugettext as _
 from django.conf import settings
 
+from hstore_flattenfields.utils import create_field_from_instance
+
 class HStoreModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         from hstore_flattenfields.models import HStoreModel
@@ -62,18 +64,20 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                       opts.many_to_many +
                       parent_local_fields]
         for field in self._dyn_fields:
-            field_name = field.name
             try:
                 field_widget = field.get_modelfield.formfield().widget
             except AttributeError:
+                field = create_field_from_instance(field)
+                field_widget = field.formfield().widget
+            except:
                 continue
 
-            dfield_names.append(field_name)
-            all_fields.append(field_name)
+            dfield_names.append(field.name)
+            all_fields.append(field.name)
 
-            if field_name in self.fields and field_widget:
-                self.fields[field_name].widget = field_widget
-                self.fields[field_name].localize = True
+            if field.name in self.fields and field_widget:
+                self.fields[field.name].widget = field_widget
+                self.fields[field.name].localize = True
 
         if not hstore_order:
             hstore_order = [x for x in self.fields.keyOrder if not x in dfield_names]
