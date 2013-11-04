@@ -76,7 +76,7 @@ class DynamicFieldGroup(models.Model):
         >>> group.fields
         [<DynamicField: Age>]
         """
-        dynamic_fields = cache.get('dynamic_fields')
+        dynamic_fields = cache.get('dynamic_fields', [])
         def by_group(dynamic_field):
             if hasattr(self, 'dynamicfieldgroup_ptr'):
                 return dynamic_field.group == self.dynamicfieldgroup_ptr
@@ -145,7 +145,7 @@ class ContentPane(models.Model):
         [<DynamicField: Age>]
         """
         # return DynamicField.objects.find_dfields(cpane=self)
-        dynamic_fields = cache.get('dynamic_fields')
+        dynamic_fields = cache.get('dynamic_fields', [])
         def by_cpane(dynamic_field):
             return dynamic_field.content_pane == self
         return filter(by_cpane, dynamic_fields)
@@ -216,14 +216,14 @@ def charge_cache(entity='dynamic_field'):
     hit reduction.
     """
     if entity == 'content_pane':
-        cache.set('content_panes', ContentPane.objects.all().\
+        cache.set('content_panes', ContentPane.objects.\
                 prefetch_related('dynamic_fields').\
                 select_related('group', 'content_type'))
     elif entity == 'dynamic_field_group':
-        cache.set('dynamic_field_groups', DynamicFieldGroup.objects.all().\
+        cache.set('dynamic_field_groups', DynamicFieldGroup.objects.\
                 prefetch_related('dynamic_fields', 'content_panes'))
     else:
-        cache.set('dynamic_fields', DynamicField.objects.all().\
+        cache.set('dynamic_fields', DynamicField.objects.\
                 select_related('content_pane', 'group'))
 
 

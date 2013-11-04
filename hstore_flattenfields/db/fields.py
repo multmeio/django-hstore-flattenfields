@@ -19,7 +19,7 @@ from hstore_flattenfields.forms.fields import *
 from hstore_flattenfields.models import DynamicField
 
 def get_dynamic_from_cache(name):
-    return [f for f in cache.get('dynamic_fields') \
+    return [f for f in cache.get('dynamic_fields', []) \
             if f.name == name][0]
 
 

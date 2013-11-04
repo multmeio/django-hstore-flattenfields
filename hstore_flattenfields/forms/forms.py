@@ -95,7 +95,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             hstore_order = filter(by_name_not_in, self.fields.keyOrder)
 
         # from django.core.cache import cache
-        # queryset = cache.get('dynamic_fields')
+        # queryset = cache.get('dynamic_fields', [])
 
         for field in self.instance.dynamic_fields:
             if field.name in hstore_order:

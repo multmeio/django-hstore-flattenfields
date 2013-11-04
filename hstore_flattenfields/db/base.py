@@ -35,7 +35,7 @@ class HStoreModelMeta(ModelBase):
             try:
                 return old_getattribute(self, key)
             except AttributeError:
-                queryset = cache.get('dynamic_fields')
+                queryset = cache.get('dynamic_fields', [])
                 field = [f for f in queryset if f.name==key]
                 # field = get_dynamic_field_model().objects.find_dfields(name=key)
                 if field:
@@ -52,7 +52,7 @@ class HStoreModelMeta(ModelBase):
                 else:
                     raise
             except TypeError:
-                queryset = cache.get('dynamic_fields')
+                queryset = cache.get('dynamic_fields', [])
                 field = [f for f in queryset if f.name==key]
                 if field and field.__class__.__name__ == 'ManyRelatedManager':
                     return field.all()
@@ -229,7 +229,7 @@ class HStoreModel(models.Model):
         dynamic_field_names = self.__class__._meta.get_all_field_names()
         def by_name(dynamic_field):
             return dynamic_field.name in dynamic_field_names
-        return filter(by_name, cache.get('dynamic_fields'))
+        return filter(by_name, cache.get('dynamic_fields', []))
 
 
 class HStoreGroupedModel(HStoreModel):
@@ -353,7 +353,7 @@ class HStoreM2MGroupedModel(HStoreModel):
         return filter(by_groups, dynamic_fields)
 
         # from django.core.cache import cache
-        # queryset = cache.get('dynamic_fields')
+        # queryset = cache.get('dynamic_fields', [])
         # return filter(by_group, [f for f in queryset if f.refer==refer])
         # return filter(by_group, get_dynamic_field_model().objects.find_dfields(refer=refer))
         # return queryset.filter(refer=refer, models.Q(group__in=self.related_instances) | models.Q(group__isnull=True))
