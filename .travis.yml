@@ -1,24 +1,24 @@
 language:
-  - python
+- python
 services:
-  - postgresql
+- postgresql
 python:
-  - '2.7'
+- '2.7'
 env:
-  - PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres"
+- PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres"
 install:
-  - pip install . --use-mirrors
-  - pip install -r tests/requirements.txt --use-mirrors
-  - pip install coveralls -U --use-mirrors
+- pip install . --use-mirrors
+- pip install -r tests/requirements.txt --use-mirrors
+- pip install coveralls -U --use-mirrors
 before_script:
-  - psql -d postgres -c 'create extension hstore;' -U postgres
-  - cp tests/local_settings.sample tests/local_settings.py
+- psql -d postgres -c 'create extension hstore;' -U postgres
+- cp tests/local_settings.sample tests/local_settings.py
 script:
-  - coverage run setup.py test
+- coverage run setup.py test
 after_success:
-  - coverage html
-  - coveralls
+- coverage html
+- coveralls
 notifications:
   hipchat:
     rooms:
-      secure: IKJ2LyhoBWc1Wo9dTRS5R3/AITKHPRz6vsSr+M1iCMGUYYfZ27cl8Hb784qJWwWmp2WT2bwC91OeF3db403eaBfl5aZ96DUBPsojbud3/p62ouUmDslOtggUvyOUTjA6xkLsUbow29QT9R7v9r0ScgmT64nPfpiLhBvojA/EKSw=
+      secure: L2wsZOfvdXUr/OQWAlqwoe17/INZPHIvwuDO53or8dHNkNHojo8feec0JD6Ar0+D42vd5Xj81jCjl6t0KY5MsYtG99YnPBuPcFpoOKS4/CR4OmqtkAiGrB2ekA6S1XXc4KCzvN/k2hj8Qg8Cka+8JSBsctw4FEt5j7K15WKopFc=
