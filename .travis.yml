@@ -1,9 +1,9 @@
-language: 
+language:
   - python
-services: 
+services:
   - postgresql
 python:
-  - "2.7"
+  - '2.7'
 env:
   - PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres"
 install:
@@ -11,13 +11,14 @@ install:
   - pip install -r tests/requirements.txt --use-mirrors
   - pip install coveralls -U --use-mirrors
 before_script:
-  # Adding the hstore extension
   - psql -d postgres -c 'create extension hstore;' -U postgres
-
-  # Changing the DATABASES settings configs
   - cp tests/local_settings.sample tests/local_settings.py
 script:
   - coverage run setup.py test
 after_success:
   - coverage html
   - coveralls
+notifications:
+  hipchat:
+    rooms:
+      secure: IKJ2LyhoBWc1Wo9dTRS5R3/AITKHPRz6vsSr+M1iCMGUYYfZ27cl8Hb784qJWwWmp2WT2bwC91OeF3db403eaBfl5aZ96DUBPsojbud3/p62ouUmDslOtggUvyOUTjA6xkLsUbow29QT9R7v9r0ScgmT64nPfpiLhBvojA/EKSw=
