@@ -49,12 +49,17 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
     def __init__(self, *args, **kwargs):
         # from hstore_flattenfields.models import DynamicField
-
         hstore_order = kwargs.pop('keyOrder', None)
         super(HStoreContentPaneModelForm, self).__init__(*args, **kwargs)
 
         model_name = self.Meta.model.__name__
-        self._dyn_fields = self.instance.dynamic_fields
+        dynamic_field_names = map(lambda x: x.name, self.instance.dynamic_fields)
+        def by_name(dynamic_field):
+            return dynamic_field.name in dynamic_field_names
+
+        # self._dyn_fields = self.instance.dynamic_fields
+            
+
         opts = self._meta.model._meta
         dfield_names = []
 
@@ -63,29 +68,36 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         all_fields = [f.name for f in opts.local_fields +
                       opts.many_to_many +
                       parent_local_fields]
-        for field in self._dyn_fields:
-            try:
+        
+        for field in filter(by_name, self._meta.model._meta.dynamic_fields):
+            if hasattr(field, 'get_modelfield'):
                 field_widget = field.get_modelfield.formfield().widget
-            except AttributeError:
-                field = create_field_from_instance(field)
+            else:
                 field_widget = field.formfield().widget
-            except:
-                continue
-
+                
             dfield_names.append(field.name)
             all_fields.append(field.name)
 
             if field.name in self.fields and field_widget:
                 self.fields[field.name].widget = field_widget
                 self.fields[field.name].localize = True
+            # try:
+            # except AttributeError:
+            #     # field = create_field_from_instance(field)
+            #     field_widget = field.formfield().widget
+            # except:
+            #     continue
+
 
         if not hstore_order:
-            hstore_order = [x for x in self.fields.keyOrder if not x in dfield_names]
+            def by_name_not_in(fieldname):
+                return fieldname not in dynamic_field_names
+            hstore_order = filter(by_name_not_in, self.fields.keyOrder)
 
-        from django.core.cache import cache
-        queryset = cache.get('dynamic_fields')
+        # from django.core.cache import cache
+        # queryset = cache.get('dynamic_fields')
 
-        for field in [f for f in queryset if f.refer==self.instance.__class__.__name__]:
+        for field in self.instance.dynamic_fields:
             if field.name in hstore_order:
                 hstore_order.pop(hstore_order.index(field.name))
             hstore_order.insert(field.order or len(hstore_order), field.name)
@@ -112,7 +124,7 @@ class HStoreContentPaneModelForm(HStoreModelForm):
                 field_names = [f.name for f in content_pane.fields]
                 return [f for f in fields if f.name in field_names]
             else:
-                field_names = [f.name for f in self._dyn_fields if f.content_pane]
+                field_names = [f.name for f in self.instance.dynamic_fields if f.content_pane]
                 return [f for f in fields if f.name not in field_names]
 
     @property
@@ -124,8 +136,10 @@ class HStoreContentPaneModelForm(HStoreModelForm):
             'model': self.Meta.model.__name__,
             'fields': self.filtred_fields()
         }]
+        
         # for content_pane in self.instance.content_panes:
-        for content_pane in self.instance.cache_content_panes:
+        
+        for content_pane in self.instance.content_panes:
             # Skip if the actual content_pane already is in grouped_panes
             if content_pane.pk in map(lambda x: x['pk'], grouped_panes):
                 continue

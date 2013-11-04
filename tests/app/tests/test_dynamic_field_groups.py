@@ -10,6 +10,7 @@ Replace this with more appropriate tests for your application.
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
+from django.core.cache import cache
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -64,6 +65,8 @@ class OneToManyDynamicFieldGroupTests(TestCase):
 
 class ManyToManyDynamicFieldGroupTests(TestCase):
     def setUp(self):
+        cache.clear()
+
         self.group1 = AuthorType.objects.create(id=1, name="Author Group", slug="author_group")
         self.group2 = AuthorType.objects.create(id=2, name="Author Group 2", slug="author_group_2")
 
