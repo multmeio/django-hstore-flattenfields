@@ -114,7 +114,7 @@ class ContentPane(models.Model):
 
     # relations
     content_type = models.ForeignKey(ContentType, null=True, blank=True, related_name='content_panes')
-    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="content_panes", verbose_name=_("Groups"))
+    group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='content_panes', verbose_name=_("Groups"))
 
     class Meta:
         verbose_name = _('Content Pane')
@@ -218,18 +218,18 @@ def charge_cache(entity='dynamic_field'):
     if entity == 'content_pane':
         cache.set('content_panes', ContentPane.objects.all().\
                 prefetch_related('dynamic_fields').\
-                select_related('dynamicfieldgroup', 'content_type'))
+                select_related('group', 'content_type'))
     elif entity == 'dynamic_field_group':
         cache.set('dynamic_field_groups', DynamicFieldGroup.objects.all().\
                 prefetch_related('dynamic_fields', 'content_panes'))
     else:
         cache.set('dynamic_fields', DynamicField.objects.all().\
-                select_related('content_pane', 'dynamicfieldgroup'))
+                select_related('content_pane', 'group'))
 
-# Initial cache charge
-charge_cache()
-charge_cache('content_pane')
-charge_cache('dynamic_field_group')
 
 # NOTE: Skip the cache when we use the Test Mode
-# dfields = [] if 'test' in sys.argv else DynamicField.objects.all()
+if not 'test' in sys.argv:
+    # Initial cache charge
+    charge_cache()
+    charge_cache('content_pane')
+    charge_cache('dynamic_field_group')
