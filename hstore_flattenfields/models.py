@@ -21,7 +21,7 @@ from django.core.cache import cache
 from django_orm.postgresql import hstore
 from django_extensions.db.fields import AutoSlugField
 
-# from db.manager import CacheDynamicFieldManager
+from db.manager import CacheDynamicFieldManager
 from db.base import (
     HStoreModel,
     HStoreM2MGroupedModel,
@@ -182,7 +182,7 @@ class DynamicField(models.Model):
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Groups"))
     content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Panel"))
 
-    # objects = CacheDynamicFieldManager()
+    objects = CacheDynamicFieldManager()
 
     class Meta:
         verbose_name = _('Dynamic Field')
