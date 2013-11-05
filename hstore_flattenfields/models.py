@@ -21,7 +21,6 @@ from django.core.cache import cache
 from django_orm.postgresql import hstore
 from django_extensions.db.fields import AutoSlugField
 
-# from db.manager import CacheDynamicFieldManager
 from db.base import (
     HStoreModel,
     HStoreM2MGroupedModel,
@@ -30,6 +29,7 @@ from hstore_flattenfields.utils import (
     single_list_to_tuple,
     FIELD_TYPES,
     FIELD_TYPES_WITHOUT_BLANK_OPTION,
+    all_flattenfields_tables_is_created,
 )
 from hstore_flattenfields.db.cache import (
     DynamicFieldGroupCacheManager,
@@ -218,42 +218,10 @@ class DynamicField(models.Model):
         return self.blank and \
             self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION
 
-    # def save(self, *args, **kwargs):
-    #     super(DynamicField, self).save()
-        # charge_cache()
-        # global dfields
-        # dfields = DynamicField.objects.all()
-
-    # def delete(self):
-    #     super(DynamicField, self).delete()
-        # charge_cache()
-        # global dfields
-        # dfields = DynamicField.objects.all()
-
-
-
-# def charge_cache(entity='dynamic_field'):
-#     """
-#     Load the main models in the cache to improve database
-#     hit reduction.
-#     """
-#     if entity == 'content_pane':
-#         cache.set('content_panes', ContentPane.objects.\
-#                 prefetch_related('dynamic_fields').\
-#                 select_related('group', 'content_type'))
-#     elif entity == 'dynamic_field_group':
-#         cache.set('dynamic_field_groups', DynamicFieldGroup.objects.\
-#                 prefetch_related('dynamic_fields', 'content_panes'))
-#     else:
-#         cache.set('dynamic_fields', DynamicField.objects.\
-#                 select_related('content_pane', 'group'))
-
 
 # NOTE: Skip the cache when we use the Test Mode
-if not 'test' in sys.argv:
+flattenfields_models = [ContentPane, DynamicFieldGroup, DynamicField]
+if all_flattenfields_tables_is_created(flattenfields_models):
     # Initial cache charge
-    for Model in [DynamicField, DynamicFieldGroup, ContentPane]:
+    for Model in flattenfields_models:
         Model.objects.charge_cache()
-#     charge_cache()
-#     charge_cache('content_pane')
-#     charge_cache('dynamic_field_group')

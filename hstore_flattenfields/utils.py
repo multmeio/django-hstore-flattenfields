@@ -118,6 +118,7 @@ __all__ = ['single_list_to_tuple',
            'create_field_from_instance',
            # 'get_dynamic_field_model',
            'parse_queryset',
+           'all_flattenfields_tables_is_created',
 ]
 
 
@@ -226,6 +227,12 @@ def has_any_in(chances, possibilities):
     True
     """
     return any([x for x in chances if x in possibilities])
+
+
+def all_flattenfields_tables_is_created(Models):
+    db_table_names = connection.introspection.table_names()
+    flattenfields_tables = map(lambda x: x._meta.db_table, Models)
+    return all([x in db_table_names for x in flattenfields_tables])
 
 # cache in globals
 _DYNAMIC_FIELD_TABLE_EXISTS = None
