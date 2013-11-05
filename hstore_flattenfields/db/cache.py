@@ -16,7 +16,15 @@ hstore_flattenfields application.
 
 from django.db import models
 from django.core.cache import cache
+from django.conf import settings
+from django.test import TestCase
 
+class TestCase(TestCase):
+    def tearDown(self):
+        if getattr(settings, 'CACHES', False):
+            cache.clear()
+        super(TestCase, self).tearDown()
+        
 
 class BaseCacheManager(models.Manager):
     def __init__(self, *args, **kwargs):

@@ -11,12 +11,14 @@ Replace this with more appropriate tests for your application.
 import django
 DJANGO_VERSION = django.VERSION[:2]
 from django import forms
-from django.test import TestCase, SimpleTestCase
+# from django.test import TestCase
+from django.conf import settings
 from datetime import date, datetime
 from decimal import Decimal
 
 from hstore_flattenfields.forms import HStoreModelForm
 from hstore_flattenfields.models import DynamicField
+from hstore_flattenfields.db.cache import TestCase
 
 from tests.app.models import *
 
@@ -25,7 +27,7 @@ class SomethingForm(HStoreModelForm):
     class Meta:
         model = Something
 
-class DateFormatTest(SimpleTestCase):
+class DateFormatTest(TestCase):
     def test_dateField(self):
         "DateFields can parse dates in the default format"
         f = forms.DateField(input_formats=["%Y-%m-%d"], localize=False)
@@ -115,7 +117,7 @@ class DateFormatTest(SimpleTestCase):
         self.assertEqual(text, "21/12/2010")
 
 
-class SomethingFormRenderTest(SimpleTestCase):
+class SomethingFormRenderTest(TestCase):
     def setUp(self):
         DynamicField.objects.create(id=1, refer="Something", typo="Integer", name="something_dfield_integer", verbose_name = u"Dynamic Field Int", html_attrs={'data-mask': 'integer'})
         DynamicField.objects.create(id=2, refer="Something", typo="CharField", name="something_dfield_charfield", verbose_name = u"Dynamic Field Str", html_attrs={'data-mask': 'charfield'})
