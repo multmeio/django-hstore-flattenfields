@@ -21,7 +21,7 @@ from django.core.cache import cache
 from django_orm.postgresql import hstore
 from django_extensions.db.fields import AutoSlugField
 
-from db.manager import CacheDynamicFieldManager
+# from db.manager import CacheDynamicFieldManager
 from db.base import (
     HStoreModel,
     HStoreM2MGroupedModel,
@@ -30,6 +30,11 @@ from hstore_flattenfields.utils import (
     single_list_to_tuple,
     FIELD_TYPES,
     FIELD_TYPES_WITHOUT_BLANK_OPTION,
+)
+from hstore_flattenfields.db.cache import (
+    DynamicFieldGroupCacheManager,
+    ContentPaneCacheManager,
+    DynamicFieldCacheManager
 )
 
 
@@ -60,6 +65,12 @@ class DynamicFieldGroup(models.Model):
     name = models.CharField(max_length=80, null=False, verbose_name=_('Name'))
     slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True, overwrite=True)
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
+
+    # managers
+    objects = DynamicFieldGroupCacheManager(
+        cache_key="dynamic_field_groups", 
+        prefetch_related = ['dynamic_fields', 'content_panes'],
+    )
 
     class Meta:
         verbose_name = _('Dynamic Field Group')
@@ -115,6 +126,13 @@ class ContentPane(models.Model):
     # relations
     content_type = models.ForeignKey(ContentType, null=True, blank=True, related_name='content_panes')
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='content_panes', verbose_name=_("Groups"))
+
+    # managers
+    objects = ContentPaneCacheManager(
+        cache_key="content_panes", 
+        prefetch_related = ['dynamic_fields'],
+        select_related = ['group', 'content_type']
+    )
 
     class Meta:
         verbose_name = _('Content Pane')
@@ -182,7 +200,11 @@ class DynamicField(models.Model):
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Groups"))
     content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Panel"))
 
-    objects = CacheDynamicFieldManager()
+    # managers
+    objects = DynamicFieldCacheManager(
+        cache_key="dynamic_fields", 
+        select_related=['content_pane', 'group']
+    )
 
     class Meta:
         verbose_name = _('Dynamic Field')
@@ -196,40 +218,42 @@ class DynamicField(models.Model):
         return self.blank and \
             self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION
 
-    def save(self, *args, **kwargs):
-        super(DynamicField, self).save()
-        charge_cache()
+    # def save(self, *args, **kwargs):
+    #     super(DynamicField, self).save()
+        # charge_cache()
         # global dfields
         # dfields = DynamicField.objects.all()
 
-    def delete(self):
-        super(DynamicField, self).delete()
-        charge_cache()
+    # def delete(self):
+    #     super(DynamicField, self).delete()
+        # charge_cache()
         # global dfields
         # dfields = DynamicField.objects.all()
 
 
 
-def charge_cache(entity='dynamic_field'):
-    """
-    Load the main models in the cache to improve database
-    hit reduction.
-    """
-    if entity == 'content_pane':
-        cache.set('content_panes', ContentPane.objects.\
-                prefetch_related('dynamic_fields').\
-                select_related('group', 'content_type'))
-    elif entity == 'dynamic_field_group':
-        cache.set('dynamic_field_groups', DynamicFieldGroup.objects.\
-                prefetch_related('dynamic_fields', 'content_panes'))
-    else:
-        cache.set('dynamic_fields', DynamicField.objects.\
-                select_related('content_pane', 'group'))
+# def charge_cache(entity='dynamic_field'):
+#     """
+#     Load the main models in the cache to improve database
+#     hit reduction.
+#     """
+#     if entity == 'content_pane':
+#         cache.set('content_panes', ContentPane.objects.\
+#                 prefetch_related('dynamic_fields').\
+#                 select_related('group', 'content_type'))
+#     elif entity == 'dynamic_field_group':
+#         cache.set('dynamic_field_groups', DynamicFieldGroup.objects.\
+#                 prefetch_related('dynamic_fields', 'content_panes'))
+#     else:
+#         cache.set('dynamic_fields', DynamicField.objects.\
+#                 select_related('content_pane', 'group'))
 
 
 # NOTE: Skip the cache when we use the Test Mode
 if not 'test' in sys.argv:
     # Initial cache charge
-    charge_cache()
-    charge_cache('content_pane')
-    charge_cache('dynamic_field_group')
+    for Model in [DynamicField, DynamicFieldGroup, ContentPane]:
+        Model.objects.charge_cache()
+#     charge_cache()
+#     charge_cache('content_pane')
+#     charge_cache('dynamic_field_group')
