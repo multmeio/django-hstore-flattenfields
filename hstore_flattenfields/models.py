@@ -162,11 +162,7 @@ class ContentPane(models.Model):
         >>> content_pane.fields
         [<DynamicField: Age>]
         """
-        # return DynamicField.objects.find_dfields(cpane=self)
-        dynamic_fields = cache.get('dynamic_fields', [])
-        def by_cpane(dynamic_field):
-            return dynamic_field.content_pane == self
-        return filter(by_cpane, dynamic_fields)
+        return DynamicField.objects.cache_filter(cpane=self)
 
 
 

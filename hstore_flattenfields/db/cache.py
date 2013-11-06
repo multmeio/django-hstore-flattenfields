@@ -98,12 +98,22 @@ class DynamicFieldCacheManager(BaseCacheManager):
 
 
 class ContentPaneCacheManager(BaseCacheManager):
-    def cache_filter(self, name=None, ctype=None):
+    def cache_filter(self, name=None, group=None, model=None):
         def by_name(x):
             return x.name == name
 
+        def by_model(x):
+            return x.content_type.model == model
+
+        def by_group(x):
+            return x.group == group
+
         if name:
             return filter(by_name, self.cached_data)
+        elif model:
+            return filter(by_model, self.cached_data)
+        elif group:
+            return filter(by_group, self.cached_data)
         else:
             return self.cached_data
 
