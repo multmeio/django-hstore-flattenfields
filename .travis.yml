@@ -1,23 +1,29 @@
 language:
-- python
+  - python
 services:
-- postgresql
+  - postgresql
 python:
-- '2.7'
+  - "2.5"
+  - "2.6"
+  - "2.7"
 env:
-- PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres"
+  - PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres" DJANGO="Django"
+  - PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres" DJANGO="Django==1.4"
+  - PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres" DJANGO="Django==1.5"
+  - PG_USER="postgres" PG_PASSWORD="" PG_DBNAME="postgres" DJANGO="Django==1.6"
 install:
-- pip install . --use-mirrors
-- pip install -r tests/requirements.txt --use-mirrors
-- pip install coveralls -U --use-mirrors
+  - pip install . --use-mirrors
+  - pip install -r tests/requirements.txt --use-mirrors
+  - pip install coveralls -U --use-mirrors
+  - pip install $DJANGO -U
 before_script:
-- psql -d postgres -c 'create extension hstore;' -U postgres
-- cp tests/local_settings.sample tests/local_settings.py
+  - psql -d postgres -c 'create extension hstore;' -U postgres
+  - cp tests/local_settings.sample tests/local_settings.py
 script:
-- coverage run setup.py test
+  - coverage run setup.py test
 after_success:
-- coverage html
-- coveralls
+  - coverage html
+  - coveralls
 notifications:
   hipchat:
     rooms:

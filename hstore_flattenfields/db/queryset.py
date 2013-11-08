@@ -21,8 +21,7 @@ except ImportError:
     from django.db.models.constants import LOOKUP_SEP
 
 from django.db.models.fields import FieldDoesNotExist
-from django.db.models.sql.where import ExtraWhere
-from django_orm.core.sql.tree import AND, OR
+from django.db.models.sql.where import ExtraWhere, AND, OR
 from django.db.models.query import *
 
 from hstore_flattenfields.utils import *

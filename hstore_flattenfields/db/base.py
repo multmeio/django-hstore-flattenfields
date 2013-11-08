@@ -7,7 +7,7 @@ except AttributeError:
     from django.db.models.base import ModelBase
 
 from django.core.cache import cache
-from django_orm.postgresql import hstore
+from djorm_hstore.fields import DictionaryField
 from hstore_flattenfields.db.manager import FlattenFieldsFilterManager
 from hstore_flattenfields.utils import (
     get_fieldnames,
@@ -191,7 +191,7 @@ class HStoreModelMeta(ModelBase):
 
 
 class HStoreModel(models.Model):
-    _dfields = hstore.DictionaryField(db_index=True, null=True, blank=True)
+    _dfields = DictionaryField(db_index=True, null=True, blank=True)
 
     __metaclass__ = HStoreModelMeta
     objects = FlattenFieldsFilterManager()
