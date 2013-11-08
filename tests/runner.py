@@ -1,7 +1,12 @@
+from django import VERSION
 from django.db.models import get_app
 from django.test.simple import DjangoTestSuiteRunner
-from django.test.testcases import DocTestRunner
 from django.test import _doctest as doctest
+
+if VERSION[:2] >= (1, 6):
+    from django.test._doctest import DocTestRunner
+else:
+    from django.test.testcases import DocTestRunner
 
 import re
 import os
