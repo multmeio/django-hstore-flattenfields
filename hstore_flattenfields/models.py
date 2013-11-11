@@ -167,13 +167,15 @@ class ContentPane(models.Model):
     @property
     def is_generic(self):
         """
-        Return True when group is None.
+        Return a boolean value if this ``ContentPane`` is Generic,
+        that means if this ``ContentPane`` will be shown everywhere, like
+        in forms, views...
 
-        >>> group = DynamicFieldGroup.objects.create(name="Test Group")
-        >>> content_pane = ContentPane.objects.create(name="Test Content Pane")
+        >>> group = DynamicFieldGroup.objects.create(name="Test Group Generic")
+        >>> content_pane = ContentPane.objects.create(name="Test Content Pane Generic")
         >>> content_pane.is_generic
         True
-        >>> content_pane2 = ContentPane.objects.create(name="Test Content Pane 2", group=group)
+        >>> content_pane2 = ContentPane.objects.create(name="Test Content Pane Not Generic", group=group)
         >>> content_pane2.is_generic
         False
 
