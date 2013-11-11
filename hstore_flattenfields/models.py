@@ -68,7 +68,7 @@ class DynamicFieldGroup(models.Model):
 
     # managers
     objects = DynamicFieldGroupCacheManager(
-        cache_key="dynamic_field_groups", 
+        cache_key="dynamic_field_groups",
         prefetch_related = ['dynamic_fields', 'content_panes'],
     )
 
@@ -129,7 +129,7 @@ class ContentPane(models.Model):
 
     # managers
     objects = ContentPaneCacheManager(
-        cache_key="content_panes", 
+        cache_key="content_panes",
         prefetch_related = ['dynamic_fields'],
         select_related = ['group', 'content_type']
     )
@@ -164,6 +164,21 @@ class ContentPane(models.Model):
         """
         return DynamicField.objects.cache_filter(cpane=self)
 
+    @property
+    def is_generic(self):
+        """
+        Return True when group is None.
+
+        >>> group = DynamicFieldGroup.objects.create(name="Test Group")
+        >>> content_pane = ContentPane.objects.create(name="Test Content Pane")
+        >>> content_pane.is_generic
+        True
+        >>> content_pane2 = ContentPane.objects.create(name="Test Content Pane 2", group=group)
+        >>> content_pane2.is_generic
+        False
+
+        """
+        return not self.group
 
 
 class DynamicField(models.Model):
@@ -198,7 +213,7 @@ class DynamicField(models.Model):
 
     # managers
     objects = DynamicFieldCacheManager(
-        cache_key="dynamic_fields", 
+        cache_key="dynamic_fields",
         select_related=['content_pane', 'group']
     )
 
