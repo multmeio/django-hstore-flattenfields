@@ -29,7 +29,7 @@ class TestCase(TestCase):
         if getattr(settings, 'CACHES', False):
             cache.clear()
         super(TestCase, self).tearDown()
-        
+
 
 class BaseCacheManager(models.Manager):
     def __init__(self, *args, **kwargs):
@@ -43,13 +43,13 @@ class BaseCacheManager(models.Manager):
         super(BaseCacheManager, self).contribute_to_class(model, name)
         models.signals.post_save.connect(self.charge_cache, model)
         models.signals.post_delete.connect(self.charge_cache, model)
-    
+
     @property
     def cached_data(self):
         return cache.get(self.cache_key, [])
-    
+
     def charge_cache(self, **kwargs):
-        cache.set(self.cache_key, 
+        cache.set(self.cache_key,
             self.model.objects\
                 .select_related(*self.select_args)\
                 .prefetch_related(*self.prefetch_args),
@@ -109,7 +109,7 @@ class ContentPaneCacheManager(BaseCacheManager):
             return x.name == name
 
         def by_model(x):
-            return x.content_type.model == model
+            return x.content_type and x.content_type.model == model
 
         def by_group(x):
             return x.group == group
