@@ -51,6 +51,8 @@ class IntegrityTests(TestCase):
 
 
 class LookupTests(TestCase):
+    maxDiff = None
+
     def setUp(self):
         # Create a few DynamicFields.
         DynamicField.objects.create(refer="Author", name="author_name", verbose_name=u"Name", typo="CharField", max_length=100)

@@ -261,7 +261,9 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     def __init__(self, *args, **kwargs):
         super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)
-        self._cache_builder()
+        self._is_cached = False
+        # if not cache.get(self.custom_cache_key):
+        #     self._cache_builder()
 
         if not self.pk:
             return
@@ -280,9 +282,9 @@ class HStoreM2MGroupedModel(HStoreModel):
                     value = getattr(parent, name, '')
                     setattr(self, name, value)
 
-    def __del__(self, *args, **kwargs):
-        cache.delete(self.custom_cache_key)
-        super(HStoreM2MGroupedModel, self).__del__(*args, **kwargs)
+    # def __del__(self, *args, **kwargs):
+    #     cache.delete(self.custom_cache_key)
+    #     super(HStoreM2MGroupedModel, self).__del__(*args, **kwargs)
 
     @property
     def custom_cache_key(self):
@@ -305,6 +307,7 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def related_instances(self):
+        # if not cache.get(self.custom_cache_key):
         if not self._is_cached:
             # NOTE: We had to rebuild the cache in this case
             #       because in this case, we can just retrieve the

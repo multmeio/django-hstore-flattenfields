@@ -20,6 +20,11 @@ from django.conf import settings
 from django.test import TestCase
 
 class TestCase(TestCase):
+    """
+    Class Created to override the normal behaviour of
+    the TestCase's Django Class and clean the cache
+    after each test.
+    """
     def tearDown(self):
         if getattr(settings, 'CACHES', False):
             cache.clear()
@@ -47,7 +52,8 @@ class BaseCacheManager(models.Manager):
         cache.set(self.cache_key, 
             self.model.objects\
                 .select_related(*self.select_args)\
-                .prefetch_related(*self.prefetch_args)
+                .prefetch_related(*self.prefetch_args),
+            timeout=None
         )
 
     def cache_filter(self, *args, **kwargs):
