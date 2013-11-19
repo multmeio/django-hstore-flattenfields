@@ -40,7 +40,7 @@ def release():
     tagname = prompt("Enter a new tagname as according as above: ")
 
     print red('.... updating tag release at hstore_flattenfields')
-    _replace_in_file("__version__ = '.*'", "__version__ = '%s'" % tagname, 'hstore_flattenfields.__init__.py')
+    _replace_in_file("__version__ = '.*'", "__version__ = '%s'" % tagname, 'hstore_flattenfields/__init__.py')
 
     print red('.... versioning tag release')
     diff_ = local('git diff', capture=True)
@@ -48,8 +48,8 @@ def release():
     if diff_:
         print diff_
         if confirm("It's ok?", default=False):
-            local('git add setup.py')
-            local("git ci -m 'version %s - %s'" % (tagname, comment))
+            local('git add hstore_flattenfields/__init__.py')
+            local("git ci -m \"version %s - %s\"" % (tagname, comment))
     local("git lg1 -n5")
     rev = prompt("Which revision you want release?")
 
