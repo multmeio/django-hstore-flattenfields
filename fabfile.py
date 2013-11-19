@@ -40,7 +40,7 @@ def release():
     tagname = prompt("Enter a new tagname as according as above: ")
 
     print red('.... updating tag release at hstore_flattenfields')
-    _replace_in_file("__version__='.*'", "__version__='%s'" % tagname, 'hstore_flattenfields.__init__.py')
+    _replace_in_file("__version__ = '.*'", "__version__ = '%s'" % tagname, 'hstore_flattenfields.__init__.py')
 
     print red('.... versioning tag release')
     diff_ = local('git diff', capture=True)
