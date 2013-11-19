@@ -52,8 +52,7 @@ class BaseCacheManager(models.Manager):
         cache.set(self.cache_key,
             self.model.objects\
                 .select_related(*self.select_args)\
-                .prefetch_related(*self.prefetch_args),
-            timeout=None
+                .prefetch_related(*self.prefetch_args)
         )
 
     def cache_filter(self, *args, **kwargs):

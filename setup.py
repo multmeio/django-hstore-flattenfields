@@ -25,7 +25,7 @@ setup(
         'Framework :: Django',
     ],
     install_requires=[
-        'Django>=1.4',
+        'django>=1.4',
         'django-bootstrap-toolkit==2.5.4',
         'django-orm-extensions==3.0b3',
         'django-extensions>=0.9',
