@@ -29,5 +29,6 @@ setup(
         'django-bootstrap-toolkit==2.5.4',
         'django-orm-extensions==3.0b3',
         'django-extensions>=0.9',
+        'django-cache-machine>=0.6'
     ]
 )
