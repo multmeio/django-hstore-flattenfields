@@ -35,5 +35,5 @@ class AuthorSpecializedInheritanceTests(TestCase):
         self.author_specialized.author_groups.add(self.group1)
         self.assertEqual(
             self.author_specialized.dynamic_fields,
-            [self.dfield3, self.dfield1, self.dfield2]
+            [self.dfield3,  self.dfield2, self.dfield1]
         )

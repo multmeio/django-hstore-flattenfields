@@ -19,8 +19,9 @@ from hstore_flattenfields.forms.fields import *
 from hstore_flattenfields.models import DynamicField
 
 def get_dynamic_from_cache(name):
-    return [f for f in cache.get('dynamic_fields', []) \
-            if f.name == name][0]
+    # return [f for f in cache.get('dynamic_fields', []) \
+    #         if f.name == name][0]
+    return DynamicField.objects.get(name=name)
 
 
 class HstoreTextField(models.TextField):
@@ -361,7 +362,7 @@ class HstoreRadioSelectField(models.CharField):
             dynamic_field = get_dynamic_from_cache(self.name)
             if dynamic_field.has_blank_option:
                 choices = super(HstoreRadioSelectField, self).get_choices()
-        except IndexError:
+        except DynamicField.DoesNotExist:
             pass
         return choices or self._choices
 
@@ -435,7 +436,7 @@ class HstoreCheckboxField(models.CharField):
             dynamic_field = get_dynamic_from_cache(self.name)
             if dynamic_field.has_blank_option:
                 choices = super(HstoreCheckboxField, self).get_choices()
-        except IndexError:
+        except DynamicField.DoesNotExist:
             pass
         return choices or self._choices
 

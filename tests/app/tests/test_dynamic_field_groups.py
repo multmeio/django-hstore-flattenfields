@@ -23,13 +23,13 @@ from tests.app.models import *
 class OneToManyDynamicFieldGroupTests(TestCase):
     def setUp(self):
         self.group1 = SomethingType.objects.create(id=1, name="Something Group", slug="something_group")
-        self.dfield1 = DynamicField.objects.create(id=1, refer="Something", group=self.group1, typo="Integer", name="something_age", verbose_name=u"Age")
+        self.age_field = DynamicField.objects.create(id=1, refer="Something", group=self.group1, typo="Integer", name="something_age", verbose_name=u"Age")
 
         self.group2 = SomethingType.objects.create(id=2, name="Something Group2", slug="something_group2")
         
-        self.dfield2 = DynamicField.objects.create(id=2, refer="Something", group=self.group2, name="something_slug", verbose_name=u"Slug", typo="CharField", max_length=100)
-        self.dfield3 = DynamicField.objects.create(id=3, refer="Something", group=self.group2, name="something_info", verbose_name=u"Info", typo="CharField", max_length=100)
-        self.dfield4 = DynamicField.objects.create(id=4, refer="Something", name="something_description", verbose_name=u"Description", typo="TextArea", max_length=100)
+        self.slug_field = DynamicField.objects.create(id=2, refer="Something", group=self.group2, name="something_slug", verbose_name=u"Slug", typo="CharField", max_length=100)
+        self.info_field = DynamicField.objects.create(id=3, refer="Something", group=self.group2, name="something_info", verbose_name=u"Info", typo="CharField", max_length=100)
+        self.description_field = DynamicField.objects.create(id=4, refer="Something", name="something_description", verbose_name=u"Description", typo="TextArea", max_length=100)
 
     def test_assert_all_dynamic_fields(self):
         self.something = Something.objects.create(
@@ -40,7 +40,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
         )
         self.assertEqual(
             self.something.dynamic_fields,
-            [self.dfield4, self.dfield1]
+            [self.description_field, self.age_field]
         )
 
     def test_assert_specific_dynamic_fields(self):
@@ -52,7 +52,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
         )
         self.assertEqual(
             self.something.dynamic_fields,
-            [self.dfield4, self.dfield2, self.dfield3]
+            [self.description_field, self.info_field, self.slug_field]
         )
 
     def test_assert_change_field_name(self):
@@ -69,10 +69,10 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
         self.group1 = AuthorType.objects.create(id=1, name="Author Group", slug="author_group")
         self.group2 = AuthorType.objects.create(id=2, name="Author Group 2", slug="author_group_2")
 
-        self.dfield1 = DynamicField.objects.create(id=1, refer="Author", group=self.group1, typo="Integer", name="author_age", verbose_name=u"Age")
-        self.dfield2 = DynamicField.objects.create(id=2, refer="Author", group=self.group2, name="author_name", verbose_name=u"Name", typo="CharField", max_length=100)
+        self.age_field = DynamicField.objects.create(id=1, refer="Author", group=self.group1, typo="Integer", name="author_age", verbose_name=u"Age")
+        self.name_field = DynamicField.objects.create(id=2, refer="Author", group=self.group2, name="author_name", verbose_name=u"Name", typo="CharField", max_length=100)
 
-        self.dfield3 = DynamicField.objects.create(id=3, refer="Author", name="author_information", verbose_name=u"Information", typo="CharField", max_length=100)
+        self.information_field = DynamicField.objects.create(id=3, refer="Author", name="author_information", verbose_name=u"Information", typo="CharField", max_length=100)
 
     def test_assert_all_dynamic_fields(self):
         self.author = Author.objects.create(
@@ -83,13 +83,13 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
         self.author.author_groups.add(self.group2)
         self.assertEqual(
             self.author.dynamic_fields,
-            [self.dfield3, self.dfield2, self.dfield1]
+            [self.information_field, self.name_field, self.age_field]
         )
 
     def test_assert_all_dynamic_fields_without_group(self):
         self.assertEqual(
             Author().dynamic_fields,
-            [self.dfield3]
+            [self.information_field]
         )
 
     def test_assert_specific_dynamic_fields(self):
@@ -100,7 +100,7 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
         self.author.author_groups.add(self.group1)
         self.assertEqual(
             self.author.dynamic_fields,
-            [self.dfield3, self.dfield1]
+            [self.information_field, self.age_field]
         )
 
 class ContentPaneTests(TestCase):
@@ -133,7 +133,7 @@ class ContentPaneTests(TestCase):
         form = self.AuthorForm(instance=self.author)
         self.assertEquals(
             form.fields.keys(),
-            ['author_groups', 'author_age', 'author_name']
+            ['author_groups', u'author_name', u'author_age']
         )
 
     def test_assert_fields_from_specific_content_pane(self):

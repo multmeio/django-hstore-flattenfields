@@ -165,9 +165,8 @@ TEST_RUNNER = 'tests.runner.DjangoWithDoctestTestRunner'
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'TIMEOUT': 36000,
-    }
+        'BACKEND': 'caching.backends.locmem.CacheClass',
+    },
 }
 
 try:

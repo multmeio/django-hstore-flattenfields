@@ -26,6 +26,10 @@ class TestCase(TestCase):
     after each test.
     """
     def tearDown(self):
+        from hstore_flattenfields.models import *
+        map(lambda m: m.objects.all().delete(),
+            [DynamicField, DynamicFieldGroup, ContentPane])
+        
         if getattr(settings, 'CACHES', False):
             cache.clear()
         super(TestCase, self).tearDown()

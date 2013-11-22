@@ -22,8 +22,10 @@ except ImportError:
 
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.sql.where import ExtraWhere
-from django_orm.core.sql.tree import AND, OR
 from django.db.models.query import *
+
+from django_orm.core.sql.tree import AND, OR
+from caching.base import CachingQuerySet
 
 from hstore_flattenfields.utils import *
 
@@ -178,7 +180,8 @@ class HQ(tree.Node):
             where_node.negate()
 
 
-class FlattenFieldsFilterQuerySet(QuerySet):
+# class FlattenFieldsFilterQuerySet(QuerySet):
+class FlattenFieldsFilterQuerySet(CachingQuerySet):
     def __init__(self, *args, **kwargs):
         super(FlattenFieldsFilterQuerySet, self).__init__(*args, **kwargs)
         self.all_dynamic_field_names = self.model._meta.get_all_dynamic_field_names()

@@ -473,6 +473,7 @@ class LookupTests(TestCase):
         # Underscores, percent signs and backslashes have special meaning in the
         # underlying SQL code, but Django handles the quoting of them automatically.
         Book.objects.create(title='Book_ with underscore', pubdate=datetime(2005, 11, 20), id=8)
+        
         self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book'),
             [
                 '<Book: Book 1>',
@@ -489,10 +490,11 @@ class LookupTests(TestCase):
                 '<Book: Book_ with underscore>'
             ])
 
-        Book.objects.create(title='Book% with percent sign', pubdate=datetime(2005, 11, 21), id=9)
+        # import ipdb; ipdb.set_trace()
+        Book.objects.create(title='Book% with percent sign', pubdate=datetime(2005, 11, 21), id=10)
         self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book'),
             [
-              '<Book: Book 1>',
+                '<Book: Book 1>',
                 '<Book: Book 2>',
                 '<Book: Book 3>',
                 '<Book: Book 4>',
@@ -500,14 +502,14 @@ class LookupTests(TestCase):
                 '<Book: Book 6>',
                 '<Book: Book 7>',
                 '<Book: Book_ with underscore>',
-                '<Book: Book% with percent sign>',
+                '<Book: Book% with percent sign>'
             ])
         self.assertQuerysetEqual(Book.objects.filter(title__startswith='Book%'),
             [
                 '<Book: Book% with percent sign>'
             ])
 
-        Book.objects.create(title='Book with \\ backslash', pubdate=datetime(2005, 11, 22), id=10)
+        Book.objects.create(title='Book with \\ backslash', pubdate=datetime(2005, 11, 22), id=11)
         self.assertQuerysetEqual(Book.objects.filter(title__contains='\\'),
             [
                 '<Book: Book with \ backslash>'

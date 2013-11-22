@@ -18,8 +18,10 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext as _
 from django.core.cache import cache
+
 from django_orm.postgresql import hstore
 from django_extensions.db.fields import AutoSlugField
+from caching.base import CachingManager, CachingMixin
 
 from db.base import (
     HStoreModel,
@@ -43,7 +45,7 @@ models.options.DEFAULT_NAMES += (
     'hstore_related_field',
 )
 
-class DynamicFieldGroup(models.Model):
+class DynamicFieldGroup(CachingMixin, models.Model):
     """
     Class context to fields in the use case.
     This has to be implemented on main app, and related to
@@ -67,10 +69,11 @@ class DynamicFieldGroup(models.Model):
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
 
     # managers
-    objects = DynamicFieldGroupCacheManager(
-        cache_key="dynamic_field_groups",
-        prefetch_related = ['dynamic_fields', 'content_panes'],
-    )
+    objects = CachingManager()
+    # objects = DynamicFieldGroupCacheManager(
+    #     cache_key="dynamic_field_groups",
+    #     prefetch_related = ['dynamic_fields', 'content_panes'],
+    # )
 
     class Meta:
         verbose_name = _('Dynamic Field Group')
@@ -81,18 +84,20 @@ class DynamicFieldGroup(models.Model):
         """
         Returns all the related ``DynamicField`` instances from cache.
 
+        >>> DynamicField.objects.all().delete()
         >>> group = DynamicFieldGroup.objects.create(name="Test Group")
         >>> DynamicField.objects.create(refer="Something", group=group, name="something_age", verbose_name=u"Age")
         <DynamicField: Age>
         >>> group.fields
         [<DynamicField: Age>]
         """
-        dynamic_fields = cache.get('dynamic_fields', [])
-        def by_group(dynamic_field):
-            if hasattr(self, 'dynamicfieldgroup_ptr'):
-                return dynamic_field.group == self.dynamicfieldgroup_ptr
-            return dynamic_field.group == self
-        return filter(by_group, dynamic_fields)
+        # dynamic_fields = cache.get('dynamic_fields', [])
+        # def by_group(dynamic_field):
+        #     if hasattr(self, 'dynamicfieldgroup_ptr'):
+        #         return dynamic_field.group == self.dynamicfieldgroup_ptr
+        #     return dynamic_field.group == self
+        # return filter(by_group, dynamic_fields)
+        return DynamicField.objects.filter(models.Q(group=self) | models.Q(group=None))
 
     def __unicode__(self):
         """
@@ -105,7 +110,7 @@ class DynamicFieldGroup(models.Model):
         return u"%s" % self.name
 
 
-class ContentPane(models.Model):
+class ContentPane(CachingMixin, models.Model):
     """
     Class to contains fields reproduced into TABs, DIVs,... on templates.
 
@@ -128,11 +133,12 @@ class ContentPane(models.Model):
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='content_panes', verbose_name=_("Groups"))
 
     # managers
-    objects = ContentPaneCacheManager(
-        cache_key="content_panes",
-        prefetch_related = ['dynamic_fields'],
-        select_related = ['group', 'content_type']
-    )
+    objects = CachingManager()
+    # objects = ContentPaneCacheManager(
+    #     cache_key="content_panes",
+    #     prefetch_related = ['dynamic_fields'],
+    #     select_related = ['group', 'content_type']
+    # )
 
     class Meta:
         verbose_name = _('Content Pane')
@@ -162,7 +168,8 @@ class ContentPane(models.Model):
         >>> content_pane.fields
         [<DynamicField: Age>]
         """
-        return DynamicField.objects.cache_filter(cpane=self)
+        # return DynamicField.objects.cache_filter(cpane=self)
+        return DynamicField.objects.filter(content_pane=self)
 
     @property
     def is_generic(self):
@@ -183,7 +190,7 @@ class ContentPane(models.Model):
         return not self.group
 
 
-class DynamicField(models.Model):
+class DynamicField(CachingMixin, models.Model):
     """
     Created to represent the Django Model's field information,
     we use him to fill the Field instances when the ``refer``
@@ -214,10 +221,11 @@ class DynamicField(models.Model):
     content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Panel"))
 
     # managers
-    objects = DynamicFieldCacheManager(
-        cache_key="dynamic_fields",
-        select_related=['content_pane', 'group']
-    )
+    objects = CachingManager()
+    # objects = DynamicFieldCacheManager(
+    #     cache_key="dynamic_fields",
+    #     select_related=['content_pane', 'group']
+    # )
 
     class Meta:
         verbose_name = _('Dynamic Field')
@@ -233,8 +241,8 @@ class DynamicField(models.Model):
 
 
 # NOTE: Skip the cache when we use the Test Mode
-flattenfields_models = [ContentPane, DynamicFieldGroup, DynamicField]
-if all_flattenfields_tables_is_created(flattenfields_models):
-    # Initial cache charge
-    for Model in flattenfields_models:
-        Model.objects.charge_cache()
+# flattenfields_models = [ContentPane, DynamicFieldGroup, DynamicField]
+# if all_flattenfields_tables_is_created(flattenfields_models):
+#     # Initial cache charge
+#     for Model in flattenfields_models:
+#         Model.objects.charge_cache()
