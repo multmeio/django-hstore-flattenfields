@@ -220,8 +220,7 @@ class HStoreModel(models.Model):
 
     def __init__(self, *args, **kwargs):
         build_flattenfields_object(self)
-        # build_flattenfields_metaclass(self.__class__._meta, self.__class__.__name__)
-
+        
         _dfields = None
         if args:
             # XXX: hack in order to save _dfields without alter django
@@ -357,7 +356,6 @@ class HStoreM2MGroupedModel(HStoreModel):
         if QueryModel != DynamicFieldGroup and \
            issubclass(QueryModel, DynamicFieldGroup):
             instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
-        
         return instances
 
     @property
@@ -366,18 +364,11 @@ class HStoreM2MGroupedModel(HStoreModel):
         def by_groups(dynamic_field):
             return dynamic_field.group == None or \
                    dynamic_field.group in self.related_instances
-        
         return filter(by_groups, dynamic_fields)
 
     @property
     def content_panes(self):
-        from hstore_flattenfields.models import ContentPane
-        return ContentPane.objects.filter(
-            models.Q(content_type__model=self.__class__.__name__.lower()),
-            models.Q(dynamic_fields__group__in=self.related_instances) |\
-            models.Q(dynamic_fields__group__isnull=True) &\
-            models.Q(dynamic_fields__in=self.dynamic_fields)
-        ).distinct()
+        return self._content_pane
         # from hstore_flattenfields.models import ContentPane
         # def by_group_in_dfields(dynamic_field):
         #     instances = self.related_instances
