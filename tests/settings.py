@@ -163,11 +163,11 @@ SOUTH_DATABASE_ADAPTERS = {
 
 TEST_RUNNER = 'tests.runner.DjangoWithDoctestTestRunner'
 
-CACHES = {
-    'default': {
-        'BACKEND': 'caching.backends.locmem.CacheClass',
-    },
-}
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'caching.backends.locmem.CacheClass',
+#     },
+# }
 
 try:
     from local_settings import *

@@ -40,7 +40,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
         )
         self.assertEqual(
             self.something.dynamic_fields,
-            [self.description_field, self.age_field]
+            [self.age_field, self.description_field]
         )
 
     def test_assert_specific_dynamic_fields(self):
@@ -52,7 +52,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
         )
         self.assertEqual(
             self.something.dynamic_fields,
-            [self.description_field, self.info_field, self.slug_field]
+            [self.slug_field, self.info_field, self.description_field]
         )
 
     def test_assert_change_field_name(self):
@@ -83,7 +83,7 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
         self.author.author_groups.add(self.group2)
         self.assertEqual(
             self.author.dynamic_fields,
-            [self.information_field, self.name_field, self.age_field]
+            [self.age_field, self.name_field, self.information_field]
         )
 
     def test_assert_all_dynamic_fields_without_group(self):
@@ -100,7 +100,7 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
         self.author.author_groups.add(self.group1)
         self.assertEqual(
             self.author.dynamic_fields,
-            [self.information_field, self.age_field]
+            [self.age_field, self.information_field]
         )
 
 class ContentPaneTests(TestCase):
@@ -133,7 +133,7 @@ class ContentPaneTests(TestCase):
         form = self.AuthorForm(instance=self.author)
         self.assertEquals(
             form.fields.keys(),
-            ['author_groups', u'author_name', u'author_age']
+            ['author_groups', u'author_age', u'author_name']
         )
 
     def test_assert_fields_from_specific_content_pane(self):

@@ -38,7 +38,7 @@ class HStoreModelMeta(ModelBase):
                 # # field = [f for f in queryset if f.name==key]
                 # # field = get_dynamic_field_model().objects.find_dfields(name=key)
                 from hstore_flattenfields.models import DynamicField
-                field = DynamicField.objects.filter(name=key)
+                field = DynamicField.objects.filter(name=key).order_by('pk')
 
                 if field:
                     field = get_modelfield(field[0].typo)()
@@ -159,7 +159,9 @@ class HStoreModelMeta(ModelBase):
                 # queryset = cache.get('dynamic_fields', [])
                 # metafields = [f for f in queryset if f.refer==new_class.__name__]
                 from hstore_flattenfields.models import DynamicField
-                metafields = DynamicField.objects.filter(refer=new_class.__name__)
+                metafields = DynamicField.objects.filter(
+                    refer=new_class.__name__
+                ).order_by('pk')
                 # if metafields:
                 #     import ipdb; ipdb.set_trace()
                 for metafield in metafields:
@@ -200,8 +202,7 @@ class HStoreModelMeta(ModelBase):
         new_class._meta = _meta()
         return new_class
 
-from caching.base import CachingMixin
-class HStoreModel(CachingMixin, models.Model):
+class HStoreModel(models.Model):
     _dfields = hstore.DictionaryField(db_index=True, null=True, blank=True)
 
     __metaclass__ = HStoreModelMeta
@@ -237,7 +238,9 @@ class HStoreModel(CachingMixin, models.Model):
             return dynamic_field.name in dynamic_field_names
         # return filter(by_name, cache.get('dynamic_fields', []))
         from hstore_flattenfields.models import DynamicField
-        return filter(by_name, DynamicField.objects.filter(refer=self.__class__.__name__))
+        return filter(by_name, DynamicField.objects.filter(
+            refer=self.__class__.__name__
+        ).order_by('pk'))
 
 
 class HStoreGroupedModel(HStoreModel):
@@ -357,36 +360,43 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def content_panes(self):
+        from hstore_flattenfields.models import ContentPane
+        return ContentPane.objects.filter(
+            models.Q(content_type__model=self.__class__.__name__.lower()),
+            models.Q(dynamic_fields__group__in=self.related_instances) |\
+            models.Q(dynamic_fields__group__isnull=True) &\
+            models.Q(dynamic_fields__in=self.dynamic_fields)
+        ).distinct()
         # from hstore_flattenfields.models import ContentPane
-        def by_group_in_dfields(dynamic_field):
-            instances = self.related_instances
-            if instances:
-                return bool([x for x in instances if dynamic_field.group == None or
-                             x == dynamic_field.group])
-            try:
-                if dynamic_field.group == None:
-                    return True
-            except:  # DoesNotExist
-                return True
-            else:
-                return False
+        # def by_group_in_dfields(dynamic_field):
+        #     instances = self.related_instances
+        #     if instances:
+        #         return bool([x for x in instances if dynamic_field.group == None or
+        #                      x == dynamic_field.group])
+        #     try:
+        #         if dynamic_field.group == None:
+        #             return True
+        #     except:  # DoesNotExist
+        #         return True
+        #     else:
+        #         return False
 
-        def by_group(content_pane):
-            return any(filter(by_group_in_dfields, content_pane.fields))
+        # def by_group(content_pane):
+        #     return any(filter(by_group_in_dfields, content_pane.fields))
 
-        def by_dfields(content_pane):
-            cpane_fields_pks = map(lambda f: f.pk, content_pane.fields)
-            obj_fields_pks = map(lambda f: f.pk, self.dynamic_fields)
+        # def by_dfields(content_pane):
+        #     cpane_fields_pks = map(lambda f: f.pk, content_pane.fields)
+        #     obj_fields_pks = map(lambda f: f.pk, self.dynamic_fields)
 
-            return has_any_in(cpane_fields_pks, obj_fields_pks)
+        #     return has_any_in(cpane_fields_pks, obj_fields_pks)
 
-        def by_refer(content_pane):
-            return content_pane.content_type.model == self.__class__.__name__.lower()
+        # def by_refer(content_pane):
+        #     return content_pane.content_type.model == self.__class__.__name__.lower()
 
-        content_panes = cache.get('content_panes', [])
+        # content_panes = cache.get('content_panes', [])
         
-        content_panes = filter(by_refer, content_panes)
-        content_panes = filter(by_group, content_panes)
-        content_panes = filter(by_dfields, content_panes)
+        # content_panes = filter(by_refer, content_panes)
+        # content_panes = filter(by_group, content_panes)
+        # content_panes = filter(by_dfields, content_panes)
         
-        return content_panes
+        # return content_panes

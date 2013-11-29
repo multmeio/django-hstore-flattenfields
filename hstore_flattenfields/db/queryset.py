@@ -180,8 +180,8 @@ class HQ(tree.Node):
             where_node.negate()
 
 
-# class FlattenFieldsFilterQuerySet(QuerySet):
-class FlattenFieldsFilterQuerySet(CachingQuerySet):
+class FlattenFieldsFilterQuerySet(QuerySet):
+# class FlattenFieldsFilterQuerySet(CachingQuerySet):
     def __init__(self, *args, **kwargs):
         super(FlattenFieldsFilterQuerySet, self).__init__(*args, **kwargs)
         self.all_dynamic_field_names = self.model._meta.get_all_dynamic_field_names()

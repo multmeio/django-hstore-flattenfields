@@ -45,7 +45,7 @@ models.options.DEFAULT_NAMES += (
     'hstore_related_field',
 )
 
-class DynamicFieldGroup(CachingMixin, models.Model):
+class DynamicFieldGroup(models.Model):
     """
     Class context to fields in the use case.
     This has to be implemented on main app, and related to
@@ -69,7 +69,7 @@ class DynamicFieldGroup(CachingMixin, models.Model):
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
 
     # managers
-    objects = CachingManager()
+    # objects = CachingManager()
     # objects = DynamicFieldGroupCacheManager(
     #     cache_key="dynamic_field_groups",
     #     prefetch_related = ['dynamic_fields', 'content_panes'],
@@ -110,7 +110,7 @@ class DynamicFieldGroup(CachingMixin, models.Model):
         return u"%s" % self.name
 
 
-class ContentPane(CachingMixin, models.Model):
+class ContentPane(models.Model):
     """
     Class to contains fields reproduced into TABs, DIVs,... on templates.
 
@@ -133,7 +133,7 @@ class ContentPane(CachingMixin, models.Model):
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='content_panes', verbose_name=_("Groups"))
 
     # managers
-    objects = CachingManager()
+    # objects = CachingManager()
     # objects = ContentPaneCacheManager(
     #     cache_key="content_panes",
     #     prefetch_related = ['dynamic_fields'],
@@ -190,7 +190,7 @@ class ContentPane(CachingMixin, models.Model):
         return not self.group
 
 
-class DynamicField(CachingMixin, models.Model):
+class DynamicField(models.Model):
     """
     Created to represent the Django Model's field information,
     we use him to fill the Field instances when the ``refer``
@@ -221,7 +221,7 @@ class DynamicField(CachingMixin, models.Model):
     content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Panel"))
 
     # managers
-    objects = CachingManager()
+    # objects = CachingManager()
     # objects = DynamicFieldCacheManager(
     #     cache_key="dynamic_fields",
     #     select_related=['content_pane', 'group']
@@ -230,6 +230,7 @@ class DynamicField(CachingMixin, models.Model):
     class Meta:
         verbose_name = _('Dynamic Field')
         verbose_name_plural = _('Dynamic Fields')
+        # ordering = ['pk']
 
     def __unicode__(self):
         return self.verbose_name or self.name
