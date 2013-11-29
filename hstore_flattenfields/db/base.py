@@ -14,7 +14,8 @@ from hstore_flattenfields.utils import (
     get_modelfield,
     dynamic_field_table_exists,
     create_field_from_instance,
-    has_any_in
+    has_any_in,
+    build_flattenfields_object,
 )
 
 
@@ -23,25 +24,25 @@ class HStoreModelMeta(ModelBase):
         new_class = super(HStoreModelMeta, cls).__new__(
             cls, name, bases, attrs
         )
-
+        
         # override getattr/setattr/delattr
         old_getattribute = new_class.__getattribute__
 
         def __getattribute__(self, key):
-            if key == 'custom_cache_key':
-                return
-            
             try:
                 return old_getattribute(self, key)
             except AttributeError:
                 # queryset = cache.get('dynamic_fields', [])
                 # # field = [f for f in queryset if f.name==key]
                 # # field = get_dynamic_field_model().objects.find_dfields(name=key)
-                from hstore_flattenfields.models import DynamicField
-                field = DynamicField.objects.filter(name=key).order_by('pk')
-
+                # from hstore_flattenfields.models import DynamicField
+                def by_name(f):
+                    return f.name == key
+                field = filter(by_name, self.__class__._meta.dynamic_fields)
+                # field = DynamicField.objects.filter(name=key).order_by('pk')
                 if field:
-                    field = get_modelfield(field[0].typo)()
+                    # field = get_modelfield(field[0].typo)()
+                    field = field[0]
                     try:
                         value = self._dfields[key]
                     except KeyError:
@@ -56,8 +57,9 @@ class HStoreModelMeta(ModelBase):
             except TypeError:
                 # queryset = cache.get('dynamic_fields', [])
                 # field = [f for f in queryset if f.name==key]
-                from hstore_flattenfields.models import DynamicField
-                field = DynamicField.objects.get(name=key)
+                def by_name(f):
+                    return f.name == key
+                field = filter(by_name, self.__class__._meta.dynamic_fields)
                 if field and field.__class__.__name__ == 'ManyRelatedManager':
                     return field.all()
                 return field
@@ -72,10 +74,14 @@ class HStoreModelMeta(ModelBase):
                 # queryset = cache.get('dynamic_fields', [])
                 # dfield = [f for f in queryset if f.refer==new_class.__name__ and\
                 #           f.name==key]
-                from hstore_flattenfields.models import DynamicField
-                dfield = DynamicField.objects.filter(name=key, refer=new_class.__name__)
+                # from hstore_flattenfields.models import DynamicField
+                # dfield = DynamicField.objects.filter(name=key, refer=new_class.__name__)
+                def by_name(f):
+                    return f.name == key
+                dfield = filter(by_name, self.__class__._meta.dynamic_fields)
                 if dfield:
-                    value = get_modelfield(dfield[0])().to_python(value)
+                    # value = get_modelfield(dfield[0])().to_python(value)
+                    value = dfield[0].to_python(value)
 
                     self._dfields[key] = ''
                     if value is not None:
@@ -152,27 +158,28 @@ class HStoreModelMeta(ModelBase):
 
             @property
             def dynamic_fields(self):
-                fields = []
-                if not dynamic_field_table_exists():
-                    return fields
+                # fields = []
+                # if not dynamic_field_table_exists():
+                #     return fields
 
-                # queryset = cache.get('dynamic_fields', [])
-                # metafields = [f for f in queryset if f.refer==new_class.__name__]
-                from hstore_flattenfields.models import DynamicField
-                metafields = DynamicField.objects.filter(
-                    refer=new_class.__name__
-                ).order_by('pk')
-                # if metafields:
-                #     import ipdb; ipdb.set_trace()
-                for metafield in metafields:
-                    try:
-                        fields.append(
-                            create_field_from_instance(metafield)
-                        )
-                    except SyntaxError:
-                        raise \
-                            TypeError(('Cannot create field for %r, maybe type %r ' +
-                                       'is not a django type') % (metafield, metafield.typo))
+                # from hstore_flattenfields.models import DynamicField
+                # metafields = DynamicField.objects.filter(
+                #     refer=new_class.__name__
+                # ).order_by('pk')
+                # return map(create_field_from_instance, metafields)
+                try:
+                    fields = self._model_dynamic_fields
+                except AttributeError:
+                    fields = []
+                # for metafield in metafields:
+                #     try:
+                #         fields.append(
+                #             create_field_from_instance(metafield)
+                #         )
+                #     except SyntaxError:
+                #         raise \
+                #             TypeError(('Cannot create field for %r, maybe type %r ' +
+                #                        'is not a django type') % (metafield, metafield.typo))
                 return fields
 
             @property
@@ -212,6 +219,9 @@ class HStoreModel(models.Model):
         abstract = True
 
     def __init__(self, *args, **kwargs):
+        build_flattenfields_object(self)
+        # build_flattenfields_metaclass(self.__class__._meta, self.__class__.__name__)
+
         _dfields = None
         if args:
             # XXX: hack in order to save _dfields without alter django
@@ -237,10 +247,11 @@ class HStoreModel(models.Model):
         def by_name(dynamic_field):
             return dynamic_field.name in dynamic_field_names
         # return filter(by_name, cache.get('dynamic_fields', []))
-        from hstore_flattenfields.models import DynamicField
-        return filter(by_name, DynamicField.objects.filter(
-            refer=self.__class__.__name__
-        ).order_by('pk'))
+        return filter(by_name, self._dynamic_fields)
+        # from hstore_flattenfields.models import DynamicField
+        # return filter(by_name, DynamicField.objects.filter(
+        #     refer=self.__class__.__name__
+        # ).order_by('pk'))
 
 
 class HStoreGroupedModel(HStoreModel):

@@ -119,6 +119,7 @@ __all__ = ['single_list_to_tuple',
            # 'get_dynamic_field_model',
            'parse_queryset',
            'all_flattenfields_tables_is_created',
+           'build_flattenfields_object',
 ]
 
 
@@ -250,10 +251,10 @@ def dynamic_field_table_exists():
 def get_fieldnames(fields, excludes=[]):
     """
     >>> from tests.app.models import Author
-    >>> get_fieldnames(Author._meta.fields)
+    >>> get_fieldnames(Author()._meta.fields)
     ['id', '_dfields']
     >>> from tests.app.models import Author
-    >>> get_fieldnames(Author._meta.fields, ['_dfields'])
+    >>> get_fieldnames(Author()._meta.fields, ['_dfields'])
     ['id']
     """
     return map(lambda f: f.name,
@@ -366,3 +367,17 @@ def parse_queryset(model, result):
                 item: field.to_python(res.get(item))
             })
     return result
+
+def build_flattenfields_object(obj):
+    try:
+        from hstore_flattenfields.models import DynamicField
+        assert dynamic_field_table_exists()
+    except (AssertionError, ImportError):
+        metafields = []
+    else:
+        metafields = DynamicField.objects.filter(
+            refer=obj.__class__.__name__
+        ).order_by('pk')
+    setattr(obj, '_dynamic_fields', list(metafields))
+    setattr(obj.__class__._meta, '_model_dynamic_fields', 
+            map(create_field_from_instance, metafields))
