@@ -16,6 +16,7 @@ used in hstore_flattenfields application.
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.db import connection
 from django.db.models import get_model, Q
+from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from ast import literal_eval
 from datetime import datetime, date
@@ -121,6 +122,7 @@ __all__ = ['single_list_to_tuple',
            'parse_queryset',
            'all_flattenfields_tables_is_created',
            'build_flattenfields_object',
+           'get_ctype',
 ]
 
 
@@ -353,11 +355,10 @@ def parse_queryset(model, result):
     <DynamicField: Age>
     >>> DynamicField.objects.create(refer="Author", name="birth_date", verbose_name=u"Birth Date", typo="Date")
     <DynamicField: Birth Date>
-    >>> Author.objects.create(age=20, birth_date='24/05/1992')
-    <Author: Author object>
-    >>> parse_queryset(Author, Author.objects.values('age'))
+    >>> author = Author.objects.create(age=20, birth_date='24/05/1992')
+    >>> parse_queryset(Author, Author.objects.filter(id=author.id).values('age'))
     [{'age': 20}]
-    >>> parse_queryset(Author, Author.objects.values('birth_date'))
+    >>> parse_queryset(Author, Author.objects.filter(id=author.id).values('birth_date'))
     [{'birth_date': datetime.date(1992, 5, 24)}]
     """
     dfield_names = model._meta.get_all_dynamic_field_names()
@@ -369,7 +370,37 @@ def parse_queryset(model, result):
             })
     return result
 
+def get_ctype(model):
+    """
+    >>> from tests.app.models import Author
+    >>> get_ctype(Author)
+    <ContentType: author>
+    >>> get_ctype(None)
+    Traceback (most recent call last):
+      ...
+    AttributeError: 'NoneType' object has no attribute '_meta'
+    """
+    return ContentType.objects.get_for_model(model)
+
 def build_flattenfields_object(obj):
+    """
+    >>> from hstore_flattenfields.models import DynamicField, ContentPane
+    >>> from hstore_flattenfields.utils import get_ctype
+    >>> from tests.app.models import Author
+    >>> DynamicField.objects.all().delete()
+    >>> DynamicField.objects.create(refer="Author", name="author_age", verbose_name=u"Age", typo="Integer")
+    <DynamicField: Age>
+    >>> DynamicField.objects.create(refer="Author", name="author_birth_date", verbose_name=u"Birth Date", typo="Date")
+    <DynamicField: Birth Date>
+    >>> ContentPane.objects.create(name='Main Info', content_type=get_ctype(Author))
+    <ContentPane: Main Info>
+    >>> author = Author.objects.create(author_age=20, author_birth_date='24/05/1992')
+    >>> author._dynamic_fields
+    [<DynamicField: Age>, <DynamicField: Birth Date>]
+    >>> author._content_panes
+    [<ContentPane: Main Info>]
+    >>> DynamicField.objects.all().delete()
+    """
     try:
         from hstore_flattenfields.models import (
             DynamicField, ContentPane
