@@ -369,36 +369,23 @@ def parse_queryset(model, result):
             })
     return result
 
-def build_flattenfields_content_panes(obj):
-    try:
-        from hstore_flattenfields.db.base import HStoreM2MGroupedModel
-        from hstore_flattenfields.models import ContentPane
-    except ImportError:
-        content_panes = []
-    else:
-        if isinstance(obj, HStoreM2MGroupedModel):
-            content_panes = ContentPane.objects.filter(
-                Q(content_type__model=obj.__class__.__name__.lower()),
-                Q(dynamic_fields__group__in=obj.related_instances) |\
-                Q(dynamic_fields__group__isnull=True) &\
-                Q(dynamic_fields__in=obj.dynamic_fields)
-            )
-        else:
-            content_panes = []
-    setattr(obj, '_content_panes', filter(lambda x: x, content_panes))
-    
 def build_flattenfields_object(obj):
     try:
-        from hstore_flattenfields.models import DynamicField
+        from hstore_flattenfields.models import (
+            DynamicField, ContentPane
+        )
         assert dynamic_field_table_exists()
     except (AssertionError, ImportError):
-        metafields = []
+        content_panes = metafields = []
     else:
         metafields = DynamicField.objects.filter(
             refer=obj.__class__.__name__
         ).order_by('pk')
+        content_panes = ContentPane.objects.filter(
+            Q(content_type__model=obj.__class__.__name__.lower())
+        )
     setattr(obj, '_dynamic_fields', filter(lambda x: x, metafields))
-    setattr(obj.__class__._meta, '_model_dynamic_fields', 
+    setattr(obj, '_content_panes', filter(lambda x: x, content_panes))
+    setattr(obj._meta, '_model_dynamic_fields', 
             map(create_field_from_instance, metafields))
-    build_flattenfields_content_panes(obj)
-
+    

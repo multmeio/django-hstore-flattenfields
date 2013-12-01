@@ -105,7 +105,7 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
 
 class ContentPaneTests(TestCase):
     def setUp(self):
-        self.content_pane = ContentPane.objects.create(name="Container", slug="container")
+        self.content_pane = ContentPane.objects.create(name="Container", slug="container", id=1)
 
         self.group1 = AuthorType.objects.create(id=1, name="Author Group", slug="author_group")
 

@@ -38,7 +38,7 @@ class HStoreModelMeta(ModelBase):
                 # from hstore_flattenfields.models import DynamicField
                 def by_name(f):
                     return f.name == key
-                field = filter(by_name, self.__class__._meta.dynamic_fields)
+                field = filter(by_name, self._meta.dynamic_fields)
                 # field = DynamicField.objects.filter(name=key).order_by('pk')
                 if field:
                     # field = get_modelfield(field[0].typo)()
@@ -59,7 +59,7 @@ class HStoreModelMeta(ModelBase):
                 # field = [f for f in queryset if f.name==key]
                 def by_name(f):
                     return f.name == key
-                field = filter(by_name, self.__class__._meta.dynamic_fields)
+                field = filter(by_name, self._meta.dynamic_fields)
                 if field and field.__class__.__name__ == 'ManyRelatedManager':
                     return field.all()
                 return field
@@ -78,7 +78,7 @@ class HStoreModelMeta(ModelBase):
                 # dfield = DynamicField.objects.filter(name=key, refer=new_class.__name__)
                 def by_name(f):
                     return f.name == key
-                dfield = filter(by_name, self.__class__._meta.dynamic_fields)
+                dfield = filter(by_name, self._meta.dynamic_fields)
                 if dfield:
                     # value = get_modelfield(dfield[0])().to_python(value)
                     value = dfield[0].to_python(value)
@@ -219,8 +219,6 @@ class HStoreModel(models.Model):
         abstract = True
 
     def __init__(self, *args, **kwargs):
-        build_flattenfields_object(self)
-        
         _dfields = None
         if args:
             # XXX: hack in order to save _dfields without alter django
@@ -237,20 +235,26 @@ class HStoreModel(models.Model):
             if index is not None and index < len(args):
                 _dfields = args[index]
 
+        build_flattenfields_object(self)
         super(HStoreModel, self).__init__(*args, **kwargs)
         if _dfields: self._dfields = _dfields
 
     @property
     def dynamic_fields(self):
-        dynamic_field_names = self.__class__._meta.get_all_field_names()
-        def by_name(dynamic_field):
-            return dynamic_field.name in dynamic_field_names
+        return self._dynamic_fields
+        # dynamic_field_names = self._meta.get_all_field_names()
+        # def by_name(dynamic_field):
+        #     return dynamic_field.name in dynamic_field_names
+        # return filter(by_name, self._dynamic_fields)
         # return filter(by_name, cache.get('dynamic_fields', []))
-        return filter(by_name, self._dynamic_fields)
         # from hstore_flattenfields.models import DynamicField
         # return filter(by_name, DynamicField.objects.filter(
         #     refer=self.__class__.__name__
         # ).order_by('pk'))
+
+    @property
+    def content_panes(self):
+        return self._content_panes
 
 
 class HStoreGroupedModel(HStoreModel):
@@ -279,6 +283,25 @@ class HStoreGroupedModel(HStoreModel):
                 return False
         
         return filter(by_group, dynamic_fields)
+
+    @property
+    def content_panes(self):
+        content_panes = super(HStoreGroupedModel, self).content_panes
+
+        def by_group(content_pane):
+            related_instance = self.related_instance
+            if related_instance:
+                return content_pane.group == None or \
+                    related_instance.dynamicfieldgroup_ptr == content_pane.group
+            try:
+                if content_pane.group == None:
+                    return True
+            except:  # DoesNotExist
+                return True
+            else:
+                return False
+        
+        return filter(by_group, content_panes)
 
 
 class HStoreM2MGroupedModel(HStoreModel):
@@ -368,7 +391,11 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def content_panes(self):
-        return self._content_pane
+        content_panes = super(HStoreM2MGroupedModel, self).content_panes
+        def by_groups(content_pane):
+            return content_pane.group == None or \
+                   content_pane.group in self.related_instances
+        return filter(by_groups, content_panes)
         # from hstore_flattenfields.models import ContentPane
         # def by_group_in_dfields(dynamic_field):
         #     instances = self.related_instances
