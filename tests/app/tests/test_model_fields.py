@@ -1,10 +1,9 @@
-# from django.test import TestCase
+from django.test import TestCase
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from datetime import date, datetime
 
 from hstore_flattenfields.db.fields import *
-from hstore_flattenfields.db.cache import TestCase
 from hstore_flattenfields.models import DynamicField
 
 from tests.app.models import *

@@ -11,14 +11,13 @@ Replace this with more appropriate tests for your application.
 import django
 DJANGO_VERSION = django.VERSION[:2]
 from django import forms
-# from django.test import TestCase
+from django.test import TestCase
 from django.conf import settings
 from datetime import date, datetime
 from decimal import Decimal
 
 from hstore_flattenfields.forms import HStoreModelForm
 from hstore_flattenfields.models import DynamicField
-from hstore_flattenfields.db.cache import TestCase
 
 from tests.app.models import *
 

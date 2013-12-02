@@ -33,11 +33,6 @@ from hstore_flattenfields.utils import (
     FIELD_TYPES_WITHOUT_BLANK_OPTION,
     all_flattenfields_tables_is_created,
 )
-from hstore_flattenfields.db.cache import (
-    DynamicFieldGroupCacheManager,
-    ContentPaneCacheManager,
-    DynamicFieldCacheManager
-)
 
 
 # Setup the "class Meta:" flattenfields custom configs
@@ -67,13 +62,6 @@ class DynamicFieldGroup(models.Model):
     name = models.CharField(max_length=80, null=False, verbose_name=_('Name'))
     slug = AutoSlugField(populate_from='name', separator='_', max_length=100, unique=True, overwrite=True)
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
-
-    # managers
-    # objects = CachingManager()
-    # objects = DynamicFieldGroupCacheManager(
-    #     cache_key="dynamic_field_groups",
-    #     prefetch_related = ['dynamic_fields', 'content_panes'],
-    # )
 
     class Meta:
         verbose_name = _('Dynamic Field Group')
@@ -131,14 +119,6 @@ class ContentPane(models.Model):
     # relations
     content_type = models.ForeignKey(ContentType, null=True, blank=True, related_name='content_panes')
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name='content_panes', verbose_name=_("Groups"))
-
-    # managers
-    # objects = CachingManager()
-    # objects = ContentPaneCacheManager(
-    #     cache_key="content_panes",
-    #     prefetch_related = ['dynamic_fields'],
-    #     select_related = ['group', 'content_type']
-    # )
 
     class Meta:
         verbose_name = _('Content Pane')
@@ -219,13 +199,6 @@ class DynamicField(models.Model):
     # relations
     group = models.ForeignKey(DynamicFieldGroup, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Groups"))
     content_pane = models.ForeignKey(ContentPane, null=True, blank=True, related_name="dynamic_fields", verbose_name=_("Panel"))
-
-    # managers
-    # objects = CachingManager()
-    # objects = DynamicFieldCacheManager(
-    #     cache_key="dynamic_fields",
-    #     select_related=['content_pane', 'group']
-    # )
 
     class Meta:
         verbose_name = _('Dynamic Field')

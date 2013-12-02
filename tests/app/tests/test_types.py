@@ -8,12 +8,10 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
-# from django.test import TestCase
+from django.test import TestCase
 from django.core.exceptions import ValidationError
 from datetime import date, datetime
 from decimal import Decimal
-
-from hstore_flattenfields.db.cache import TestCase
 
 from tests.app.models import *
 
