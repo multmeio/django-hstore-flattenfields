@@ -60,27 +60,27 @@ class HStoreContentPaneModelForm(HStoreModelForm):
         # self._dyn_fields = self.instance.dynamic_fields
             
 
-        opts = self._meta.model._meta
-        dfield_names = []
+        # opts = self._meta.model._meta
+        # dfield_names = []
 
         # FIXME: Adding Inherit fields
-        parent_local_fields = self.instance.__class__.__base__._meta.local_fields
-        all_fields = [f.name for f in opts.local_fields +
-                      opts.many_to_many +
-                      parent_local_fields]
+        # parent_local_fields = self.instance.__class__.__base__._meta.local_fields
+        # all_fields = [f.name for f in opts.local_fields +
+        #               opts.many_to_many +
+        #               parent_local_fields]
         
-        for field in filter(by_name, self._meta.model._meta.dynamic_fields):
-            if hasattr(field, 'get_modelfield'):
-                field_widget = field.get_modelfield.formfield().widget
-            else:
-                field_widget = field.formfield().widget
+        # for field in filter(by_name, self._meta.model._meta.dynamic_fields):
+        #     if hasattr(field, 'get_modelfield'):
+        #         field_widget = field.get_modelfield.formfield().widget
+        #     else:
+        #         field_widget = field.formfield().widget
                 
-            dfield_names.append(field.name)
-            all_fields.append(field.name)
+        #     dfield_names.append(field.name)
+        #     all_fields.append(field.name)
 
-            if field.name in self.fields and field_widget:
-                self.fields[field.name].widget = field_widget
-                self.fields[field.name].localize = True
+            # if field.name in self.fields and field_widget:
+            #     self.fields[field.name].widget = field_widget
+            #     self.fields[field.name].localize = True
             # try:
             # except AttributeError:
             #     # field = create_field_from_instance(field)
@@ -104,9 +104,9 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
         self.fields.keyOrder = hstore_order
 
-        for name in self.fields.keys():
-            if name not in all_fields:
-                self.fields.pop(name)
+        # for name in self.fields.keys():
+        #     if name not in all_fields:
+        #         self.fields.pop(name)
 
     def filtred_fields(self, content_pane=None):
         """

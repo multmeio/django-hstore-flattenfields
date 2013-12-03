@@ -67,8 +67,6 @@ class HStoreModelMeta(ModelBase):
 
         old_setattr = new_class.__setattr__
         def __setattr__(self, key, value):
-            if key == 'custom_cache_key':
-                return
             if hasattr(self, '_dfields') and not key in dir(new_class):
                 # from django.core.cache import cache
                 # queryset = cache.get('dynamic_fields', [])
@@ -220,6 +218,8 @@ class HStoreModel(models.Model):
 
     def __init__(self, *args, **kwargs):
         _dfields = None
+        build_flattenfields_object(self)
+
         if args:
             # XXX: hack in order to save _dfields without alter django
             # save _dfields in args and restore
@@ -235,7 +235,6 @@ class HStoreModel(models.Model):
             if index is not None and index < len(args):
                 _dfields = args[index]
 
-        build_flattenfields_object(self)
         super(HStoreModel, self).__init__(*args, **kwargs)
         if _dfields: self._dfields = _dfields
 
@@ -310,6 +309,7 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     def __init__(self, *args, **kwargs):
         super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)
+        # print "\t%s \n\t%s\n\n" % (self._dfields, self.dynamic_fields)
         # self._is_cached = False
         # if not cache.get(self.custom_cache_key):
         #     self._cache_builder()

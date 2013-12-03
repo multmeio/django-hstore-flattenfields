@@ -343,7 +343,35 @@ class LookupTests(TestCase):
         # If you don't specify field names to values(), all are returned.
         self.assertQuerysetEqual(
             Book.objects.filter(id=self.b5.id).values(),
-            [{u'pubdate': datetime(2005, 8, 1, 9, 0), u'title': u'Book 5', 'author': 2, '_dfields': {u'pages': u'5', u'pubdate': u'2005-08-01 09:00:00', u'title': u'Book 5'}, 'id': 5, 'tag': 101, u'pages': 5, 'tags': None}, {u'pubdate': datetime(2005, 8, 1, 9, 0), u'title': u'Book 5', 'author': 2, '_dfields': {u'pages': u'5', u'pubdate': u'2005-08-01 09:00:00', u'title': u'Book 5'}, 'id': 5, 'tag': 102, u'pages': 5, 'tags': None}], transform=self.identity)
+            [{
+                u'pubdate': datetime(2005, 8, 1, 9, 0), 
+                u'title': u'Book 5', 'author': 2, 
+                '_dfields': {
+                    u'pages': u'5', 
+                    u'pubdate': u'2005-08-01 09:00:00', 
+                    u'title': u'Book 5'
+                }, 
+                'id': 5, 
+                'illustrators': None, 
+                'tag': 101, 
+                u'pages': 5, 
+                'tags': None
+            }, 
+            {
+                u'pubdate': datetime(2005, 8, 1, 9, 0), 
+                u'title': u'Book 5', 
+                'author': 2, 
+                '_dfields': {
+                    u'pages': u'5', 
+                    u'pubdate': u'2005-08-01 09:00:00', 
+                    u'title': u'Book 5'
+                }, 
+                'id': 5, 
+                'illustrators': None, 
+                'tag': 102, 
+                u'pages': 5, 
+                'tags': None
+            }], transform=self.identity)
 
     def test_values_list__title(self):
         # values_list() is similar to values(), except that the results are

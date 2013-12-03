@@ -37,6 +37,14 @@ class Author(HStoreM2MGroupedModel):
             return super(Author, self).__str__()
 
 
+class Illustrator(Author):
+    def __str__(self):
+        if hasattr(self, 'illustrator_name'):
+            return self.illustrator_name
+        else:
+            return super(Author, self).__str__()
+
+
 class Tag(HStoreModel):
     articles = models.ManyToManyField('Book')
 
@@ -50,6 +58,7 @@ class Tag(HStoreModel):
 
 class Book(HStoreModel):
     author = models.ForeignKey('Author', null=True, blank=True)
+    illustrators = models.ManyToManyField('Illustrator', related_name='books')
     tags = models.ManyToManyField('Tag')
 
     def __str__(self):

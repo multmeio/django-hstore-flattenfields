@@ -15,6 +15,38 @@ from datetime import date, datetime
 from tests.app.models import *
 
 
+class IllustratorInheritanceTest(TestCase):
+    def setUp(self):
+        self.group1 = AuthorType.objects.create(id=1, name="Something Group", slug="something_group")
+
+        self.age = DynamicField.objects.create(id=1, refer="Illustrator", group=self.group1, 
+            typo="Integer", name="illustrator_age", verbose_name=u"Age")
+        self.name = DynamicField.objects.create(id=2, refer="Illustrator", group=self.group1, 
+            name="illustrator_name", verbose_name=u"Name", typo="CharField", max_length=100)
+        self.information = DynamicField.objects.create(id=3, refer="Illustrator", 
+            name="illustrator_information", verbose_name=u"Information", typo="CharField", max_length=100)
+
+    def test_integrity(self):
+        illustrator = Illustrator.objects.create(
+            illustrator_information="Some Information",
+            illustrator_age=42, 
+            illustrator_name="some-name",
+        )
+        # illustrator = Illustrator.objects.get()
+        # illustrator.author_groups.add(self.group1)
+
+        self.assertEqual(
+            illustrator.illustrator_information, 
+            "Some Information"
+        )
+        self.assertEqual(
+            illustrator.illustrator_age, 42
+        )
+        self.assertEqual(
+            illustrator.illustrator_name, "some-name"
+        )
+        
+
 class AuthorSpecializedInheritanceTests(TestCase):
     def setUp(self):
         self.group1 = AuthorType.objects.create(id=1, name="Something Group", slug="something_group")
