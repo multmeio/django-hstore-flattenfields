@@ -24,7 +24,7 @@ class HStoreModelMeta(ModelBase):
         new_class = super(HStoreModelMeta, cls).__new__(
             cls, name, bases, attrs
         )
-        
+
         # override getattr/setattr/delattr
         old_getattribute = new_class.__getattribute__
 
@@ -280,7 +280,7 @@ class HStoreGroupedModel(HStoreModel):
                 return True
             else:
                 return False
-        
+
         return filter(by_group, dynamic_fields)
 
     @property
@@ -299,7 +299,7 @@ class HStoreGroupedModel(HStoreModel):
                 return True
             else:
                 return False
-        
+
         return filter(by_group, content_panes)
 
 
@@ -308,6 +308,9 @@ class HStoreM2MGroupedModel(HStoreModel):
         abstract = True
 
     def __init__(self, *args, **kwargs):
+        # NOTE: Populating related_instances for the next time
+        # and override this property
+        self.related_instances = self._related_instances()
         super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)
         # print "\t%s \n\t%s\n\n" % (self._dfields, self.dynamic_fields)
         # self._is_cached = False
@@ -354,8 +357,8 @@ class HStoreM2MGroupedModel(HStoreModel):
     #         cache.set(self.custom_cache_key, related_instances)
     #         self._is_cached = True
 
-    @property
-    def related_instances(self):
+    # @property
+    def _related_instances(self):
         # if not cache.get(self.custom_cache_key):
         # if not self._is_cached:
         #     # NOTE: We had to rebuild the cache in this case
@@ -376,6 +379,8 @@ class HStoreM2MGroupedModel(HStoreModel):
 
         from hstore_flattenfields.models import DynamicFieldGroup
         QueryModel = instances.query.model
+
+
         if QueryModel != DynamicFieldGroup and \
            issubclass(QueryModel, DynamicFieldGroup):
             instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
@@ -423,9 +428,9 @@ class HStoreM2MGroupedModel(HStoreModel):
         #     return content_pane.content_type.model == self.__class__.__name__.lower()
 
         # content_panes = cache.get('content_panes', [])
-        
+
         # content_panes = filter(by_refer, content_panes)
         # content_panes = filter(by_group, content_panes)
         # content_panes = filter(by_dfields, content_panes)
-        
+
         # return content_panes

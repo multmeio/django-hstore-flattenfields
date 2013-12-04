@@ -417,6 +417,6 @@ def build_flattenfields_object(obj):
         )
     setattr(obj, '_dynamic_fields', filter(lambda x: x, metafields))
     setattr(obj, '_content_panes', filter(lambda x: x, content_panes))
-    setattr(obj._meta, '_model_dynamic_fields', 
+    setattr(obj._meta, '_model_dynamic_fields',
             map(create_field_from_instance, metafields))
-    
+
