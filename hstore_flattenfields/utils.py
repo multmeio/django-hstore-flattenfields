@@ -9,7 +9,7 @@ The Models file where places all the stored classes
 used in hstore_flattenfields application.
 
 :copyright: 2012, multmeio (http://www.multmeio.com.br)
-:author: 2012, Luís Antônio Araújo Brito <iuridiniz@gmail.com>
+:author: 2012, Luís Araújo <caitifbrito@gmail.com>
 :license: BSD, see LICENSE for more details.
 """
 
