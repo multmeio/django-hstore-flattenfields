@@ -24,7 +24,7 @@ class HStoreModelMeta(ModelBase):
         new_class = super(HStoreModelMeta, cls).__new__(
             cls, name, bases, attrs
         )
-        
+
         # override getattr/setattr/delattr
         old_getattribute = new_class.__getattribute__
 
@@ -280,7 +280,7 @@ class HStoreGroupedModel(HStoreModel):
                 return True
             else:
                 return False
-        
+
         return filter(by_group, dynamic_fields)
 
     @property
@@ -299,7 +299,7 @@ class HStoreGroupedModel(HStoreModel):
                 return True
             else:
                 return False
-        
+
         return filter(by_group, content_panes)
 
 
@@ -376,6 +376,8 @@ class HStoreM2MGroupedModel(HStoreModel):
 
         from hstore_flattenfields.models import DynamicFieldGroup
         QueryModel = instances.query.model
+
+
         if QueryModel != DynamicFieldGroup and \
            issubclass(QueryModel, DynamicFieldGroup):
             instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
@@ -423,9 +425,9 @@ class HStoreM2MGroupedModel(HStoreModel):
         #     return content_pane.content_type.model == self.__class__.__name__.lower()
 
         # content_panes = cache.get('content_panes', [])
-        
+
         # content_panes = filter(by_refer, content_panes)
         # content_panes = filter(by_group, content_panes)
         # content_panes = filter(by_dfields, content_panes)
-        
+
         # return content_panes

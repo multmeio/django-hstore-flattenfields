@@ -9,7 +9,7 @@ The Models file where places all the stored classes
 used in hstore_flattenfields application.
 
 :copyright: 2012, multmeio (http://www.multmeio.com.br)
-:author: 2012, Luís Antônio Araújo Brito <iuridiniz@gmail.com>
+:author: 2012, Luís Araújo <caitifbrito@gmail.com>
 :license: BSD, see LICENSE for more details.
 """
 
@@ -412,22 +412,21 @@ def build_flattenfields_object(obj):
     [<ContentPane: Main Info>]
     >>> DynamicField.objects.all().delete()
     """
-    from hstore_flattenfields.models import (
-        DynamicField, 
-        ContentPane
-    )
-    content_panes = metafields = []
-    metafields = DynamicField.objects.filter(
-        refer=obj.__class__.__name__
-    ).order_by('pk')
-    content_panes = ContentPane.objects.filter(
-        Q(content_type__model=obj.__class__.__name__.lower())
-    )
-    setattr(obj, '_dynamic_fields', metafields)
-    setattr(obj, '_content_panes', content_panes)
-    setattr(obj._meta, '_model_dynamic_fields', 
+    try:
+        from hstore_flattenfields.models import (
+            DynamicField, ContentPane
+        )
+        assert dynamic_field_table_exists()
+    except (AssertionError, ImportError):
+        content_panes = metafields = []
+    else:
+        metafields = DynamicField.objects.filter(
+            refer=obj.__class__.__name__
+        ).order_by('pk')
+        content_panes = ContentPane.objects.filter(
+            Q(content_type__model=obj.__class__.__name__.lower())
+        )
+    setattr(obj, '_dynamic_fields', filter(lambda x: x, metafields))
+    setattr(obj, '_content_panes', filter(lambda x: x, content_panes))
+    setattr(obj._meta, '_model_dynamic_fields',
             map(create_field_from_instance, metafields))
-    # try:
-    # assert dynamic_field_table_exists()
-    # except (AssertionError, ImportError):
-    # else:

@@ -212,7 +212,7 @@ class FlattenFieldsFilterQuerySet(QuerySet):
         if not fields:
             fields = self.all_field_names
         return parse_queryset(
-            self.model, 
+            self.model,
             super(FlattenFieldsFilterQuerySet, self).values(
                 *fields
             )
