@@ -54,8 +54,8 @@ class HStoreContentPaneModelForm(HStoreModelForm):
 
         model_name = self.Meta.model.__name__
         dynamic_field_names = map(lambda x: x.name, self.instance.dynamic_fields)
-        def by_name(dynamic_field):
-            return dynamic_field.name in dynamic_field_names
+        # def by_name(dynamic_field):
+        #     return dynamic_field.name in dynamic_field_names
 
         # self._dyn_fields = self.instance.dynamic_fields
             

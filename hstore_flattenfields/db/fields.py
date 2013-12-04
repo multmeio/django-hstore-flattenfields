@@ -18,12 +18,6 @@ from hstore_flattenfields.utils import *
 from hstore_flattenfields.forms.fields import *
 from hstore_flattenfields.models import DynamicField
 
-def get_dynamic_from_cache(name):
-    # return [f for f in cache.get('dynamic_fields', []) \
-    #         if f.name == name][0]
-    return DynamicField.objects.get(name=name)
-
-
 class HstoreTextField(models.TextField):
     __metaclass__ = models.SubfieldBase
 
@@ -42,10 +36,11 @@ class HstoreTextField(models.TextField):
         return form_class(**defaults)
 
     def to_python(self, value):
-        if value is models.fields.NOT_PROVIDED:
-            return ''
-        else:
-            return super(HstoreTextField, self).to_python(value)
+        if not value or value is models.fields.NOT_PROVIDED:
+            value = None
+        elif not isinstance(value, basestring):
+            value = str(value)
+        return value
 
 
 class HstoreFloatField(models.FloatField):
@@ -115,7 +110,7 @@ class HstoreIntegerField(models.IntegerField):
         if value:
             return int(value)
 
-    def clean(self, value, *args):
+    def clean(self, value, instance):
         return value
 
 
@@ -136,27 +131,23 @@ class HstoreCharField(models.CharField):
         defaults.update(kwargs)
         return form_class(**defaults)
 
-    def clean(self, value, *args):
-        return unicode(value)
-
     def get_choices(self, include_blank=False):
-        choices = []
+        dynamic_field = DynamicField.objects.get(name=self.name)
 
-        # FIXME: this maybe mistake on fields with same name in different
-        # refers
-        try:
-            dynamic_field = get_dynamic_from_cache(self.name)
-            if dynamic_field.has_blank_option:
-                choices = super(HstoreMultipleSelectField, self).get_choices()
-        except IndexError:
-            pass
-
+        choices = single_list_to_tuple(
+            str2literal(dynamic_field.choices)
+        )
+        
+        if include_blank and choices and \
+           dynamic_field.has_blank_option:
+            choices.insert(0, ('', '----'))
         return choices or self._choices
 
     def to_python(self, value):
-        if value is models.fields.NOT_PROVIDED:
-            return ''
-
+        if not value or value is models.fields.NOT_PROVIDED:
+            value = None
+        elif not isinstance(value, basestring):
+            value = str(value)
         return value
 
 
@@ -184,17 +175,14 @@ class HstoreDecimalField(models.DecimalField):
         than max_digits in the number, and no more than decimal_places digits
         after the decimal point.
         """
-        if value is models.fields.NOT_PROVIDED:
-            return None
-
-        try:
-            value = Decimal(value)
-            return value
-        except InvalidOperation:
-            return ''
-
-    def clean(self, value, *args):
-        return unicode(value)
+        if not value or value is models.fields.NOT_PROVIDED:
+            value = None
+        elif not isinstance(value, Decimal):
+            try:
+                value = Decimal(value)
+            except InvalidOperation:
+                value = None
+        return value
 
 
 class HstoreDateField(models.DateField):
@@ -219,11 +207,6 @@ class HstoreDateField(models.DateField):
             return None
         return str2date(value)
 
-    def clean(self, value, *args):
-        if not value:
-            return ''
-        return value
-
     def _get_val_from_obj(self, obj):
         try:
             return getattr(obj, self.attname)
@@ -236,6 +219,9 @@ class HstoreDateField(models.DateField):
         if value and isinstance(value, date):
             return value.isoformat()
         return ''
+
+    def clean(self, value, instance):
+        return value
 
 
 class HstoreDateTimeField(models.DateTimeField):
@@ -260,11 +246,6 @@ class HstoreDateTimeField(models.DateTimeField):
             return None
         return str2datetime(value)
 
-    def clean(self, value, *args):
-        if not value:
-            return ''
-        return value
-
     def _get_val_from_obj(self, obj):
         try:
             return getattr(obj, self.attname)
@@ -278,6 +259,9 @@ class HstoreDateTimeField(models.DateTimeField):
             return value.isoformat()
         return ''
 
+    def clean(self, value, instance):
+        return value
+
 
 class HstoreSelectField(models.CharField):
     __metaclass__ = models.SubfieldBase
@@ -286,17 +270,16 @@ class HstoreSelectField(models.CharField):
         self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreSelectField, self).__init__(*args, **kwargs)
 
-    def clean(self, value, *args):
-        # FIXME: At the beginning of the project there was
-        #       a bug that was saving the value as a string: 'None'
-        if not value:
-            return ''
-        return value
-
     def to_python(self, value):
-        if value is models.fields.NOT_PROVIDED:
-            return ''
+        if not value or value is models.fields.NOT_PROVIDED:
+            value = None
         return value
+    
+    def get_choices(self, include_blank=False):
+        dynamic_field = DynamicField.objects.get(name=self.name)
+
+        choices = str2literal(dynamic_field.choices)
+        return choices or self._choices
 
 
 class HstoreRadioSelectField(models.CharField):
@@ -306,9 +289,6 @@ class HstoreRadioSelectField(models.CharField):
         self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreRadioSelectField, self).__init__(*args, **kwargs)
 
-    # XXX: Override formfield
-    # most code was copied from django 1.4.1: db.models.CharField.formfield)
-    # only changed TypedChoiceField to MultipleChoiceField
     def formfield(self, form_class=RadioSelectField, **kwargs):
         """
         Returns a django.forms.Field instance for this database Field.
@@ -321,11 +301,7 @@ class HstoreRadioSelectField(models.CharField):
         }
 
         if self.has_default():
-            if callable(self.default):
-                defaults['initial'] = self.default
-                defaults['show_hidden_initial'] = True
-            else:
-                defaults['initial'] = self.get_default()
+            defaults['initial'] = self.default
 
         if self.choices:
             # Fields with choices get special treatment.
@@ -335,15 +311,6 @@ class HstoreRadioSelectField(models.CharField):
             defaults['coerce'] = self.to_python
             if self.null:
                 defaults['empty_value'] = ""
-
-            # Many of the subclass-specific formfield arguments (min_value,
-            # max_value) don't apply for choice fields, so be sure to only pass
-            # the values that TypedChoiceField will understand.
-            for k in kwargs.keys():
-                if k not in ('coerce', 'empty_value', 'choices', 'required',
-                             'widget', 'label', 'initial', 'help_text',
-                             'error_messages', 'show_hidden_initial'):
-                    del kwargs[k]
         defaults.update(kwargs)
         return form_class(**defaults)
 
@@ -354,20 +321,11 @@ class HstoreRadioSelectField(models.CharField):
             return value
 
     def get_choices(self, include_blank=False):
-        choices = []
-
-        # FIXME: this maybe mistake on fields with same name in different
-        # refers
-        try:
-            dynamic_field = get_dynamic_from_cache(self.name)
-            if dynamic_field.has_blank_option:
-                choices = super(HstoreRadioSelectField, self).get_choices()
-        except DynamicField.DoesNotExist:
-            pass
+        dynamic_field = DynamicField.objects.get(name=self.name)
+        choices = single_list_to_tuple(
+            str2literal(dynamic_field.choices)
+        )
         return choices or self._choices
-
-    def get_default(self):
-        return self.default
 
 
 class HstoreCheckboxField(models.CharField):
@@ -392,11 +350,7 @@ class HstoreCheckboxField(models.CharField):
         }
 
         if self.has_default():
-            if callable(self.default):
-                defaults['initial'] = self.default
-                defaults['show_hidden_initial'] = True
-            else:
-                defaults['initial'] = self.get_default()
+            defaults['initial'] = self.default
 
         if self.choices:
             # Fields with choices get special treatment.
@@ -407,15 +361,6 @@ class HstoreCheckboxField(models.CharField):
             if self.null:
                 defaults['empty_value'] = ""
 
-            # Many of the subclass-specific formfield arguments (min_value,
-            # max_value) don't apply for choice fields, so be sure to only pass
-            # the values that TypedChoiceField will understand.
-            for k in kwargs.keys():
-                if k not in ('coerce', 'empty_value', 'choices', 'required',
-                             'widget', 'label', 'initial', 'help_text',
-                             'error_messages', 'show_hidden_initial'):
-                    del kwargs[k]
-
         defaults.update(kwargs)
         formfield = form_class(**defaults)
 
@@ -424,20 +369,12 @@ class HstoreCheckboxField(models.CharField):
 
         return formfield
 
-    def clean(self, value, *args):
-        return value
-
     def get_choices(self, include_blank=False):
         choices = []
-
-        # FIXME: this maybe mistake on fields with same name in different
-        # refers
-        try:
-            dynamic_field = get_dynamic_from_cache(self.name)
-            if dynamic_field.has_blank_option:
-                choices = super(HstoreCheckboxField, self).get_choices()
-        except DynamicField.DoesNotExist:
-            pass
+        dynamic_field = DynamicField.objects.get(name=self.name)
+        choices = single_list_to_tuple(
+            str2literal(dynamic_field.choices)
+        )
         return choices or self._choices
 
     def get_default(self):
@@ -450,6 +387,9 @@ class HstoreCheckboxField(models.CharField):
             return []
         return str2literal(value) or value
 
+    def clean(self, value, instance):
+        return value
+
 
 class HstoreMultipleSelectField(models.CharField):
     __metaclass__ = models.SubfieldBase
@@ -457,9 +397,6 @@ class HstoreMultipleSelectField(models.CharField):
     def __init__(self, *args, **kwargs):
         self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreMultipleSelectField, self).__init__(*args, **kwargs)
-
-    def clean(self, value, *args, **kwargs):
-        return value
 
     # XXX: Override formfield
     # most code was copied from django 1.4.1: db.models.CharField.formfield)
@@ -476,11 +413,7 @@ class HstoreMultipleSelectField(models.CharField):
         }
 
         if self.has_default():
-            if callable(self.default):
-                defaults['initial'] = self.default
-                defaults['show_hidden_initial'] = True
-            else:
-                defaults['initial'] = self.get_default()
+            defaults['initial'] = self.default
 
         if self.choices:
             # Fields with choices get special treatment.
@@ -490,35 +423,28 @@ class HstoreMultipleSelectField(models.CharField):
             defaults['coerce'] = self.to_python
             if self.null:
                 defaults['empty_value'] = ""
-
-            # Many of the subclass-specific formfield arguments (min_value,
-            # max_value) don't apply for choice fields, so be sure to only pass
-            # the values that TypedChoiceField will understand.
-            for k in kwargs.keys():
-                if k not in ('coerce', 'empty_value', 'choices', 'required',
-                             'widget', 'label', 'initial', 'help_text',
-                             'error_messages', 'show_hidden_initial'):
-                    del kwargs[k]
         defaults.update(kwargs)
         return form_class(**defaults)
 
     def to_python(self, value):
-        if isinstance(value, list):
-            return value
-        if value is models.fields.NOT_PROVIDED:
-            return []
-        return str2literal(value)
+        if not value or value is models.fields.NOT_PROVIDED:
+            value = []
+        
+        if isinstance(value, basestring):
+            value = str2literal(value)
+        elif not isinstance(value, list):
+            value = []
+
+        return value
 
     def get_choices(self, include_blank=False):
-        choices = []
-
-        # FIXME: this maybe mistake on fields with same name in different
-        # refers
-        try:
-            dynamic_field = get_dynamic_from_cache(self.name)
-            if dynamic_field.has_blank_option:
-                choices = super(HstoreMultipleSelectField, self).get_choices()
-        except IndexError:
-            pass
-
+        dynamic_field = DynamicField.objects.get(name=self.name)
+        choices = single_list_to_tuple(
+            str2literal(dynamic_field.choices)
+        )
+        if include_blank and choices:
+            choices.insert(0, ('', '----'))
         return choices or self._choices
+
+    def clean(self, value, instance):
+        return value

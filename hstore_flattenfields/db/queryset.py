@@ -25,7 +25,7 @@ from django.db.models.sql.where import ExtraWhere
 from django.db.models.query import *
 
 from django_orm.core.sql.tree import AND, OR
-from caching.base import CachingQuerySet
+# from caching.base import CachingQuerySet
 
 from hstore_flattenfields.utils import *
 

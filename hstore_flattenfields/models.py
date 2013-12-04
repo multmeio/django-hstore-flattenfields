@@ -21,7 +21,7 @@ from django.core.cache import cache
 
 from django_orm.postgresql import hstore
 from django_extensions.db.fields import AutoSlugField
-from caching.base import CachingManager, CachingMixin
+# from caching.base import CachingManager, CachingMixin
 
 from db.base import (
     HStoreModel,

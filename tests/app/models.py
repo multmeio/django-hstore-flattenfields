@@ -38,6 +38,10 @@ class Author(HStoreM2MGroupedModel):
 
 
 class Illustrator(Author):
+    class Meta:
+        # hstore
+        hstore_related_field = 'author_groups'
+        
     def __str__(self):
         if hasattr(self, 'illustrator_name'):
             return self.illustrator_name

@@ -198,16 +198,17 @@ class SomethingFormRenderTest(TestCase):
         )
 
     def test_assert_multselect_render(self):
-        expected = u'<select multiple="multiple" data-mask="multipleselect" name="something_dfield_multiselect">\n<option value="[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]">[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]</option>\n</select>'
+        expected = u'<select multiple="multiple" data-mask="multipleselect" name="something_dfield_multiselect">\n<option value="">----</option>\n<option value="1">1</option>\n<option value="2">2</option>\n<option value="3">3</option>\n<option value="4">4</option>\n</select>'
         if DJANGO_VERSION >= (1, 5):
             expected = u'<select multiple="multiple" data-mask="multipleselect" name="something_dfield_multiselect">\n<option value="[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]">[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]</option>\n</select>'
+            
         self.assertEqual(
             SomethingForm().fields['something_dfield_multiselect'].widget.render('something_dfield_multiselect', self.something.something_dfield_multiselect),
             expected
         )
 
     def test_assert_radiobutton_render(self):
-        expected = u'<ul>\n<li><label><input data-mask="radiobutton" type="radio" name="something_dfield_radiobutton" value="[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]" /> [&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]</label></li>\n</ul>'
+        expected = u'<ul>\n<li><label><input data-mask="radiobutton" type="radio" name="something_dfield_radiobutton" value="1" /> 1</label></li>\n<li><label><input data-mask="radiobutton" checked="checked" type="radio" name="something_dfield_radiobutton" value="2" /> 2</label></li>\n<li><label><input data-mask="radiobutton" type="radio" name="something_dfield_radiobutton" value="3" /> 3</label></li>\n<li><label><input data-mask="radiobutton" type="radio" name="something_dfield_radiobutton" value="4" /> 4</label></li>\n</ul>'
         if DJANGO_VERSION >= (1, 5):
             expected = u'<ul>\n<li><label><input data-mask="radiobutton" name="something_dfield_radiobutton" type="radio" value="[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]" /> [&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]</label></li>\n</ul>'
         self.assertEqual(
@@ -216,7 +217,7 @@ class SomethingFormRenderTest(TestCase):
         )
 
     def test_assert_checkbox_render(self):
-        expected = u'<ul>\n<li><label><input data-mask="checkbox" type="checkbox" name="something_dfield_checkbox" value="[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]" /> [&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]</label></li>\n</ul>'
+        expected = u'<ul>\n<li><label><input data-mask="checkbox" checked="checked" type="checkbox" name="something_dfield_checkbox" value="1" /> 1</label></li>\n<li><label><input data-mask="checkbox" checked="checked" type="checkbox" name="something_dfield_checkbox" value="2" /> 2</label></li>\n<li><label><input data-mask="checkbox" checked="checked" type="checkbox" name="something_dfield_checkbox" value="3" /> 3</label></li>\n<li><label><input data-mask="checkbox" type="checkbox" name="something_dfield_checkbox" value="4" /> 4</label></li>\n</ul>'
         if DJANGO_VERSION >= (1, 5):
             expected = u'<ul>\n<li><label><input data-mask="checkbox" name="something_dfield_checkbox" type="checkbox" value="[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]" /> [&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]</label></li>\n</ul>'
         self.assertEqual(

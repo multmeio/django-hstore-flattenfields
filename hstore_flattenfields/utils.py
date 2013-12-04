@@ -234,6 +234,12 @@ def has_any_in(chances, possibilities):
 
 
 def all_flattenfields_tables_is_created(Models):
+    """
+    >>> from hstore_flattenfields.utils import all_flattenfields_tables_is_created
+    >>> from hstore_flattenfields.models import *
+    >>> all_flattenfields_tables_is_created([DynamicField, ContentPane, DynamicFieldGroup])
+    True
+    """
     db_table_names = connection.introspection.table_names()
     flattenfields_tables = map(lambda x: x._meta.db_table, Models)
     return all([x in db_table_names for x in flattenfields_tables])
@@ -243,6 +249,11 @@ _DYNAMIC_FIELD_TABLE_EXISTS = None
 
 
 def dynamic_field_table_exists():
+    """
+    >>> from hstore_flattenfields.utils import dynamic_field_table_exists
+    >>> dynamic_field_table_exists()
+    True
+    """
     from hstore_flattenfields.models import DynamicField
     dynamic_field_table_name = DynamicField._meta.db_table
     global _DYNAMIC_FIELD_TABLE_EXISTS
@@ -401,22 +412,22 @@ def build_flattenfields_object(obj):
     [<ContentPane: Main Info>]
     >>> DynamicField.objects.all().delete()
     """
-    try:
-        from hstore_flattenfields.models import (
-            DynamicField, ContentPane
-        )
-        assert dynamic_field_table_exists()
-    except (AssertionError, ImportError):
-        content_panes = metafields = []
-    else:
-        metafields = DynamicField.objects.filter(
-            refer=obj.__class__.__name__
-        ).order_by('pk')
-        content_panes = ContentPane.objects.filter(
-            Q(content_type__model=obj.__class__.__name__.lower())
-        )
-    setattr(obj, '_dynamic_fields', filter(lambda x: x, metafields))
-    setattr(obj, '_content_panes', filter(lambda x: x, content_panes))
+    from hstore_flattenfields.models import (
+        DynamicField, 
+        ContentPane
+    )
+    content_panes = metafields = []
+    metafields = DynamicField.objects.filter(
+        refer=obj.__class__.__name__
+    ).order_by('pk')
+    content_panes = ContentPane.objects.filter(
+        Q(content_type__model=obj.__class__.__name__.lower())
+    )
+    setattr(obj, '_dynamic_fields', metafields)
+    setattr(obj, '_content_panes', content_panes)
     setattr(obj._meta, '_model_dynamic_fields', 
             map(create_field_from_instance, metafields))
-    
+    # try:
+    # assert dynamic_field_table_exists()
+    # except (AssertionError, ImportError):
+    # else:

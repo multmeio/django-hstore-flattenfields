@@ -5,3 +5,4 @@ from test_forms import *
 from test_dynamic_field_groups import *
 from test_inheritance import *
 from test_content_panes import *
+from test_utils import *
