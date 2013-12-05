@@ -308,6 +308,9 @@ class HStoreM2MGroupedModel(HStoreModel):
         abstract = True
 
     def __init__(self, *args, **kwargs):
+        # NOTE: Populating related_instances for the next time
+        # and override this property
+        self.related_instances = self._related_instances()
         super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)
         # print "\t%s \n\t%s\n\n" % (self._dfields, self.dynamic_fields)
         # self._is_cached = False
@@ -354,8 +357,8 @@ class HStoreM2MGroupedModel(HStoreModel):
     #         cache.set(self.custom_cache_key, related_instances)
     #         self._is_cached = True
 
-    @property
-    def related_instances(self):
+    # @property
+    def _related_instances(self):
         # if not cache.get(self.custom_cache_key):
         # if not self._is_cached:
         #     # NOTE: We had to rebuild the cache in this case
