@@ -150,6 +150,14 @@ class HstoreCharField(models.CharField):
             value = str(value)
         return value
 
+    def value_to_string(self, obj):
+        value = self._get_val_from_obj(obj) or ''
+        
+        if value and not isinstance(value, basestring):
+            value = str(value)
+
+        return value
+
 
 class HstoreDecimalField(models.DecimalField):
     __metaclass__ = models.SubfieldBase

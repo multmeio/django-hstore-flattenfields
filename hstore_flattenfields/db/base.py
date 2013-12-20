@@ -7,7 +7,9 @@ except AttributeError:
     from django.db.models.base import ModelBase
 
 from django.core.cache import cache
+from django.db.models.query import QuerySet
 from django_orm.postgresql import hstore
+
 from hstore_flattenfields.db.manager import FlattenFieldsFilterManager
 from hstore_flattenfields.utils import (
     get_fieldnames,
@@ -38,11 +40,12 @@ class HStoreModelMeta(ModelBase):
                 # from hstore_flattenfields.models import DynamicField
                 def by_name(f):
                     return f.name == key
-                field = filter(by_name, self._meta.dynamic_fields)
+
+                field = filter(by_name, self.dynamic_fields)
                 # field = DynamicField.objects.filter(name=key).order_by('pk')
                 if field:
                     # field = get_modelfield(field[0].typo)()
-                    field = field[0]
+                    field = field[0].get_modelfield
                     try:
                         value = self._dfields[key]
                     except KeyError:
@@ -63,30 +66,65 @@ class HStoreModelMeta(ModelBase):
                 if field and field.__class__.__name__ == 'ManyRelatedManager':
                     return field.all()
                 return field
-        new_class.__getattribute__ = __getattribute__
+
+        def __getattribute__(self, key):
+            if hasattr(self, 'dynamic_fields') and \
+               key in map(lambda x: x.name, self.dynamic_fields):
+                import ipdb; ipdb.set_trace()
+            return models.Model.__getattribute__(self, key)
+            # if key in self._meta.get_all_dynamic_field_names():
+            #     key not in map(lambda x: x.name, self.dynamic_fields)
+            # else:
+            # try:
+            #     return models.Model.__getattribute__(self, key)
+            # except:
+            #     if key == '_dfields':
+            #         return []
+            #     if key in self._dfields:
+            #         dfield = self._meta.get_field_by_name(key)[0]
+                    
+            #         value = self._dfields[key]
+            #         return dfield.to_python(value)
+            #     else:
+            #         return models.Model.__getattribute__(self, key)
+                    
+                
+        # new_class.__getattribute__ = __getattribute__
 
         old_setattr = new_class.__setattr__
         def __setattr__(self, key, value):
-            if hasattr(self, '_dfields') and not key in dir(new_class):
-                # from django.core.cache import cache
-                # queryset = cache.get('dynamic_fields', [])
-                # dfield = [f for f in queryset if f.refer==new_class.__name__ and\
-                #           f.name==key]
-                # from hstore_flattenfields.models import DynamicField
-                # dfield = DynamicField.objects.filter(name=key, refer=new_class.__name__)
-                def by_name(f):
-                    return f.name == key
-                dfield = filter(by_name, self._meta.dynamic_fields)
-                if dfield:
-                    # value = get_modelfield(dfield[0])().to_python(value)
-                    value = dfield[0].to_python(value)
-
-                    self._dfields[key] = ''
-                    if value is not None:
-                        self._dfields[key] = unicode(value)
-                    return
-            # print "called __setattr__(%r, %r)" % (key, value)
             old_setattr(self, key, value)
+            # models.Model.__setattr__(self, key, value)
+
+            if value and key in self._meta.get_all_dynamic_field_names():
+                dynamic_field = self._meta.get_field_by_name(key)[0]
+                self._dfields.update({
+                    key: dynamic_field.value_to_string(self)
+                })
+
+            # if 'customer_idade' == key:
+            #     print "%s: %s - %s" % (key, getattr(self, key), self._dfields.get(key))
+            
+            
+            # if hasattr(self, '_dfields') and not key in dir(new_class):
+            #     # from django.core.cache import cache
+            #     # queryset = cache.get('dynamic_fields', [])
+            #     # dfield = [f for f in queryset if f.refer==new_class.__name__ and\
+            #     #           f.name==key]
+            #     # from hstore_flattenfields.models import DynamicField
+            #     # dfield = DynamicField.objects.filter(name=key, refer=new_class.__name__)
+            #     def by_name(f):
+            #         return f.name == key
+            #     dfield = filter(by_name, self._meta.dynamic_fields)
+            #     if dfield:
+            #         # value = get_modelfield(dfield[0])().to_python(value)
+            #         value = dfield[0].to_python(value)
+
+            #         self._dfields[key] = ''
+            #         if value is not None:
+            #             self._dfields[key] = unicode(value)
+            #         return
+            # print "called __setattr__(%r, %r)" % (key, value)
         new_class.__setattr__ = __setattr__
 
         old_delattr = new_class.__delattr__
@@ -100,56 +138,56 @@ class HStoreModelMeta(ModelBase):
 
         _old_meta = new_class._meta
         class _meta(object):
-            def __eq__(self, other):
-                return _old_meta == other
+            # def __eq__(self, other):
+            #     return _old_meta == other
 
             def __getattr__(self, key):
                 return getattr(_old_meta, key)
 
-            def __setattr__(self, key, value):
-                return setattr(_old_meta, key, value)
+            # def __setattr__(self, key, value):
+            #     return setattr(_old_meta, key, value)
 
-            def init_name_map(self):
-                _cache = _old_meta.init_name_map()
-                for dfield in self.dynamic_fields:
-                    _cache.update(**{
-                        dfield.name: (dfield, _old_meta.concrete_model, True, False)
-                    })
-                return _cache
+            # def init_name_map(self):
+            #     _cache = _old_meta.init_name_map()
+            #     for dfield in self.dynamic_fields:
+            #         _cache.update(**{
+            #             dfield.name: (dfield, _old_meta.concrete_model, True, False)
+            #         })
+            #     return _cache
 
-            def get_field_by_name(self, name):
-                if name is 'pk':
-                    name = 'id'
-                try:
-                    if hasattr(self, '_name_map') and name in self._name_map:
-                        return self._name_map[name]
-                    else:
-                        cache = self.init_name_map()
-                        return cache[name]
-                except KeyError:
-                    raise FieldDoesNotExist('%s has no field named %r'
-                                            % (self.object_name, name))
+            # def get_field_by_name(self, name):
+            #     if name is 'pk':
+            #         name = 'id'
+            #     try:
+            #         if hasattr(self, '_name_map') and name in self._name_map:
+            #             return self._name_map[name]
+            #         else:
+            #             cache = self.init_name_map()
+            #             return cache[name]
+            #     except KeyError:
+            #         raise FieldDoesNotExist('%s has no field named %r'
+            #                                 % (self.object_name, name))
 
-            def get_field(self, name, many_to_many=True):
-                """
-                Returns the requested field by name. Raises FieldDoesNotExist on error.
-                """
-                to_search = many_to_many and (
-                    self.fields + self.many_to_many) or self.fields
-                for f in to_search:
-                    if f.name == name:
-                        return f
-                raise FieldDoesNotExist(
-                    '%s has no field named %r' % (self.object_name, name))
+            # def get_field(self, name, many_to_many=True):
+            #     """
+            #     Returns the requested field by name. Raises FieldDoesNotExist on error.
+            #     """
+            #     to_search = many_to_many and (
+            #         self.fields + self.many_to_many) or self.fields
+            #     for f in to_search:
+            #         if f.name == name:
+            #             return f
+            #     raise FieldDoesNotExist(
+            #         '%s has no field named %r' % (self.object_name, name))
 
-            def get_all_field_names(self):
-                declared_and_dfields = set(
-                    get_fieldnames(self.fields, ['_dfields']))
-                relation_fields = set()
-                if hasattr(self, '_name_map'):
-                    relation_fields = set(getattr(self, '_name_map').keys())
-                all_fields = list(declared_and_dfields.union(relation_fields))
-                return all_fields
+            # def get_all_field_names(self):
+            #     declared_and_dfields = set(
+            #         get_fieldnames(self.fields, ['_dfields']))
+            #     relation_fields = set()
+            #     if hasattr(self, '_name_map'):
+            #         relation_fields = set(getattr(self, '_name_map').keys())
+            #     all_fields = list(declared_and_dfields.union(relation_fields))
+            #     return all_fields
 
             def get_all_dynamic_field_names(self):
                 return get_fieldnames(self.dynamic_fields)
@@ -165,10 +203,18 @@ class HStoreModelMeta(ModelBase):
                 #     refer=new_class.__name__
                 # ).order_by('pk')
                 # return map(create_field_from_instance, metafields)
-                try:
-                    fields = self._model_dynamic_fields
-                except AttributeError:
-                    fields = []
+                return filter(
+                    lambda x: x.db_type == 'dynamic_field', 
+                    self.fields
+                )
+                # try:
+                #     # fields = self._model_dynamic_fields
+                #     fields = filter(
+                #         lambda x: x.db_type == 'dynamic_field', 
+                #         self.fields
+                #     )
+                # except AttributeError:
+                #     fields = []
                 # for metafield in metafields:
                 #     try:
                 #         fields.append(
@@ -180,30 +226,30 @@ class HStoreModelMeta(ModelBase):
                 #                        'is not a django type') % (metafield, metafield.typo))
                 return fields
 
-            @property
-            def fields(self):
-                return _old_meta.fields + self.dynamic_fields
-
-            def get_base_chain(self, model):
-                """
-                Returns a list of parent classes leading to 'model' (order from closet
-                to most distant ancestor). This has to handle the case were 'model' is
-                a granparent or even more distant relation.
-                """
-                if model in self.parents or not self.parents:
-                    # FIXME: In cases of the actual Model doesn`t have
-                    # Any parent, so return him
-                    return [model]
-                parent = None
-                for parent in self.parents:
-                    res = parent._meta.get_base_chain(model)
-                    if res:
-                        res.insert(0, parent)
-                        return res
-                if model.__base__ == parent:
-                    return [parent]
-                raise TypeError('%r is not an ancestor of this model'
-                                % model._meta.module_name)
+            # @property
+            # def fields(self):
+            #     return _old_meta.fields + self.dynamic_fields
+                
+            # def get_base_chain(self, model):
+            #     """
+            #     Returns a list of parent classes leading to 'model' (order from closet
+            #     to most distant ancestor). This has to handle the case were 'model' is
+            #     a granparent or even more distant relation.
+            #     """
+            #     if model in self.parents or not self.parents:
+            #         # FIXME: In cases of the actual Model doesn`t have
+            #         # Any parent, so return him
+            #         return [model]
+            #     parent = None
+            #     for parent in self.parents:
+            #         res = parent._meta.get_base_chain(model)
+            #         if res:
+            #             res.insert(0, parent)
+            #             return res
+            #     if model.__base__ == parent:
+            #         return [parent]
+            #     raise TypeError('%r is not an ancestor of this model'
+            #                     % model._meta.module_name)
         new_class._meta = _meta()
         return new_class
 
@@ -255,14 +301,29 @@ class HStoreModel(models.Model):
     def content_panes(self):
         return self._content_panes
 
+    @property
+    def related_instances(self):
+        return []
+    
+
 
 class HStoreGroupedModel(HStoreModel):
     class Meta:
         abstract = True
 
+    def __init__(self, *args, **kwargs):
+        from hstore_flattenfields.models import DynamicFieldGroup
+        super(HStoreGroupedModel, self).__init__(*args, **kwargs)
+        
+        instance = getattr(self, self._meta.hstore_related_field)
+        if instance.__class__ != DynamicFieldGroup and \
+           issubclass(instance.__class__, DynamicFieldGroup):
+            instance = instance.dynamicfieldgroup_ptr
+        setattr(self, '_related_instance', instance)
+        
     @property
     def related_instance(self):
-        return getattr(self, self._meta.hstore_related_field)
+        return self._related_instance
 
     @property
     def dynamic_fields(self):
@@ -272,7 +333,7 @@ class HStoreGroupedModel(HStoreModel):
             related_instance = self.related_instance
             if related_instance:
                 return dynamic_field.group == None or \
-                    related_instance.dynamicfieldgroup_ptr == dynamic_field.group
+                    related_instance == dynamic_field.group
             try:
                 if dynamic_field.group == None:
                     return True
@@ -291,7 +352,7 @@ class HStoreGroupedModel(HStoreModel):
             related_instance = self.related_instance
             if related_instance:
                 return content_pane.group == None or \
-                    related_instance.dynamicfieldgroup_ptr == content_pane.group
+                    related_instance == content_pane.group
             try:
                 if content_pane.group == None:
                     return True
@@ -309,27 +370,47 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     def __init__(self, *args, **kwargs):
         super(HStoreM2MGroupedModel, self).__init__(*args, **kwargs)
+        if not self.pk: return
+
+        from hstore_flattenfields.models import DynamicFieldGroup
+        try:
+            instances = getattr(
+                self, self._meta.hstore_related_field
+            ).prefetch_related('dynamicfieldgroup_ptr')
+        except (AttributeError, ValueError):
+            instances = []
+
+        if isinstance(instances, QuerySet):
+            QueryModel = instances.query.model
+            if QueryModel != DynamicFieldGroup and \
+               issubclass(QueryModel, DynamicFieldGroup):
+                instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
+        setattr(self, '_related_instances', instances)
+            
+        dfields_names = map(lambda x: x.name, self.dynamic_fields)
+        for dynamic_field in self._meta._model_dynamic_fields:
+            if dynamic_field.name not in dfields_names:
+                setattr(self, dynamic_field.name, None)
+                    
         # print "\t%s \n\t%s\n\n" % (self._dfields, self.dynamic_fields)
         # self._is_cached = False
         # if not cache.get(self.custom_cache_key):
         #     self._cache_builder()
 
-        if not self.pk:
-            return
 
-        base_class = self.__class__.__base__
-        hstore_classes = [HStoreModel, HStoreM2MGroupedModel]
+        # base_class = self.__class__.__base__
+        # hstore_classes = [HStoreModel, HStoreM2MGroupedModel]
 
-        if not base_class in hstore_classes:
-            related_name = "%s_ptr" % base_class.__name__.lower()
+        # if not base_class in hstore_classes:
+        #     related_name = "%s_ptr" % base_class.__name__.lower()
 
-            for dfield in self.dynamic_fields:
-                name = dfield.name
+        #     for dfield in self.dynamic_fields:
+        #         name = dfield.name
 
-                if hasattr(self.__class__, related_name):
-                    parent = getattr(self, related_name)
-                    value = getattr(parent, name, '')
-                    setattr(self, name, value)
+        #         if hasattr(self.__class__, related_name):
+        #             parent = getattr(self, related_name)
+        #             value = getattr(parent, name, '')
+        #             setattr(self, name, value)
 
     # def __del__(self, *args, **kwargs):
     #     cache.delete(self.custom_cache_key)
@@ -356,6 +437,7 @@ class HStoreM2MGroupedModel(HStoreModel):
 
     @property
     def related_instances(self):
+        return self._related_instances
         # if not cache.get(self.custom_cache_key):
         # if not self._is_cached:
         #     # NOTE: We had to rebuild the cache in this case
@@ -363,29 +445,30 @@ class HStoreM2MGroupedModel(HStoreModel):
         #     #       DynamicFieldGroup`s after the object get his id
         #     self._cache_builder()
         # instances = cache.get(self.custom_cache_key)
-        try:
-            instances = getattr(
-                self, self._meta.hstore_related_field
-            ).prefetch_related('dynamicfieldgroup_ptr')
-        except (AttributeError, ValueError):
-            instances = None
+        # try:
+        #     instances = getattr(
+        #         self, self._meta.hstore_related_field
+        #     ).prefetch_related('dynamicfieldgroup_ptr')
+        # except (AttributeError, ValueError):
+        #     instances = None
 
-        from django.db.models.query import QuerySet
-        if not isinstance(instances, QuerySet):
-            return []
+        # from django.db.models.query import QuerySet
+        # if not isinstance(instances, QuerySet):
+        #     return []
 
-        from hstore_flattenfields.models import DynamicFieldGroup
-        QueryModel = instances.query.model
+        # from hstore_flattenfields.models import DynamicFieldGroup
+        # QueryModel = instances.query.model
 
 
-        if QueryModel != DynamicFieldGroup and \
-           issubclass(QueryModel, DynamicFieldGroup):
-            instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
-        return instances
+        # if QueryModel != DynamicFieldGroup and \
+        #    issubclass(QueryModel, DynamicFieldGroup):
+        #     instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
+        # return instances
 
     @property
     def dynamic_fields(self):
         dynamic_fields = super(HStoreM2MGroupedModel, self).dynamic_fields
+
         def by_groups(dynamic_field):
             return dynamic_field.group == None or \
                    dynamic_field.group in self.related_instances

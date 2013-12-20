@@ -414,7 +414,7 @@ def build_flattenfields_object(obj):
     """
     try:
         from hstore_flattenfields.models import (
-            DynamicField, ContentPane
+            DynamicField, ContentPane, DynamicFieldGroup
         )
         assert dynamic_field_table_exists()
     except (AssertionError, ImportError):
@@ -426,7 +426,47 @@ def build_flattenfields_object(obj):
         content_panes = ContentPane.objects.filter(
             Q(content_type__model=obj.__class__.__name__.lower())
         )
-    setattr(obj, '_dynamic_fields', filter(lambda x: x, metafields))
-    setattr(obj, '_content_panes', filter(lambda x: x, content_panes))
-    setattr(obj._meta, '_model_dynamic_fields',
-            map(create_field_from_instance, metafields))
+        model_dynamic_fields = map(
+            create_field_from_instance, 
+            metafields
+        )
+
+        try:
+            instances = getattr(
+                obj, obj._meta.hstore_related_field
+            ).prefetch_related('dynamicfieldgroup_ptr')
+        except (AttributeError, ValueError):
+            instances = []
+
+        from django.db.models.query import QuerySet
+        if isinstance(instances, QuerySet):
+            QueryModel = instances.query.model
+            if QueryModel != DynamicFieldGroup and \
+               issubclass(QueryModel, DynamicFieldGroup):
+                instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
+                
+    setattr(obj, '_related_instances', instances)
+    setattr(obj, '_dynamic_fields', metafields)
+    setattr(obj, '_content_panes', content_panes)
+    # setattr(obj._meta, '_model_dynamic_fields', model_dynamic_fields)
+    
+    for dynamic_field in model_dynamic_fields:
+        name = dynamic_field.name
+
+        # FIXME: This code is in the wrong place, he leads wit
+        #        Entity attributes, we are in a Instance scope.
+        if not name in obj._meta.get_all_field_names():
+            dynamic_field.contribute_to_class(
+                obj.__class__, name
+            )
+            
+            
+        obj_dfields = map(lambda x: x.name, obj.dynamic_fields)
+        value = None
+        if hasattr(obj, '_dfields') and name in obj_dfields:
+            value = dynamic_field.get_val_from_obj(obj)
+                
+        # obj.__dict__[name] = value
+        setattr(obj, name, None)
+
+        # setattr(obj, dynamic_field.name, )

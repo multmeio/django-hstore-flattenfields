@@ -17,3 +17,12 @@ from hstore_flattenfields.db.queryset import FlattenFieldsFilterQuerySet
 class FlattenFieldsFilterManager(HStoreManager):
     def get_query_set(self):
         return FlattenFieldsFilterQuerySet(model=self.model, using=self._db)
+
+    def _insert(self, *args, **kwargs):
+        def is_not_dynamic(field):
+            return not field.db_type == 'dynamic_field'
+
+        kwargs.update({
+            'fields': filter(is_not_dynamic, kwargs.get('fields'))
+        })
+        return super(FlattenFieldsFilterManager, self)._insert(*args, **kwargs)
