@@ -101,13 +101,13 @@ class HstoreIntegerFieldTests(TestCase):
         DynamicField.objects.create(id=1, refer="Something", typo="Integer", name="something_dfield_int", verbose_name=u"Dynamic Field Int")
         something = Something.objects.create(something_dfield_int=3)
 
-        self.assertEqual(f.value_to_string(something), 3)
+        self.assertEqual(f.value_to_string(something), "3")
         _update_obj(something, "something_dfield_int", -3)
-        self.assertEqual(f.value_to_string(something), -3)
+        self.assertEqual(f.value_to_string(something), "-3")
         _update_obj(something, "something_dfield_int", None)
-        self.assertEqual(f.value_to_string(something), None)
+        self.assertEqual(f.value_to_string(something), "")
         _update_obj(something, "something_dfield_int", "aaa")
-        self.assertEqual(f.value_to_string(something), None)
+        self.assertEqual(f.value_to_string(something), "")
 
     def test_clean(self):
         f = HstoreIntegerField(name="something_dfield_int")
@@ -176,10 +176,10 @@ class HstoreDateTimeFieldTests(TestCase):
         DynamicField.objects.create(id=1, refer="Something", typo="DateTime", name="something_dfield_datetime", verbose_name=u"Dynamic Field Datetime")
         something = Something.objects.create(something_dfield_datetime="2013-05-25 11:04:33")
 
-        self.assertEqual(f.value_to_string(something), "2013-05-25T11:04:33")
+        self.assertEqual(f.value_to_string(something), "2013-05-25 11:04:33")
         _update_obj(something, "something_dfield_datetime", datetime(2013, 2, 9, 11, 30, 22))
 
-        self.assertEqual(f.value_to_string(something), "2013-02-09T11:30:22")
+        self.assertEqual(f.value_to_string(something), "2013-02-09 11:30:22")
         _update_obj(something, "something_dfield_datetime", None)
         self.assertEqual(f.value_to_string(something), "")
 

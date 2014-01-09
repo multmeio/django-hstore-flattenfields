@@ -13,25 +13,24 @@ used in hstore_flattenfields application.
 :license: BSD, see LICENSE for more details.
 """
 
-import sys
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext as _
-from django.core.cache import cache
 
 from django_orm.postgresql import hstore
 from django_extensions.db.fields import AutoSlugField
 
 from db.base import (
     HStoreModel,
+    HStoreGroupedModel,
     HStoreM2MGroupedModel,
 )
 from hstore_flattenfields.utils import (
     single_list_to_tuple,
     FIELD_TYPES,
     FIELD_TYPES_WITHOUT_BLANK_OPTION,
-    all_flattenfields_tables_is_created,
 )
+from hstore_flattenfields.signals import *
 
 
 # Setup the "class Meta:" flattenfields custom configs
@@ -66,6 +65,16 @@ class DynamicFieldGroup(models.Model):
         verbose_name = _('Dynamic Field Group')
         verbose_name_plural = _('Dynamic Field Groups')
 
+    def __unicode__(self):
+        """
+        Returns a pretty representation of this object.
+
+        >>> group = DynamicFieldGroup.objects.create(name="Test Group")
+        >>> unicode(group)
+        u'Test Group'
+        """
+        return u"%s" % self.name
+
     @property
     def fields(self):
         """
@@ -78,23 +87,7 @@ class DynamicFieldGroup(models.Model):
         >>> group.fields
         [<DynamicField: Age>]
         """
-        # dynamic_fields = cache.get('dynamic_fields', [])
-        # def by_group(dynamic_field):
-        #     if hasattr(self, 'dynamicfieldgroup_ptr'):
-        #         return dynamic_field.group == self.dynamicfieldgroup_ptr
-        #     return dynamic_field.group == self
-        # return filter(by_group, dynamic_fields)
         return DynamicField.objects.filter(models.Q(group=self) | models.Q(group=None))
-
-    def __unicode__(self):
-        """
-        Returns a pretty representation of this object.
-
-        >>> group = DynamicFieldGroup.objects.create(name="Test Group")
-        >>> unicode(group)
-        u'Test Group'
-        """
-        return u"%s" % self.name
 
 
 class ContentPane(models.Model):
@@ -147,8 +140,7 @@ class ContentPane(models.Model):
         >>> content_pane.fields
         [<DynamicField: Age>]
         """
-        # return DynamicField.objects.cache_filter(cpane=self)
-        return DynamicField.objects.filter(content_pane=self)
+        return self.dynamic_fields.order_by('order')
 
     @property
     def is_generic(self):
@@ -209,13 +201,4 @@ class DynamicField(models.Model):
 
     @property
     def has_blank_option(self):
-        return self.blank and \
-            self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION
-
-
-# NOTE: Skip the cache when we use the Test Mode
-# flattenfields_models = [ContentPane, DynamicFieldGroup, DynamicField]
-# if all_flattenfields_tables_is_created(flattenfields_models):
-#     # Initial cache charge
-#     for Model in flattenfields_models:
-#         Model.objects.charge_cache()
+        return self.blank and self.typo not in FIELD_TYPES_WITHOUT_BLANK_OPTION

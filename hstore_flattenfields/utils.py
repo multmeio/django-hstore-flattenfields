@@ -28,6 +28,9 @@ import six
 DATETIME_ISO_RE = re.compile(
     r'(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2}) (?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2})$'
 )
+DATETIME_ISO_TZ_RE = re.compile(
+    r'(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2}) (?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2})$'
+)
 DATETIME_ISO_MS_RE = re.compile(
     r'(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2}) (?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}).(?P<microsecond>\d{1,6})$'
 )
@@ -44,7 +47,7 @@ DATE_BR_RE = re.compile(
     r'(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{4})$'
 )
 
-REGEX_DATETIMES = [DATETIME_ISO_RE, DATETIME_ISO_MS_RE, DATETIME_BR_RE,
+REGEX_DATETIMES = [DATETIME_ISO_RE, DATETIME_ISO_TZ_RE, DATETIME_ISO_MS_RE, DATETIME_BR_RE,
                    DATETIME_BR_MS_RE]
 REGEX_DATES = [DATE_ISO_RE, DATE_BR_RE]
 
@@ -121,7 +124,6 @@ __all__ = ['single_list_to_tuple',
            # 'get_dynamic_field_model',
            'parse_queryset',
            'all_flattenfields_tables_is_created',
-           'build_flattenfields_object',
            'get_ctype',
 ]
 
@@ -175,6 +177,7 @@ def str2datetime(value):
     if not value:
         return ''
 
+    # value = value.replace('T', ' ')
     for regex in REGEX_DATETIMES:
         match = regex.match(value)
         if match:
@@ -263,17 +266,17 @@ def dynamic_field_table_exists():
 
 
 def get_fieldnames(fields, excludes=[]):
-    """
-    >>> from tests.app.models import Author
-    >>> get_fieldnames(Author()._meta.fields)
-    ['id', '_dfields']
-    >>> from tests.app.models import Author
-    >>> get_fieldnames(Author()._meta.fields, ['_dfields'])
-    ['id']
-    """
-    return map(lambda f: f.name,
-       filter(lambda f: f.name not in excludes, fields)
-   )
+    pass
+   #  """
+   #  >>> from tests.app.models import Author
+   #  >>> get_fieldnames(Author()._meta.fields)
+   #  ['id', '_dfields']
+   #  >>> get_fieldnames(Author()._meta.fields, ['_dfields'])
+   #  ['id']
+   #  """
+   #  return map(lambda f: f.name,
+   #     filter(lambda f: f.name not in excludes, fields)
+   # )
 
 
 def create_choices(choices=''):
@@ -392,81 +395,3 @@ def get_ctype(model):
     AttributeError: 'NoneType' object has no attribute '_meta'
     """
     return ContentType.objects.get_for_model(model)
-
-def build_flattenfields_object(obj):
-    """
-    >>> from hstore_flattenfields.models import DynamicField, ContentPane
-    >>> from hstore_flattenfields.utils import get_ctype
-    >>> from tests.app.models import Author
-    >>> DynamicField.objects.all().delete()
-    >>> DynamicField.objects.create(refer="Author", name="author_age", verbose_name=u"Age", typo="Integer")
-    <DynamicField: Age>
-    >>> DynamicField.objects.create(refer="Author", name="author_birth_date", verbose_name=u"Birth Date", typo="Date")
-    <DynamicField: Birth Date>
-    >>> ContentPane.objects.create(name='Main Info', content_type=get_ctype(Author))
-    <ContentPane: Main Info>
-    >>> author = Author.objects.create(author_age=20, author_birth_date='24/05/1992')
-    >>> author._dynamic_fields
-    [<DynamicField: Age>, <DynamicField: Birth Date>]
-    >>> author._content_panes
-    [<ContentPane: Main Info>]
-    >>> DynamicField.objects.all().delete()
-    """
-    try:
-        from hstore_flattenfields.models import (
-            DynamicField, ContentPane, DynamicFieldGroup
-        )
-        assert dynamic_field_table_exists()
-    except (AssertionError, ImportError):
-        content_panes = metafields = []
-    else:
-        metafields = DynamicField.objects.filter(
-            refer=obj.__class__.__name__
-        ).order_by('pk')
-        content_panes = ContentPane.objects.filter(
-            Q(content_type__model=obj.__class__.__name__.lower())
-        )
-        model_dynamic_fields = map(
-            create_field_from_instance, 
-            metafields
-        )
-
-        try:
-            instances = getattr(
-                obj, obj._meta.hstore_related_field
-            ).prefetch_related('dynamicfieldgroup_ptr')
-        except (AttributeError, ValueError):
-            instances = []
-
-        from django.db.models.query import QuerySet
-        if isinstance(instances, QuerySet):
-            QueryModel = instances.query.model
-            if QueryModel != DynamicFieldGroup and \
-               issubclass(QueryModel, DynamicFieldGroup):
-                instances = map(lambda x: x.dynamicfieldgroup_ptr, instances)
-                
-    setattr(obj, '_related_instances', instances)
-    setattr(obj, '_dynamic_fields', metafields)
-    setattr(obj, '_content_panes', content_panes)
-    # setattr(obj._meta, '_model_dynamic_fields', model_dynamic_fields)
-    
-    for dynamic_field in model_dynamic_fields:
-        name = dynamic_field.name
-
-        # FIXME: This code is in the wrong place, he leads wit
-        #        Entity attributes, we are in a Instance scope.
-        if not name in obj._meta.get_all_field_names():
-            dynamic_field.contribute_to_class(
-                obj.__class__, name
-            )
-            
-            
-        obj_dfields = map(lambda x: x.name, obj.dynamic_fields)
-        value = None
-        if hasattr(obj, '_dfields') and name in obj_dfields:
-            value = dynamic_field.get_val_from_obj(obj)
-                
-        # obj.__dict__[name] = value
-        setattr(obj, name, None)
-
-        # setattr(obj, dynamic_field.name, )

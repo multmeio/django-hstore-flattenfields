@@ -10,7 +10,6 @@ Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
 from django import forms
 from django.db import models
 from django.utils.text import capfirst
-from django.core.cache import cache
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime
 
@@ -108,7 +107,9 @@ class HstoreIntegerField(models.IntegerField):
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
         if value:
-            return int(value)
+            return str(value)
+        else:
+            return ''
 
     def clean(self, value, instance):
         return value
@@ -197,6 +198,7 @@ class HstoreDateField(models.DateField):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
+            
         self.html_attrs = kwargs.pop('html_attrs', None)
         super(HstoreDateField, self).__init__(*args, **kwargs)
 
@@ -252,6 +254,7 @@ class HstoreDateTimeField(models.DateTimeField):
     def to_python(self, value):
         if not value or value is models.fields.NOT_PROVIDED:
             return None
+        
         return str2datetime(value)
 
     def _get_val_from_obj(self, obj):
@@ -262,9 +265,9 @@ class HstoreDateTimeField(models.DateTimeField):
 
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
-
+        
         if value and isinstance(value, datetime):
-            return value.isoformat()
+            return value.isoformat().replace('T', ' ')
         return ''
 
     def clean(self, value, instance):

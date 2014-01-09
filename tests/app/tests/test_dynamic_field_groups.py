@@ -37,6 +37,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
             something_age=42,
             something_slug="some-name",
         )
+
         self.assertEqual(
             self.something.dynamic_fields,
             [self.age_field, self.description_field]
@@ -49,6 +50,7 @@ class OneToManyDynamicFieldGroupTests(TestCase):
             something_age=42,
             something_slug="some-name",
         )
+        
         self.assertEqual(
             self.something.dynamic_fields,
             [self.slug_field, self.info_field, self.description_field]
@@ -80,6 +82,9 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
         )
         self.author.author_groups.add(self.group1)
         self.author.author_groups.add(self.group2)
+
+        self.author = Author.objects.get()
+
         self.assertEqual(
             self.author.dynamic_fields,
             [self.age_field, self.name_field, self.information_field]
@@ -97,6 +102,7 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
             author_name="some-name",
         )
         self.author.author_groups.add(self.group1)
+        self.author = Author.objects.get()
         self.assertEqual(
             self.author.dynamic_fields,
             [self.age_field, self.information_field]
@@ -130,6 +136,7 @@ class ContentPaneTests(TestCase):
 
     def test_assert_form_fields_names(self):
         form = self.AuthorForm(instance=self.author)
+        
         self.assertEquals(
             form.fields.keys(),
             ['author_groups', u'author_age', u'author_name']

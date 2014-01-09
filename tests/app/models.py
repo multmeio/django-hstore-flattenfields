@@ -32,7 +32,7 @@ class Author(HStoreM2MGroupedModel):
 
     def __str__(self):
         if hasattr(self, 'author_name'):
-            return self.author_name
+            return "%s" % self.author_name
         else:
             return super(Author, self).__str__()
 
@@ -44,7 +44,7 @@ class Illustrator(Author):
         
     def __str__(self):
         if hasattr(self, 'illustrator_name'):
-            return self.illustrator_name
+            return "%s" % self.illustrator_name
         else:
             return super(Author, self).__str__()
 
@@ -54,7 +54,7 @@ class Tag(HStoreModel):
 
     def __str__(self):
         if hasattr(self, 'tag_name'):
-            return self.tag_name
+            return "%s" % self.tag_name
         else:
             return super(Author, self).__str__()
 
@@ -67,7 +67,7 @@ class Book(HStoreModel):
 
     def __str__(self):
         if hasattr(self, 'title'):
-            return self.title
+            return self.title or ''
         else:
             return "Book %s" % self.pk
 
@@ -75,7 +75,7 @@ class Book(HStoreModel):
 class Season(HStoreModel):
     def __str__(self):
         if hasattr(self, 'year'):
-            return self.year
+            return self.year or ''
         else:
             return super(Author, self).__str__()
 

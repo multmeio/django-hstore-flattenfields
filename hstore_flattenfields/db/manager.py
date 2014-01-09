@@ -8,7 +8,6 @@ Copyright (c) 2012 Multmeio [design+tecnologia]. All rights reserved.
 """
 
 from django.db import models
-from django.core.cache import cache
 from django_orm.postgresql.hstore import HStoreManager
 
 from hstore_flattenfields.db.queryset import FlattenFieldsFilterQuerySet

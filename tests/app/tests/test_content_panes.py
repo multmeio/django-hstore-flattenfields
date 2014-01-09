@@ -89,7 +89,9 @@ class AuthorContentPaneTests(TestCase):
             author_age=42, author_name="some-name"
         )
         author.author_groups.add(self.commics_authors)
-        
+
+        author = Author.objects.get()
+
         self.assertQuerysetEqual(
             author.content_panes,
             [

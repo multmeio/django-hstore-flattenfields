@@ -25,7 +25,6 @@ from django.db.models.sql.where import ExtraWhere
 from django.db.models.query import *
 
 from django_orm.core.sql.tree import AND, OR
-# from caching.base import CachingQuerySet
 
 from hstore_flattenfields.utils import *
 
@@ -181,26 +180,8 @@ class HQ(tree.Node):
 
 
 class FlattenFieldsFilterQuerySet(QuerySet):
-# class FlattenFieldsFilterQuerySet(CachingQuerySet):
     def __init__(self, *args, **kwargs):
         super(FlattenFieldsFilterQuerySet, self).__init__(*args, **kwargs)
-        try:
-            from hstore_flattenfields.models import (
-                DynamicField, ContentPane, DynamicFieldGroup
-            )
-            assert dynamic_field_table_exists()
-        except (AssertionError, ImportError):
-            pass
-        else:
-            metafields = DynamicField.objects.filter(
-                refer=self.model.__name__
-            ).order_by('pk')
-            setattr(self.model._meta, 
-                '_model_dynamic_fields', 
-                map(create_field_from_instance, metafields)
-            )
-            setattr(self.model, '_dynamic_fields', metafields)
-
         self.all_dynamic_field_names = self.model._meta.get_all_dynamic_field_names()
         self.all_field_names = self.model._meta.get_all_field_names()
 
@@ -208,15 +189,16 @@ class FlattenFieldsFilterQuerySet(QuerySet):
         def is_not_dynamic(value):
             return not value[0].db_type == 'dynamic_field'
         values = filter(is_not_dynamic, values)
-        
         return super(FlattenFieldsFilterQuerySet, self)._update(values)
-
 
     def hstore_override_method(self, method, *args, **kwargs):
         queries = []
         super_cls = super(FlattenFieldsFilterQuerySet, self)
         for key in kwargs.keys():
             if key.split('__')[0] in self.all_dynamic_field_names:
+                if isinstance(kwargs[key], int):
+                    kwargs[key] = str(kwargs[key])
+
                 queries.append(
                     Q(HQ(**{
                         "_dfields__%s" % key: kwargs[key]
