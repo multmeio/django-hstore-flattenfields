@@ -10,7 +10,7 @@ Replace this with more appropriate tests for your application.
 
 from django.test import TestCase, skipUnlessDBFeature
 from django.core.exceptions import FieldError, ValidationError
-from django.db.models import Sum
+from django.db.models import Sum, fields
 from datetime import date, datetime
 from decimal import Decimal
 from operator import attrgetter
@@ -21,9 +21,11 @@ from tests.app.models import *
 
 class IntegrityTests(TestCase):
     def setUp(self):
+        DynamicField.objects.create(refer="Author", name="author_name", verbose_name=u"Name", typo="Input", max_length=100)
         DynamicField.objects.create(refer="Book", name="pages", verbose_name=u"Pages", typo="Integer")
-        DynamicField.objects.create(refer="Book", name="title", verbose_name=u"Title", typo="CharField", max_length=200)
-        self.b1 = Book.objects.create(pages=20, title="20 Pages")
+        DynamicField.objects.create(refer="Book", name="title", verbose_name=u"Title", typo="Input", max_length=200)
+        self.au1 = Author.objects.create(author_name='Author 1', id=1)
+        self.b1 = Book.objects.create(pages=20, title="20 Pages", author=self.au1)
         Book.objects.create(pages=4, title="4 Pages")
         self.identity = lambda x: x
 
@@ -39,22 +41,41 @@ class IntegrityTests(TestCase):
             ['<Book: 4 Pages>']
         )
 
+    def test_assert_model_m2m_fields(self):
+        self.assertEqual(
+            hasattr(Author, 'author_groups'), True
+        )
+        self.assertIn(
+            'author_groups',
+            Author._meta.get_all_field_names(),
+        )
+
+    def test_assert_model_reverse_related_filter(self):
+        self.assertQuerysetEqual(
+            Book.objects.filter(author=self.au1),
+            ['<Book: 20 Pages>']
+        )        
+        self.assertQuerysetEqual(
+            Author.objects.filter(book__pages=20),
+            ['<Author: Author 1>']
+        )
+
 
 class LookupTests(TestCase):
     maxDiff = None
 
     def setUp(self):
         # Create a few DynamicFields.
-        DynamicField.objects.create(refer="Author", name="author_name", verbose_name=u"Name", typo="CharField", max_length=100)
-        DynamicField.objects.create(refer="Tag", name="tag_name", verbose_name=u"Name", typo="CharField", max_length=100)
+        DynamicField.objects.create(refer="Author", name="author_name", verbose_name=u"Name", typo="Input", max_length=100)
+        DynamicField.objects.create(refer="Tag", name="tag_name", verbose_name=u"Name", typo="Input", max_length=100)
         DynamicField.objects.create(refer="Book", name="pubdate", verbose_name=u"Publication Date", typo="DateTime")
-        DynamicField.objects.create(refer="Book", name="title", verbose_name=u"Title", typo="CharField", max_length=200)
+        DynamicField.objects.create(refer="Book", name="title", verbose_name=u"Title", typo="Input", max_length=200)
         DynamicField.objects.create(refer="Book", name="pages", verbose_name=u"Pages", typo="Integer", default_value=0)
         DynamicField.objects.create(refer="Season", name="year", verbose_name=u"Year", typo="Integer")
         DynamicField.objects.create(refer="Season", name="gt", verbose_name=u"Gt", typo="Integer")
-        DynamicField.objects.create(refer="Game", name="home", verbose_name=u"Home", typo="CharField", max_length=100)
-        DynamicField.objects.create(refer="Game", name="away", verbose_name=u"Away", typo="CharField", max_length=100)
-        DynamicField.objects.create(refer="Player", name="player_name", verbose_name=u"Name", typo="CharField", max_length=100)
+        DynamicField.objects.create(refer="Game", name="home", verbose_name=u"Home", typo="Input", max_length=100)
+        DynamicField.objects.create(refer="Game", name="away", verbose_name=u"Away", typo="Input", max_length=100)
+        DynamicField.objects.create(refer="Player", name="player_name", verbose_name=u"Name", typo="Input", max_length=100)
 
         # Create a few Authors.
         self.au1 = Author.objects.create(author_name='Author 1', id=1)
@@ -353,54 +374,24 @@ class LookupTests(TestCase):
             }], transform=self.identity)
     
     def test_values_without_especifies(self):
-        # If you don't specify field names to values(), all are returned.
         self.assertQuerysetEqual(
-            Book.objects.filter(id=self.b5.id).values(),
+            Book.objects.values('pubdate', 'author', 'tags', '_dfields', 'id', 'illustrators', 'title', 'pages')[:1],
             [{
-                u'pubdate': datetime(2005, 8, 1, 9, 0), 
-                'author': 2, 
+                u'pubdate': datetime(2005, 7, 27, 0, 0), 
+                'author': 1, 
                 'tags': None, 
                 '_dfields': {
-                    u'pages': u'5', 
-                    u'pubdate': u'2005-08-01 09:00:00', 
-                    u'title': u'Book 5'
+                    u'pages': u'2', 
+                    u'pubdate': u'2005-07-27 00:00:00', 
+                    u'title': u'Book 2'
                 }, 
-                'id': 5, 
-                'illustrators': None, 
-                u'title': u'Book 5', 
-                u'pages': 5
-            }], 
+                'id': 2, 
+                'illustrators': None,
+                u'title': u'Book 2', 
+                u'pages': 2
+            }],
             transform=self.identity
         )
-            # [{
-            #     u'pubdate': datetime(2005, 8, 1, 9, 0), 
-            #     u'title': u'Book 5', 'author': 2, 
-            #     '_dfields': {
-            #         u'pages': u'5', 
-            #         u'pubdate': u'2005-08-01 09:00:00', 
-            #         u'title': u'Book 5'
-            #     }, 
-            #     'id': 5, 
-            #     'illustrators': None, 
-            #     'tag': 101, 
-            #     u'pages': 5, 
-            #     'tags': None
-            # }, 
-            # {
-            #     u'pubdate': datetime(2005, 8, 1, 9, 0), 
-            #     u'title': u'Book 5', 
-            #     'author': 2, 
-            #     '_dfields': {
-            #         u'pages': u'5', 
-            #         u'pubdate': u'2005-08-01 09:00:00', 
-            #         u'title': u'Book 5'
-            #     }, 
-            #     'id': 5, 
-            #     'illustrators': None, 
-            #     'tag': 102, 
-            #     u'pages': 5, 
-            #     'tags': None
-            # }], transform=self.identity)
 
     def test_values_list__title(self):
         # values_list() is similar to values(), except that the results are
@@ -777,25 +768,10 @@ class LookupTests(TestCase):
             ])
 
     def test_nonfield_lookups(self):
-        """
-        Ensure that a lookup query containing non-fields DONT 
-        raises the any exception.
-        Because we dont have know what kind of name the
-        Dynamic Fields in each DB Register.
-        """
-        self.assertQuerysetEqual(
-            Book.objects.filter(name__blahblah=99),
-            []
-        )
-        self.assertQuerysetEqual(
+        with self.assertRaises(fields.FieldDoesNotExist):
+            Book.objects.filter(name__blahblah=99)
+        with self.assertRaises(fields.FieldDoesNotExist):
             Book.objects.filter(name__blahblah__exact=99),
-            []
-        )
-        self.assertQuerysetEqual(
-            Book.objects.filter(blahblah=99),
-            []
-        )
-
     # def test_lookup_collision(self):
     #     """
     #     Ensure that genuine field names don't collide with built-in lookup

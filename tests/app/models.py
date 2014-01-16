@@ -23,6 +23,7 @@ class Something(HStoreGroupedModel):
 
 
 class Author(HStoreM2MGroupedModel):
+    # author_name = models.CharField(max_length=50)
     # relations
     author_groups = models.ManyToManyField(AuthorType, null=True, blank=True, related_name='authors', verbose_name=u'Group')
 
@@ -61,6 +62,8 @@ class Tag(HStoreModel):
 
 
 class Book(HStoreModel):
+    # pages = models.IntegerField()
+    
     author = models.ForeignKey('Author', null=True, blank=True)
     illustrators = models.ManyToManyField('Illustrator', related_name='books')
     tags = models.ManyToManyField('Tag')

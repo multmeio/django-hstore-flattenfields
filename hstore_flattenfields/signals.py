@@ -25,7 +25,8 @@ def fill_model_with_fields(sender, **kwargs):
         for dynamic_field in metafields:
             field = create_field_from_instance(dynamic_field)
             if not field.name in sender._meta.get_all_field_names():
-                field.contribute_to_class(sender, field.name)
+                sender.add_to_class(field.name, field)
+                # field.contribute_to_class(sender, field.name)
         setattr(sender, '_dynamic_fields', metafields)
         setattr(sender, '_content_panes', content_panes)
         

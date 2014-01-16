@@ -184,6 +184,7 @@ class FlattenFieldsFilterQuerySet(QuerySet):
         super(FlattenFieldsFilterQuerySet, self).__init__(*args, **kwargs)
         self.all_dynamic_field_names = self.model._meta.get_all_dynamic_field_names()
         self.all_field_names = self.model._meta.get_all_field_names()
+        
 
     def _update(self, values):
         def is_not_dynamic(value):
@@ -192,10 +193,14 @@ class FlattenFieldsFilterQuerySet(QuerySet):
         return super(FlattenFieldsFilterQuerySet, self)._update(values)
 
     def hstore_override_method(self, method, *args, **kwargs):
+        from hstore_flattenfields.db.base import HStoreModel
         queries = []
         super_cls = super(FlattenFieldsFilterQuerySet, self)
+        opts = self.model._meta
+        
         for key in kwargs.keys():
             if key.split('__')[0] in self.all_dynamic_field_names:
+                
                 if isinstance(kwargs[key], int):
                     kwargs[key] = str(kwargs[key])
 
@@ -204,6 +209,29 @@ class FlattenFieldsFilterQuerySet(QuerySet):
                         "_dfields__%s" % key: kwargs[key]
                     }))
                 )
+            elif '__' in key and not key.split('__')[1] in VALUE_OPERATORS.keys():
+                if isinstance(kwargs[key], int):
+                    kwargs[key] = str(kwargs[key])
+
+                if hasattr(opts.get_field_by_name(key.split('__')[0])[0], 'field') and\
+                 opts.get_field_by_name(key.split('__')[0])[0].field.__class__.__name__ == 'ForeignKey' and \
+                 issubclass(opts.get_field_by_name(key.split('__')[0])[0].model, HStoreModel) and \
+                 key.split('__')[1] in opts.get_field_by_name(key.split('__')[0])[0].model._meta.get_all_dynamic_field_names():
+                    recursive_key = "%s___dfields__%s" % tuple(key.split('__'))
+                    queries.append(
+                        Q(HQ(**{
+                            recursive_key: kwargs[key]
+                        }))
+                    )
+                elif opts.get_field_by_name(key.split('__')[0])[0].__class__.__name__ == 'ForeignKey' and \
+                 issubclass(opts.get_field_by_name(key.split('__')[0])[0].model, HStoreModel) and \
+                 key.split('__')[1] in opts.get_field_by_name(key.split('__')[0])[0].model._meta.get_all_dynamic_field_names():
+                    recursive_key = "%s___dfields__%s" % tuple(key.split('__'))
+                    queries.append(
+                        Q(HQ(**{
+                            recursive_key: kwargs[key]
+                        }))
+                    )
             else:
                 queries.append(Q(**{key: kwargs[key]}))
         try:
@@ -218,12 +246,25 @@ class FlattenFieldsFilterQuerySet(QuerySet):
     def values(self, *fields):
         if not fields:
             fields = self.all_field_names
+        
         return parse_queryset(
             self.model,
-            super(FlattenFieldsFilterQuerySet, self).values(
-                *fields
-            )
+            super(FlattenFieldsFilterQuerySet, self).values(*fields)
         )
+
+    def _clone(self, klass=None, setup=False, **kwargs):
+        if klass is None:
+            klass = self.__class__
+        query = self.query.clone()
+        if self._sticky_filter:
+            query.filter_is_sticky = True
+        c = klass(model=self.model, query=query, using=self._db)
+        c._for_write = self._for_write
+        c._prefetch_related_lookups = self._prefetch_related_lookups[:]
+        c.__dict__.update(kwargs)
+        if setup and hasattr(c, '_setup_query'):
+            c._setup_query()
+        return c
 
     def values_list(self, *fields, **kwargs):
         if not fields and not kwargs.get('flat', False):

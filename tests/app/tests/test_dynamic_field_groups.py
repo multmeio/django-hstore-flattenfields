@@ -75,6 +75,19 @@ class ManyToManyDynamicFieldGroupTests(TestCase):
 
         self.information_field = DynamicField.objects.create(id=3, refer="Author", name="author_information", verbose_name=u"Information", typo="CharField", max_length=100)
 
+    def test_assert_values_from_related_field(self):
+        self.author = Author.objects.create(
+            author_age=42,
+            author_name="some-name",
+        )
+        self.author.author_groups.add(self.group1)
+        self.author.save()
+
+        self.assertQuerysetEqual(
+            AuthorType.objects.filter(authors__in=[self.author]),
+            ['<AuthorType: Author Group>']
+        )
+
     def test_assert_all_dynamic_fields(self):
         self.author = Author.objects.create(
             author_age=42,

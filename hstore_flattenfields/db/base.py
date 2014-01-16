@@ -39,19 +39,48 @@ class HStoreModelMeta(ModelBase):
 
         _old_meta = new_class._meta
         class _meta(object):
+            def __eq__(self, other):
+                return _old_meta == other
+
             def __getattr__(self, key):
                 return getattr(_old_meta, key)
 
+            def __setattr__(self, key, value):
+                return setattr(_old_meta, key, value)
+
+            # def init_name_map(self):
+            #     _cache = _old_meta.init_name_map()
+            #     for dfield in self.dynamic_fields:
+            #         _cache.update(**{
+            #             dfield.name: (dfield, dfield.model, True, False)
+            #         })
+            #     return _cache
+            
             def get_all_dynamic_field_names(self):
                 return map(lambda x: x.name, self.dynamic_fields)
             
             @property
             def dynamic_fields(self):
                 return filter(
-                    lambda x: x.db_type == 'dynamic_field', 
+                    lambda x: not callable(x.db_type) and \
+                              x.db_type == 'dynamic_field', 
                     self.fields
                 )
+
+            def get_all_field_names(self):
+                try:
+                    cache = self._name_map
+                except AttributeError:
+                    cache = self.init_name_map()
+                names = sorted(cache.keys())
+                return [val for val in names if not val.endswith('+')]
+    
         new_class._meta = _meta()
+        # new_meta = _meta()
+        # new_class._meta.__getattr__ = new_meta.__getattr__
+        # new_class._meta.dynamic_fields = new_meta.dynamic_fields
+        # new_class._meta.get_all_dynamic_field_names = new_meta.get_all_dynamic_field_names
+
         return new_class
 
 class HStoreModel(models.Model):
