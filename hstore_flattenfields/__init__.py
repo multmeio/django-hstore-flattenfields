@@ -7,4 +7,4 @@ This way you can quickly add new fields in a Model,
 with some great features.
 """
 
-__version__ = '0.8'
+__version__ = '0.8.1'
