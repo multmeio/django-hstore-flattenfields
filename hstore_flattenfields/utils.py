@@ -12,7 +12,6 @@ used in hstore_flattenfields application.
 :author: 2012, Luís Araújo <caitifbrito@gmail.com>
 :license: BSD, see LICENSE for more details.
 """
-
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.db import connection
 from django.db.models import get_model, Q
@@ -315,6 +314,15 @@ def create_field_from_instance(instance):
     >>> df = DynamicField(refer="Author", typo="Input", name="author_name", verbose_name=u"Name")
     >>> create_field_from_instance(df)
     <hstore_flattenfields.db.fields.HstoreCharField: author_name>
+    >>> create_field_from_instance(df).name
+    'author_name'
+    >>> from tests.app.models import Author
+    >>> Author._meta.get_field_by_name("author_name")[0].name
+    'author_name'
+    >>> fields = Author._meta.get_fields_with_model()
+    >>> field = filter(lambda x: x[0].name == 'author_name', fields)[0]
+    >>> field[0].name
+    'author_name'
     """
     FieldClass = get_modelfield(instance.typo)
 
@@ -323,7 +331,9 @@ def create_field_from_instance(instance):
     if default_value is None:
         default_value = ""
 
-    field = FieldClass(name=instance.name,
+    name = str(instance.name)
+    field = FieldClass(
+        name=name,
         verbose_name=instance.verbose_name,
         max_length=instance.max_length or 255,
         blank=instance.blank,
@@ -331,12 +341,12 @@ def create_field_from_instance(instance):
         default=default_value,
         choices=create_choices(instance.choices),
         help_text=instance.help_text,
-        db_column="_dfields->'%s'" % instance.name,
+        db_column="_dfields->'%s'" % name,
         html_attrs=instance.html_attrs,
     )
 
     field.db_type = 'dynamic_field'
-    field.attname = field.name
+    field.attname = name
     field.column = field.db_column
 
     instance.get_modelfield = field
