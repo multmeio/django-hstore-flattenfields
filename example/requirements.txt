@@ -1,4 +1,4 @@
-Django==1.4.1
+Django==1.11.28
 -e git://github.com/multmeio/django-hstore.git#egg=django-hstore
 -e git://github.com/multmeio/django-hstore-flattenfields.git#egg=django-hstore-flattenfields
 django-orm-extensions==3.0b3
