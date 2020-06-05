@@ -1,4 +1,4 @@
-Django==1.4.3
+Django==1.11.29
 git+https://github.com/multmeio/django-hstore.git
 django-orm-extensions==3.0b3
 psycopg2==2.5
